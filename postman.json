@@ -1,0 +1,348 @@
+{
+	"info": {
+		"_postman_id": "ca67f940-21d8-4b65-8ba7-9799b9b5a90c",
+		"name": "Госключ по API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "22138400"
+	},
+	"item": [
+		{
+			"name": "ЕСИА",
+			"item": [
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/ext-app/7de47885-e1a6-423e-94b2-ddc82c333fd9/tkn?signature=MIAGCSqGSIb3DQEHAqCAMIACAQExDjAMBggqhQMHAQECAgUAMIAGCSqGSIb3DQEHAQAAoIIJ2zCCCdcwggmEoAMCAQICEQHXPbgALq-_r0Z-bloLsW6tMAoGCCqFAwcBAQ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"console.log(response); \r",
+									"\r",
+									"pm.collectionVariables.set(\"accessTkn_esia\", response.accessTkn);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{esia_url}}/{{api_key}}/tkn?signature={{sig}}",
+							"host": [
+								"{{esia_url}}"
+							],
+							"path": [
+								"{{api_key}}",
+								"tkn"
+							],
+							"query": [
+								{
+									"key": "signature",
+									"value": "{{sig}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "ЕПГУ",
+			"item": [
+				{
+					"name": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"77\",\r\n \"serviceCode\":\"10000000374\",\r\n \"targetCode\":\"-10000000374\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/push",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"console.log(response); \r",
+									"\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "meta",
+									"value": "{\"region\":\"77\", \"serviceCode\":\"10000000374\", \"targetCode\":\"-10000000374\"}",
+									"contentType": "application/json",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/rlkli/YandexDisk/Рабочий ноут/Documents/work/ЦЭКИ/ЭДО/Госключ/API/Тестирование с вендорами/внутренняя организация/Тестовые данные/6/6.zip"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/push",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"push"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/push/chunked",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "meta",
+									"value": "{\"region\":\"77\", \"serviceCode\":\"10000000374\", \"targetCode\":\"-10000000374\"}",
+									"contentType": "application/json",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "chanks",
+									"value": "10",
+									"type": "text"
+								},
+								{
+									"key": "chunk",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "orderId",
+									"value": "73772596",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/push/chunked",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"push",
+								"chunked"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/73840057?embed=STATUS_HISTORY",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"77\",\r\n \"serviceCode\":\"10000000374\",\r\n \"targetCode\":\"-10000000374\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/{{orderId}}?embed=STATUS_HISTORY",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order",
+								"{{orderId}}"
+							],
+							"query": [
+								{
+									"key": "embed",
+									"value": "STATUS_HISTORY"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "esia_url",
+			"value": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/ext-app"
+		},
+		{
+			"key": "api_key",
+			"value": "7de47885-e1a6-423e-94b2-ddc82c333fd9"
+		},
+		{
+			"key": "sig",
+			"value": "MIAGCSqGSIb3DQEHAqCAMIACAQExDjAMBggqhQMHAQECAgUAMIAGCSqGSIb3DQEHAQAAoIIJ2zCCCdcwggmEoAMCAQICEQHXPbgALq-_r0Z-bloLsW6tMAoGCCqFAwcBAQMCMIIBgTEVMBMGBSqFA2QEEgo3NzA3MDQ5Mzg4MRgwFgYFKoUDZAESDTEwMjc3MDAxOTg3NjcxCzAJBgNVBAYTAlJVMSkwJwYDVQQIDCA3OCDQodCw0L3QutGCLdCf0LXRgtC10YDQsdGD0YDQszEmMCQGA1UEBwwd0KHQsNC90LrRgi3Qn9C10YLQtdGA0LHRg9GA0LMxgZ4wgZsGA1UECQyBk9C80YPQvdC40YbQuNC_0LDQu9GM0L3Ri9C5INC-0LrRgNGD0LMg0KHQvNC-0LvRjNC90LjQvdGB0LrQvtC1INCS0J0u0KLQldCgLtCTLiwg0KHQuNC90L7Qv9GB0LrQsNGPINC90LDQsdC10YDQtdC20L3QsNGPLCDQtNC-0LwgMTQsINC70LjRgtC10YDQsCDQkDEmMCQGA1UECgwd0J_QkNCeICLQoNC-0YHRgtC10LvQtdC60L7QvCIxJTAjBgNVBAMMHNCi0LXRgdGC0L7QstGL0Lkg0KPQpiDQoNCi0JowHhcNMjIxMDE0MTEwMDQ4WhcNMjMxMDE0MTExMDQ4WjCCAg0xFTATBgUqhQNkBBIKNzcyNTI4OTI0ODEaMBgGCCqFAwOBAwEBEgwxNzA4MzgyODgyMDAxFjAUBgUqhQNkAxILMDAwNDM3NjkxOTkxGDAWBgUqhQNkARINMTE1Nzc0Njg2MTM1OTEwMC4GA1UEDAwn0JPQtdC90LXRgNCw0LvRjNC90YvQuSDQtNC40YDQtdC60YLQvtGAMVUwUwYDVQQKDEzQntCe0J4gwqvQntCx0YnQtdGB0YLQstC-INGC0LXRgdGC0LjRgNC-0LLQsNC90LjRjyDQkNCf0Jgg0JPQvtGB0LrQu9GO0YfQsMK7MTEwLwYDVQQJDCjRg9C7INCi0LLQtdGA0YHQutCw0Y8sINC00L7QvCAxLCDQutCyLiAxMRUwEwYDVQQHDAzQnNC-0YHQutCy0LAxHDAaBgNVBAgMEzc3INCzLiDQnNC-0YHQutCy0LAxCzAJBgNVBAYTAlJVMTIwMAYDVQQqDCnQlNC40YDQtdC60YLQvtGAINCU0LjRgNC10LrRgtC-0YDQvtCy0LjRhzEdMBsGA1UEBAwU0JTQuNGA0LXQutGC0L7RgNC-0LIxVTBTBgNVBAMMTNCe0J7QniDCq9Ce0LHRidC10YHRgtCy0L4g0YLQtdGB0YLQuNGA0L7QstCw0L3QuNGPINCQ0J_QmCDQk9C-0YHQutC70Y7Rh9CwwrswZjAfBggqhQMHAQEBATATBgcqhQMCAiQABggqhQMHAQECAgNDAARA2TFzFZ5gdIYdBvTwm0xrO-GetbSd5MB3niaKiwjELZnc8kSvqI5Jn1O5MLYdsJCgBT8cPHKt-wxZGA9QAPNahKOCBT4wggU6MA4GA1UdDwEB_wQEAwIE8DAdBgNVHQ4EFgQUrqNQ7zCgUF2n2_F24ZSFxhWmaoMwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMIGnBggrBgEFBQcBAQSBmjCBlzBEBggrBgEFBQcwAoY4aHR0cDovL2NlcnRlbnJvbGwudGVzdC5nb3N1c2x1Z2kucnUvY2RwL3Rlc3RfY2FfcnRrMi5jZXIwTwYIKwYBBQUHMAKGQ2h0dHA6Ly90ZXN0Y2FyYS9yYS9haWEvNGQzNDMxNWYwNjc3ZmJlZGJjN2M3NmY5ODc4YzcyYmFjZDNmYTIzYS5jcnQwHQYDVR0gBBYwFDAIBgYqhQNkcQEwCAYGKoUDZHECMCsGA1UdEAQkMCKADzIwMjIxMDE0MTEwMDQ4WoEPMjAyMzEwMTQxMTAwNDhaMIIBMAYFKoUDZHAEggElMIIBIQwrItCa0YDQuNC_0YLQvtCf0YDQviBDU1AiICjQstC10YDRgdC40Y8gNC4wKQwsItCa0YDQuNC_0YLQvtCf0YDQviDQo9CmIiAo0LLQtdGA0YHQuNC4IDIuMCkMYdCh0LXRgNGC0LjRhNC40LrQsNGC0Ysg0YHQvtC-0YLQstC10YLRgdGC0LLQuNGPINCk0KHQkSDQoNC-0YHRgdC40Lgg0KHQpC8xMjQtMzYxMiDQvtGCIDEwLjAxLjIwMTkMYdCh0LXRgNGC0LjRhNC40LrQsNGC0Ysg0YHQvtC-0YLQstC10YLRgdGC0LLQuNGPINCk0KHQkSDQoNC-0YHRgdC40Lgg0KHQpC8xMjgtMzU5MiDQvtGCIDE3LjEwLjIwMTgwNgYFKoUDZG8ELQwrItCa0YDQuNC_0YLQvtCf0YDQviBDU1AiICjQstC10YDRgdC40Y8gNC4wKTCBsgYDVR0fBIGqMIGnMFqgWKBWhlRodHRwOi8vY2VydGVucm9sbC50ZXN0Lmdvc3VzbHVnaS5ydS9jZHAvNGQzNDMxNWYwNjc3ZmJlZGJjN2M3NmY5ODc4YzcyYmFjZDNmYTIzYS5jcmwwSaBHoEWGQ2h0dHA6Ly90ZXN0Y2FyYS9yYS9jZHAvNGQzNDMxNWYwNjc3ZmJlZGJjN2M3NmY5ODc4YzcyYmFjZDNmYTIzYS5jcmwwDAYFKoUDZHIEAwIBADCCAcMGA1UdIwSCAbowggG2gBRNNDFfBnf77bx8dvmHjHK6zT-iOqGCAYmkggGFMIIBgTEVMBMGBSqFA2QEEgo3NzA3MDQ5Mzg4MRgwFgYFKoUDZAESDTEwMjc3MDAxOTg3NjcxCzAJBgNVBAYTAlJVMSkwJwYDVQQIDCA3OCDQodCw0L3QutGCLdCf0LXRgtC10YDQsdGD0YDQszEmMCQGA1UEBwwd0KHQsNC90LrRgi3Qn9C10YLQtdGA0LHRg9GA0LMxgZ4wgZsGA1UECQyBk9C80YPQvdC40YbQuNC_0LDQu9GM0L3Ri9C5INC-0LrRgNGD0LMg0KHQvNC-0LvRjNC90LjQvdGB0LrQvtC1INCS0J0u0KLQldCgLtCTLiwg0KHQuNC90L7Qv9GB0LrQsNGPINC90LDQsdC10YDQtdC20L3QsNGPLCDQtNC-0LwgMTQsINC70LjRgtC10YDQsCDQkDEmMCQGA1UECgwd0J_QkNCeICLQoNC-0YHRgtC10LvQtdC60L7QvCIxJTAjBgNVBAMMHNCi0LXRgdGC0L7QstGL0Lkg0KPQpiDQoNCi0JqCEQHbOaEAqa1zrknO5LuiyeuyMAoGCCqFAwcBAQMCA0EA2L5qtll3SBZQfjvwd92bjnvhLAt1mb1w0uEiLVBciTo5-gUhwZzozSlVS0hLXuQ_n6GabJzNcV44KJE1IzKtOzGCBF8wggRbAgEBMIIBmDCCAYExFTATBgUqhQNkBBIKNzcwNzA0OTM4ODEYMBYGBSqFA2QBEg0xMDI3NzAwMTk4NzY3MQswCQYDVQQGEwJSVTEpMCcGA1UECAwgNzgg0KHQsNC90LrRgi3Qn9C10YLQtdGA0LHRg9GA0LMxJjAkBgNVBAcMHdCh0LDQvdC60YIt0J_QtdGC0LXRgNCx0YPRgNCzMYGeMIGbBgNVBAkMgZPQvNGD0L3QuNGG0LjQv9Cw0LvRjNC90YvQuSDQvtC60YDRg9CzINCh0LzQvtC70YzQvdC40L3RgdC60L7QtSDQktCdLtCi0JXQoC7Qky4sINCh0LjQvdC-0L_RgdC60LDRjyDQvdCw0LHQtdGA0LXQttC90LDRjywg0LTQvtC8IDE0LCDQu9C40YLQtdGA0LAg0JAxJjAkBgNVBAoMHdCf0JDQniAi0KDQvtGB0YLQtdC70LXQutC-0LwiMSUwIwYDVQQDDBzQotC10YHRgtC-0LLRi9C5INCj0KYg0KDQotCaAhEB1z24AC6vv69Gfm5aC7FurTAMBggqhQMHAQECAgUAoIICXDAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0yMjEwMjcwODU1NTJaMC8GCSqGSIb3DQEJBDEiBCCwKPOlQ0asaTfZrJsGIfcXgRaF6FFL8zZrqIZqgaXjLTCCAe8GCyqGSIb3DQEJEAIvMYIB3jCCAdowggHWMIIB0jAKBggqhQMHAQECAgQgWcPP_1JH8gpLXzDmljfd4oAP2ggmclpYBEDZ8ajfzzAwggGgMIIBiaSCAYUwggGBMRUwEwYFKoUDZAQSCjc3MDcwNDkzODgxGDAWBgUqhQNkARINMTAyNzcwMDE5ODc2NzELMAkGA1UEBhMCUlUxKTAnBgNVBAgMIDc4INCh0LDQvdC60YIt0J_QtdGC0LXRgNCx0YPRgNCzMSYwJAYDVQQHDB3QodCw0L3QutGCLdCf0LXRgtC10YDQsdGD0YDQszGBnjCBmwYDVQQJDIGT0LzRg9C90LjRhtC40L_QsNC70YzQvdGL0Lkg0L7QutGA0YPQsyDQodC80L7Qu9GM0L3QuNC90YHQutC-0LUg0JLQnS7QotCV0KAu0JMuLCDQodC40L3QvtC_0YHQutCw0Y8g0L3QsNCx0LXRgNC10LbQvdCw0Y8sINC00L7QvCAxNCwg0LvQuNGC0LXRgNCwINCQMSYwJAYDVQQKDB3Qn9CQ0J4gItCg0L7RgdGC0LXQu9C10LrQvtC8IjElMCMGA1UEAwwc0KLQtdGB0YLQvtCy0YvQuSDQo9CmINCg0KLQmgIRAdc9uAAur7-vRn5uWguxbq0wCgYIKoUDBwEBAQEEQBLUHp8EjOheAus6H1SSG5_h7KFeg3wWoBENRiMSRe2sqXPFIZ_DZLB88RyPbM4lSB7HVyjVwMLuC2oGCJZ5ojEAAAAAAAA"
+		},
+		{
+			"key": "accessTkn_esia",
+			"value": ""
+		},
+		{
+			"key": "orderId",
+			"value": ""
+		}
+	]
+}

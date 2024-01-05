@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  myapp:
+    deploy:
+      resources:
+        limits:
+          cpus: '0,5'
+          memory: 512M
+        reservations:
+          cpus: '0,5'
+          memory: 256M
+    image: app:latest
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        progress: plain
+    entrypoint: ["sh", "/certs/entrypoint.sh"]
+    ports:
+      - 5000:5000
+      - 5678:5678
+    volumes:
+      - ./app.py:/app/app.py
+      - ./.env:/app/.env
+      - ${key_folder:-./xxx.000}:/var/opt/cprocsp/keys/root/xxx.000
+      - ./certs:/certs

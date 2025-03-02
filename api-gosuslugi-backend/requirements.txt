@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+debugpy
+requests
+python-dotenv
+python-multipart
+lxml
+httpx 
+pydantic

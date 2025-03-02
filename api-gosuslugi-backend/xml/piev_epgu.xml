@@ -1,0 +1,29 @@
+<fssp:IRequest xmlns:fssp="http://www.fssprus.ru/namespace/incoming/2019/1">
+	<fssp:ExternalKey>xxx</fssp:ExternalKey>
+    <fssp:DocType>I_IP_EXIST_INTERACTIVE</fssp:DocType>
+    <fssp:DocName>Заявление о предоставлении информации о наличии исполнительного производства из банка данных</fssp:DocName>
+    <fssp:DocDate>2025-01-12</fssp:DocDate>
+    <fssp:IncludeAll>true</fssp:IncludeAll>
+    <fssp:ComplainerType>1</fssp:ComplainerType>
+    <fssp:AuthorName>Фxxx Иxxx Оxxx</fssp:AuthorName>
+    <fssp:ComplainerGender>1</fssp:ComplainerGender>
+    <fssp:AuthorBorn>xxx0-01-01</fssp:AuthorBorn>
+    <fssp:AuthorSnils>xxx45678901</fssp:AuthorSnils>
+    <fssp:AuthorBackAddrType>ЕПГУ</fssp:AuthorBackAddrType>
+    <fssp:AuthorBackAddr>xxx45678901</fssp:AuthorBackAddr>
+    <fssp:TrusteeDoctype>09</fssp:TrusteeDoctype>
+    <fssp:TrusteeDivision>xxxОРГАНИЗАЦИЯ </fssp:TrusteeDivision>
+    <fssp:TrusteeDocnumber>1</fssp:TrusteeDocnumber>
+    <fssp:TrusteeDocdate>2025-01-03</fssp:TrusteeDocdate>
+    <fssp:TrusteeName>xxxОРГАНИЗАЦИЯ </fssp:TrusteeName>
+    <fssp:TrusteeAddress>xxx127434, Город Москва, Улица Дубки</fssp:TrusteeAddress>
+    <fssp:TrusteeInn>xxx4567890</fssp:TrusteeInn>
+    <fssp:TrusteeOGRN>xxx4567890123</fssp:TrusteeOGRN>
+    <fssp:SimpleDigSignature>xxx45678901</fssp:SimpleDigSignature>
+    <fssp:Sendlist>
+        <fssp:Receiver>ФССП</fssp:Receiver>
+        <fssp:ReceiverDivisionCode>00000</fssp:ReceiverDivisionCode>
+        <fssp:ReceiverAddrType>ВЕБ-СЕРВИС</fssp:ReceiverAddrType>
+        <fssp:ReceiverAddr>00000</fssp:ReceiverAddr>
+    </fssp:Sendlist>
+</fssp:IRequest>

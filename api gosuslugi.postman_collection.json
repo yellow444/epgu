@@ -1,0 +1,1875 @@
+{
+	"info": {
+		"_postman_id": "a6c30fdc-9625-4ddb-874b-c6d8fb634f5a",
+		"name": "api gosuslugi",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11851491"
+	},
+	"item": [
+		{
+			"name": "esia",
+			"item": [
+				{
+					"name": "tkn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"accessTkn_esia\", response.accessTkn);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{esia_url}}/{{api_key}}/tkn?signature={{sig}}",
+							"host": [
+								"{{esia_url}}"
+							],
+							"path": [
+								"{{api_key}}",
+								"tkn"
+							],
+							"query": [
+								{
+									"key": "signature",
+									"value": "{{sig}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "epgu",
+			"item": [
+				{
+					"name": "order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"oldOrderId\", pm.collectionVariables.get(\"orderId\"));\r",
+									"pm.collectionVariables.set(\"NewOrderId\", response.orderId);\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getOrdersStatus",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"45000000000\",\r\n \"serviceCode\":\"60010153\",\r\n \"targetCode\":\"-60010153\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/getOrdersStatus/?pageNum=0&pageSize=5",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order",
+								"getOrdersStatus",
+								""
+							],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "0"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getUpdatedAfter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"45000000000\",\r\n \"serviceCode\":\"60010153\",\r\n \"targetCode\":\"-60010153\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order",
+								"getUpdatedAfter",
+								""
+							],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "0"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								},
+								{
+									"key": "updatedAfter",
+									"value": "{{$timestamp}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "push",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"oldOrderId\", pm.collectionVariables.get(\"orderId\"));\r",
+									"pm.collectionVariables.set(\"NewOrderId\", response.orderId);\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "meta",
+									"value": "{\"region\":{{region}}, \"serviceCode\":{{serviceCode}}, \"targetCode\":{{targetCode}}}",
+									"contentType": "application/json",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/push",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"push"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "push/chunked",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"oldOrderId\", pm.collectionVariables.get(\"orderId\"));\r",
+									"pm.collectionVariables.set(\"NewOrderId\", response.orderId);\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "meta",
+									"value": "{\"region\":\"45000000000\", \"serviceCode\":\"60010153\", \"targetCode\":\"-60010153\"}",
+									"contentType": "application/json",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "orderId",
+									"value": "{{orderId}}",
+									"type": "text"
+								},
+								{
+									"key": "chunk",
+									"value": "{{chunk}}",
+									"type": "text"
+								},
+								{
+									"key": "chunks",
+									"value": "{{chunks}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/push/chunked",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"push",
+								"chunked"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "STATUS_HISTORY",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/{{orderId}}?embed=STATUS_HISTORY",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order",
+								"{{orderId}}"
+							],
+							"query": [
+								{
+									"key": "embed",
+									"value": "STATUS_HISTORY"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "order/orderId",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/{{orderId}}",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order",
+								"{{orderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "order/orderId/cancel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/order/{{orderId}}/cancel",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"order",
+								"{{orderId}}",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "terrabyte",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/gusmev/files/download/21001285203/3?mnemonic=piev_epgu.zip&eserviceCode=60010153",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"gusmev",
+								"files",
+								"download",
+								"21001285203",
+								"3"
+							],
+							"query": [
+								{
+									"key": "mnemonic",
+									"value": "piev_epgu.zip"
+								},
+								{
+									"key": "eserviceCode",
+									"value": "60010153"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "dictionary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://svcdev-beta.test.gosuslugi.ru/api/nsi/v1/dictionary/{{code}}",
+							"protocol": "https",
+							"host": [
+								"svcdev-beta",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"api",
+								"nsi",
+								"v1",
+								"dictionary",
+								"{{code}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "app",
+			"item": [
+				{
+					"name": "order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"oldOrderId\", pm.collectionVariables.get(\"orderId\"));\r",
+									"pm.collectionVariables.set(\"NewOrderId\", response.orderId);\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/order",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "order/orderId",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/order/{{orderId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"{{orderId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "order/orderId/cancel",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/order/{{orderId}}/cancel",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"{{orderId}}",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getOrdersStatus",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"45000000000\",\r\n \"serviceCode\":\"60010153\",\r\n \"targetCode\":\"-60010153\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/getOrdersStatus/?pageNum=0&pageSize=5",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"getOrdersStatus",
+								""
+							],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "0"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getUpdatedAfter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"45000000000\",\r\n \"serviceCode\":\"60010153\",\r\n \"targetCode\":\"-60010153\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"getUpdatedAfter",
+								""
+							],
+							"query": [
+								{
+									"key": "pageNum",
+									"value": "0"
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								},
+								{
+									"key": "updatedAfter",
+									"value": "{{$timestamp}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "push",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"oldOrderId\", pm.collectionVariables.get(\"orderId\"));\r",
+									"pm.collectionVariables.set(\"NewOrderId\", response.orderId);\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "meta",
+									"value": "{\"region\":{{region}}, \"serviceCode\":{{serviceCode}}, \"targetCode\":{{targetCode}}}",
+									"contentType": "application/json",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5000/push",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"push"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "push/chunked",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json(); \r",
+									"pm.collectionVariables.set(\"oldOrderId\", pm.collectionVariables.get(\"orderId\"));\r",
+									"pm.collectionVariables.set(\"NewOrderId\", response.orderId);\r",
+									"pm.collectionVariables.set(\"orderId\", response.orderId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "meta",
+									"value": "{\"region\":\"45000000000\", \"serviceCode\":\"60010153\", \"targetCode\":\"-60010153\"}",
+									"contentType": "application/json",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "orderId",
+									"value": "{{orderId}}",
+									"type": "text"
+								},
+								{
+									"key": "chunk",
+									"value": "{{chunk}}",
+									"type": "text"
+								},
+								{
+									"key": "chunks",
+									"value": "{{chunks}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5000/chunked",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"chunked"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "STATUS_HISTORY",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":{{region}},\r\n \"serviceCode\":{{serviceCode}},\r\n \"targetCode\":{{targetCode}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/order/{{orderId}}?embed=STATUS_HISTORY",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"{{orderId}}"
+							],
+							"query": [
+								{
+									"key": "embed",
+									"value": "STATUS_HISTORY"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "terrabyte",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\"region\":\"45000000000\",\r\n \"serviceCode\":\"60010153\",\r\n \"targetCode\":\"-60010153\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5000/download/21001285203/3?mnemonic=piev_epgu.zip&eserviceCode=60010153",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"download",
+								"21001285203",
+								"3"
+							],
+							"query": [
+								{
+									"key": "mnemonic",
+									"value": "piev_epgu.zip"
+								},
+								{
+									"key": "eserviceCode",
+									"value": "60010153"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "dictionary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/dictionary/{{code}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"dictionary",
+								"{{code}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_certificates",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/order/get_certificates",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"get_certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "set_current_certificate",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/order/set_current_certificate",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"set_current_certificate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get_current_certificate",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/order/get_current_certificate",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"get_current_certificate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/order/status",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"order",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "hc",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessTkn_esia}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5000/hc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"hc"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "accessTkn_esia",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    const response = pm.response.json()\r",
+									"    pm.collectionVariables.set(\"accessTkn_esia\", response[\"accessTkn\"]);\r",
+									"}); "
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "api_key",
+									"value": "{{api_key}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5000/accessTkn_esia",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"accessTkn_esia"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "download_file",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "objectId",
+									"value": "{{objectId}}",
+									"type": "text"
+								},
+								{
+									"key": "objectType",
+									"value": "{{objectType}}",
+									"type": "text"
+								},
+								{
+									"key": "mnemonic",
+									"value": "{{mnemonic}}",
+									"type": "text"
+								},
+								{
+									"key": "eserviceCode",
+									"value": "{{eserviceCode}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5000//download_file/{{objectId}}/{{objectType}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5000",
+							"path": [
+								"",
+								"download_file",
+								"{{objectId}}",
+								"{{objectType}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "some",
+			"item": [
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v2/prns/ctts/confirmEmail?code",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v2/prns/ctts/confirmEmail?code",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v2",
+								"prns",
+								"ctts",
+								"confirmEmail"
+							],
+							"query": [
+								{
+									"key": "code",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/1000000001/rсs/find?embed=(elements.address,elements.contact)&wpdo=true",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/1000000001/rсs/find?embed=(elements.address,elements.contact)&wpdo=true",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"orgs",
+								"1000000001",
+								"rсs",
+								"find"
+							],
+							"query": [
+								{
+									"key": "embed",
+									"value": "(elements.address,elements.contact)"
+								},
+								{
+									"key": "wpdo",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/1000000001/rcs/1000000234/invts/force",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/1000000001/rcs/1000000234/invts/force",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"orgs",
+								"1000000001",
+								"rcs",
+								"1000000234",
+								"invts",
+								"force"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/{org_oid}/rсs/find",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/{org_oid}/rсs/find",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"orgs",
+								"{org_oid}",
+								"rсs",
+								"find"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/{org_oid}/rcs/{ra_oid}",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/{org_oid}/rcs/{ra_oid}",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"orgs",
+								"{org_oid}",
+								"rcs",
+								"{ra_oid}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/pso/{prn_oid}/avt/circle",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/pso/{prn_oid}/avt/circle",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"pso",
+								"{prn_oid}",
+								"avt",
+								"circle"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/pso/{prn_oid}/avt/square",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/pso/{prn_oid}/avt/square",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"pso",
+								"{prn_oid}",
+								"avt",
+								"square"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/ext/vrf/result",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/ext/vrf/result",
+							"protocol": "https",
+							"host": [
+								"esia-portal1",
+								"test",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v1",
+								"ext",
+								"vrf",
+								"result"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "https://esia.gosuslugi.ru/esia-rs/api/public/v2/prns/import",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "https://esia.gosuslugi.ru/esia-rs/api/public/v2/prns/import ",
+							"protocol": "https",
+							"host": [
+								"esia",
+								"gosuslugi",
+								"ru"
+							],
+							"path": [
+								"esia-rs",
+								"api",
+								"public",
+								"v2",
+								"prns",
+								"import "
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "getUpdatedAfter",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{accessTkn_esia}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"region\":\"45000000000\",\r\n \"serviceCode\":\"60010153\",\r\n \"targetCode\":\"-60010153\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"getUpdatedAfter",
+						""
+					],
+					"query": [
+						{
+							"key": "pageNum",
+							"value": "0"
+						},
+						{
+							"key": "pageSize",
+							"value": "5"
+						},
+						{
+							"key": "updatedAfter",
+							"value": "{{$timestamp}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "esia_url",
+			"value": "https://esia-portal1.test.gosuslugi.ru/esia-rs/api/public/v1/orgs/ext-app"
+		},
+		{
+			"key": "api_key",
+			"value": "0"
+		},
+		{
+			"key": "sig",
+			"value": "0"
+		},
+		{
+			"key": "accessTkn_esia",
+			"value": "0"
+		},
+		{
+			"key": "orderId",
+			"value": "0"
+		},
+		{
+			"key": "newOrderId",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "oldOrderId",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "region",
+			"value": "45000000000",
+			"type": "string"
+		},
+		{
+			"key": "serviceCode",
+			"value": "10000000367",
+			"type": "string"
+		},
+		{
+			"key": "targetCode",
+			"value": "-10000000367",
+			"type": "string"
+		},
+		{
+			"key": "chunk",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "chunks",
+			"value": "0",
+			"type": "string"
+		},
+		{
+			"key": "code",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

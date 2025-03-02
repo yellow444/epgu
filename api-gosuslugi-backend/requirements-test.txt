@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+debugpy
+requests
+python-dotenv
+python-multipart
+lxml
+httpx
+pytest
+pytest-asyncio
+pydantic
+pytest-mock

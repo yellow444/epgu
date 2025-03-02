@@ -1,6 +1,0 @@
-Flask>=1.1
-flask-restful
-uwsgi
-debugpy
-requests
-python-dotenv

@@ -5,8 +5,8 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Remote Attach",
-            "type": "python",
+            "name": "Python Debugger: Remote Attach",
+            "type": "debugpy",
             "request": "attach",
             "connect": {
                 "host": "localhost",
@@ -17,8 +17,7 @@
                     "localRoot": "${workspaceFolder}",
                     "remoteRoot": "."
                 }
-            ],
-            "justMyCode": true
+            ]
         }
     ]
 }

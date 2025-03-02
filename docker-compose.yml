@@ -1,26 +1,57 @@
-version: '3.8'
+version: "3.9"
+
 services:
-  myapp:
+  api:
+    image: api-gosuslugi-backend:latest
+    build:
+      context: ./api-gosuslugi-backend
+      dockerfile: ./Dockerfile
+      args:
+        progress: plain
     deploy:
       resources:
         limits:
-          cpus: '0,5'
-          memory: 512M
+          cpus: "0.5"
+          memory: "512M"
         reservations:
-          cpus: '0,5'
-          memory: 256M
-    image: app:latest
+          cpus: "0.5"
+          memory: "256M"
+    entrypoint: [ "sh", "/certs/entrypoint.sh" ]
+    environment:
+      - apikey=${apikey:-GUID}
+      - TSAAddress=${TSAAddress:-http://testca2012.cryptopro.ru/tsp/tsp.srf}
+      - esia_host=${esia_host:-https://esia-portal1.test.gosuslugi.ru}
+      - svcdev_host=${svcdev_host:-https://svcdev-beta.test.gosuslugi.ru}
+      - KeyPin=${KeyPin:-1234567890}
+      - production=${production}
+      - SERVICES=${SERVICES}
+    ports:
+      - "5000:5000"
+      - "5678:5678"
+    volumes:
+      - ./api-gosuslugi-backend/app.py:/app/app.py
+      - ./api-gosuslugi-backend/.env:/app/.env
+      # Если key_folder не задан в .env, по умолчанию берем ./api-gosuslugi-backend/xxx.000
+      - "${key_folder:-./api-gosuslugi-backend/xxx.000}:/var/opt/cprocsp/keys/root/xxx.000"
+      - ./api-gosuslugi-backend/certs:/certs
+      - ./api-gosuslugi-backend/xml:/xml
+    restart: always
+
+  frontend:
+    image: api-gosuslugi-client
     build:
-      context: ./
-      dockerfile: Dockerfile
+      context: ./api-gosuslugi-client
+      dockerfile: ./Dockerfile
       args:
         progress: plain
-    entrypoint: ["sh", "/certs/entrypoint.sh"]
+        BACKEND_URL: "${BACKEND_URL:-http://192.168.50.100/api}"
+    container_name: react-nginx
+    entrypoint: [ "sh", "/entrypoint.sh" ]
+    environment:
+      - BACKEND_API=${BACKEND_API:-http://192.168.50.100:5000/api}
     ports:
-      - 5000:5000
-      - 5678:5678
+      - "5080:80"
     volumes:
-      - ./app.py:/app/app.py
-      - ./.env:/app/.env
-      - ${key_folder:-./xxx.000}:/var/opt/cprocsp/keys/root/xxx.000
-      - ./certs:/certs
+      - ./api-gosuslugi-client/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
+      - ./api-gosuslugi-client/entrypoint.sh:/entrypoint.sh
+    restart: always

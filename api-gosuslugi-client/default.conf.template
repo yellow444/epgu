@@ -1,0 +1,22 @@
+server {
+    listen       80;
+    server_name  _;
+    root /usr/share/nginx/html;
+    index index.html index.htm;
+    expires off;
+    # Обработка запросов к статическим файлам (фронтенд)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Проксирование запросов к API на backend
+    location /api/ {
+        # Здесь переменная BACKEND_API должна быть подставлена, например, через entrypoint
+        proxy_pass ${BACKEND_API};
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+
+    }
+}

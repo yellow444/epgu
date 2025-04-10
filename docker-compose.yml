@@ -32,7 +32,7 @@ services:
       - ./api-gosuslugi-backend/app.py:/app/app.py
       - ./api-gosuslugi-backend/.env:/app/.env
       # Если key_folder не задан в .env, по умолчанию берем ./api-gosuslugi-backend/xxx.000
-      - "${key_folder:-./api-gosuslugi-backend/xxx.000}:/var/opt/cprocsp/keys/root/xxx.000"
+      - "${key_folder:-./api-gosuslugi-backend/xxx.000}:/var/opt/cprocsp/keys/app/xxx.000"
       - ./api-gosuslugi-backend/certs:/certs
       - ./api-gosuslugi-backend/xml:/xml
     restart: always

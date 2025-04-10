@@ -1,7 +1,5 @@
 #!/bin/sh
 
-chown -R root:root /var/opt/cprocsp/keys/root/xxx.000
-chown -R root:root /certs
 
 csptest -keyset -enum_cont -fqcn -verifyc | iconv -f cp1251 | grep HDI > envfile
 certmgr -inst -store uMy -cont $(cat ./envfile) -provtype 81

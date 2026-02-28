@@ -169,7 +169,7 @@ def signkey(api_key: str) -> str:
     signer.Certificate = cert
     signer.CheckCertificate = True
     signer.TSAAddress = TSA_ADDRESS
-    signer.KeyPin = '1234567890'
+    signer.KeyPin = KEY_PIN
     signedData = pycades.SignedData()
     signedData.ContentEncoding = pycades.CADESCOM_BASE64_TO_BINARY
     message_bytes = api_key.encode("utf-8")
@@ -249,8 +249,8 @@ async def access_tkn_esia(request: APIKeyRequest, client: httpx.AsyncClient = De
         raise HTTPException(status_code=400, detail="Некорректный API ключ.")
     try:
         signature = signkey(api_key_data)
-        url = f"{ESIA_HOST}/esia-rs/api/public/v1/orgs/ext-app/{api_key_data}/tkn?signature={signature}"
-        response = await client.get(url, headers={"User-Agent": USER_AGENT})
+        url = f"{ESIA_HOST}/esia-rs/api/public/v1/orgs/ext-app/{api_key_data}/tkn"
+        response = await client.get(url, params={"signature": signature}, headers={"User-Agent": USER_AGENT})
         response.raise_for_status()
         res = response.json()
         if "accessTkn" in res:

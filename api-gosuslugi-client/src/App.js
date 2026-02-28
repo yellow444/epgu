@@ -15,7 +15,7 @@ import { jwtDecode } from 'jwt-decode';
 import { openDB } from 'idb';
 
 const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL || 'http://192.168.50.100:5000/api';
+  process.env.REACT_APP_BACKEND_URL || '/api';
 
 // Создаём или открываем IndexedDB базу данных
 const dbPromise = openDB('files-db', 1, {

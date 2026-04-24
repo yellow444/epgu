@@ -6,15 +6,21 @@ chown -R root:root /certs
 csptest -keyset -enum_cont -fqcn -verifyc | iconv -f cp1251 | grep HDI > envfile
 certmgr -inst -store uMy -cont $(cat ./envfile) -provtype 81
 
-# certmgr -inst -file /certs/some.cer -cont $(cat ./envfile)
+# Публичные CA (поставляются с репозиторием)
+PUBLIC_CERTS=/certs/public
+yes 'o' | certmgr -inst -store root -file ${PUBLIC_CERTS}/test_ca_rtk2.cer
+yes 'o' | certmgr -inst -store root -file ${PUBLIC_CERTS}/ca-root.crt
+yes 'o' | certmgr -inst -store root -file ${PUBLIC_CERTS}/rootca.cer
+yes 'o' | certmgr -inst -store mroot -file ${PUBLIC_CERTS}/2F0CB09BE3550EF17EC4F29C90ABD18BFCAAD63A.cer
+for i in $(seq 1 12); do yes $i | certmgr -inst -store mroot -file ${PUBLIC_CERTS}/cacerts.p7b; done
 
+# Личные сертификаты пользователя (монтируются, в репозиторий не попадают)
+PERSONAL_CERTS=/certs/personal
+if [ -d "${PERSONAL_CERTS}" ]; then
+  for cert in ${PERSONAL_CERTS}/*.cer; do
+    [ -e "$cert" ] || continue
+    yes 'o' | certmgr -inst -store uMy -file "$cert" -cont $(cat ./envfile)
+  done
+fi
 
-
-yes 'o' | certmgr -inst -store root -file /certs/test_ca_rtk2.cer
-yes 'o' | certmgr -inst -store root -file /certs/ca-root.crt
-yes 'o' | certmgr -inst -store root -file /certs/rootca.cer
-yes 'o' | certmgr -inst -store root -file /certs/sertum-pro-2024.cer
-yes 'o' | certmgr -inst -store mroot -file /certs/2F0CB09BE3550EF17EC4F29C90ABD18BFCAAD63A.cer
-for i in $(seq 1 12); do  yes $i | certmgr -inst -store mroot -file /certs/cacerts.p7b; done
-# yes 'o' | certmgr -inst -store mroot -file /certs/cacerts.p7b
 pytest test_app.py -v

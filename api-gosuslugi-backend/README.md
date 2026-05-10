@@ -2,16 +2,28 @@
 
 ## Описание проекта
 
-Проект предоставляет набор функций и API для работы с Госуслугами, включая управление сертификатами, создание запросов, загрузку и скачивание файлов, а также проверки XML на соответствие XSD.
+Backend проекта: FastAPI-сервис, реализующий **Спецификацию API ЕПГУ v1.13** (правки v1.12.1 — ГОСТ TLS / СМЭВ4). Управление сертификатами через КриптоПро CSP, подпись CAdES-BES, проксирование вызовов к ЕПГУ, валидация XML по XSD.
+
+> Дата актуализации против [Портала API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu): **2026-05-12**.
+
+## Структура
+
+| Файл | Назначение |
+|---|---|
+| `app.py` | Точка входа FastAPI, бизнес-эндпоинты (order/push/dictionary/files…) |
+| `config.py` | `DEFAULT_SERVICES` (каталог услуг) и `ENVIRONMENTS` (тест/прод host'ы) |
+| `routers.py` | Диагностические роутеры `/version`, `/environments`, `/services/{code}` |
+| `xml/piev_epgu.xsd` | XSD-схема для валидации `piev_epgu.xml` |
+| `test_app.py` | Unit-тесты (`pytest`) |
 
 ## Требования
 
-- Python 3.8+
+- Python 3.10+
 - FastAPI
-- PyCades
-- requests
+- PyCades (КриптоПро CSP 5.0+)
+- httpx (async)
 - lxml
-- dotenv
+- python-dotenv
 - uvicorn
 
 ## Установка

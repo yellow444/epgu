@@ -4,30 +4,35 @@
 
 FastAPI автоматически публикует Swagger: <http://localhost:5000/docs>.
 
+> Источник истины по внешним вызовам — [Спецификация API ЕПГУ v1.13](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_13.docx) (с правками v1.12.1 по ГОСТ TLS и СМЭВ4). Внутренние эндпоинты бэкенда транслируют соответствующие методы спецификации, добавляя криптооперации через `pycades` и валидацию XML по локальному XSD.
+
 ## Сводная таблица
 
-| Метод | Путь | Назначение |
-|---|---|---|
-| GET | `/hc` | Health-check (есть ли PyCades) |
-| GET | `/status` | Версия PyCades / модуля |
-| POST | `/get_certificates` | Список сертификатов из хранилища CSP |
-| GET | `/get_certificates` | То же (fallback) |
-| POST | `/set_current_certificate?cert_id=...` | Выбор активного сертификата |
-| POST | `/get_current_certificate` | Текущий сертификат и его субъект |
-| POST | `/accessTkn_esia` | Получение JWT от ЕСИА |
-| POST | `/order` | Создать/запросить заявление по услуге |
-| POST | `/order/{orderId}` | Детали заявления + список ответных файлов |
-| POST | `/order/{orderId}/cancel` | Отменить заявление |
-| GET  | `/getUpdatedAfter` | Заявления, обновлённые после даты |
-| GET  | `/getOrdersStatus/` | Статусы по списку orderIds |
-| POST | `/dictionary/{code}` | Справочник НСИ |
-| POST | `/download_file/{objectId}/{objectType}` | Скачать файл-ответ |
-| GET  | `/services` | Справочник услуг (из env `SERVICES`) |
-| GET  | `/xsd?simple_type_name=...` | Перечисления (`xs:enumeration`) из XSD |
-| GET  | `/xml?service=...` | Эталонные `req.xml` и `piev_epgu.xml` услуги |
-| POST | `/zipsize` | Размер будущего zip-архива из файлов |
-| POST | `/push` | Отправка заявления в ЕПГУ (одним куском) |
-| POST | `/push/chunked` | Chunked-отправка + XSD-валидация `piev_epgu.xml` |
+| Метод | Путь | Назначение | Источник в спец. v1.13 |
+|---|---|---|---|
+| GET | `/hc` | Health-check (есть ли PyCades) | — (внутренний) |
+| GET | `/status` | Версия PyCades / модуля | — (внутренний) |
+| GET | `/version` | Расширенная диагностика: pycades, среда, host'ы, число услуг, версия спецификации | — (внутренний) |
+| GET | `/environments` | Справочник известных сред (test/prod): host'ы ЕСИА/ЕПГУ, технологический портал, согласия | — (внутренний) |
+| POST | `/get_certificates` | Список сертификатов из хранилища CSP | — (внутренний) |
+| GET | `/get_certificates` | То же (fallback) | — (внутренний) |
+| POST | `/set_current_certificate?cert_id=...` | Выбор активного сертификата | — (внутренний) |
+| POST | `/get_current_certificate` | Текущий сертификат и его субъект | — (внутренний) |
+| POST | `/accessTkn_esia` | Получение JWT от ЕСИА | ЕСИА `/esia-rs/.../tkn` |
+| POST | `/order` | Создать/запросить заявление по услуге | `POST /api/gusmev/order` |
+| POST | `/order/{orderId}` | Детали заявления + список ответных файлов | `POST /api/gusmev/order/{id}` |
+| POST | `/order/{orderId}/cancel` | Отменить заявление | `POST /api/gusmev/order/{id}/cancel` |
+| GET  | `/getUpdatedAfter` | Заявления, обновлённые после даты | `GET /api/gusmev/order/getUpdatedAfter` |
+| GET  | `/getOrdersStatus/` | Статусы по списку orderIds | `GET /api/gusmev/order/getOrdersStatus` |
+| POST | `/dictionary/{code}` | Справочник НСИ | `POST /api/nsi/v1/dictionary/{code}` |
+| POST | `/download_file/{objectId}/{objectType}` | Скачать файл-ответ | `GET /api/gusmev/files/download/{id}/{type}` |
+| GET  | `/services` | Справочник услуг (из env `SERVICES`) | — (внутренний) |
+| GET  | `/services/{code}` | Описание одной услуги (404 если не зарегистрирована) | — (внутренний) |
+| GET  | `/xsd?simple_type_name=...` | Перечисления (`xs:enumeration`) из XSD | — (внутренний) |
+| GET  | `/xml?service=...` | Эталонные `req.xml` и `piev_epgu.xml` услуги | — (внутренний) |
+| POST | `/zipsize` | Размер будущего zip-архива из файлов | — (внутренний) |
+| POST | `/push` | Отправка заявления в ЕПГУ (одним куском) | `POST /api/gusmev/push` |
+| POST | `/push/chunked` | Chunked-отправка + XSD-валидация `piev_epgu.xml` | `POST /api/gusmev/push/chunked` |
 
 ## Модели запросов
 
@@ -101,11 +106,24 @@ Backend:
 
 | Имя | По умолчанию | Назначение |
 |---|---|---|
-| `apikey` | `my api key` | API-ключ организации |
+| `apikey` | `my api key` | API-ключ организации (выпускается на технологическом портале ЕСИА) |
 | `KeyPin` | `1234567890` | PIN контейнера ключа |
-| `TSAAddress` | `cryptopro.ru/tsp` | TSA для CAdES |
-| `esia_host` | `esia-portal1.test.gosuslugi.ru` | ЕСИА |
-| `svcdev_host` | `svcdev-beta.test.gosuslugi.ru` | СМЭВ/ЕПГУ |
+| `TSAAddress` | `http://www.cryptopro.ru/tsp/tsp.srf` | TSA для CAdES |
+| `esia_host` | `https://esia-portal1.test.gosuslugi.ru` | ЕСИА (тест). Для прод: `https://esia.gosuslugi.ru` |
+| `svcdev_host` | `https://svcdev-beta.test.gosuslugi.ru` | СМЭВ/ЕПГУ (тест). Для прод (ГОСТ TLS): `https://lk.gosuslugi.ru` |
 | `XSD_FILE` | `/xml/piev_epgu.xsd` | Схема для валидации |
 | `SERVICES` | см. `app.py` | JSON-справочник услуг |
 | `production` | пусто | Если пусто — включается `debugpy` на `:5678` |
+
+> **Подключение через СМЭВ4 (ПОДД)** — альтернатива прямому ГОСТ TLS. На тестовом контуре спецификация публикуется в `https://lkuv.gosuslugi.ru/paip-portal/`. На промышленном — на момент 2024-05 не опубликована. Подключение требует Агента ПОДД (см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/)). Бэкенд проксирует запросы по тому же контуру URL — переключение производится сменой `svcdev_host`.
+
+## Поддерживаемые услуги
+
+Полный каталог услуг и кодов — в [SERVICES.md](./SERVICES.md). По умолчанию в `app.py` зарегистрированы:
+
+| Код | Описание | XML / XSD |
+|---|---|---|
+| `60010153` | Наличие ИП (ФССП) | `req.xml`, `piev_epgu.xml` (XSD: `piev_epgu.xsd`) |
+| `10000000367` | Подача заявлений/ходатайств/объяснений | `req.xml`, `piev_epgu.xml` |
+| `10000000109` | Доставка пенсии и социальных выплат ПФР/СФР | `req.xml`, `piev_epgu.xml` |
+| `60010154` | Предоставление информации о ходе ИП (ФССП) | `req.xml`, `piev_epgu.xml` |

@@ -70,12 +70,18 @@ npm ci && webpack build"] --> Nginx["nginx:alpine
 ## Production-чеклист
 
 - [ ] `production=1` (отключает debugpy, уровень INFO).
-- [ ] Заменить тестовые `esia_host`/`svcdev_host` на боевые.
+- [ ] Заменить тестовые `esia_host`/`svcdev_host` на боевые:
+      - `esia_host=https://esia.gosuslugi.ru`
+      - `svcdev_host=https://lk.gosuslugi.ru` (для прямого ГОСТ TLS)
+- [ ] Подключение по ГОСТ TLS: установить и доверять корневым CA Минцифры / ФСБ (в `certs/public/`).
+- [ ] Альтернатива: подключение через СМЭВ4 (ПОДД) — установить Агент ПОДД, см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/).
 - [ ] Ограничить CORS `allow_origins` конкретным доменом.
 - [ ] `KeyPin` — через Docker secrets / Vault, а не env.
 - [ ] HTTPS на frontend (отдельный reverse proxy / certs).
 - [ ] Журналирование операций подписания (audit log).
 - [ ] Мониторинг `/hc`, алерты на ошибки.
+- [ ] Регламентная регистрация ИС на технологическом портале ЕСИА: <https://esia.gosuslugi.ru/console/tech/>. Тест: <https://esia-portal1.test.gosuslugi.ru/console/tech>.
+- [ ] Проверить выданные согласия пользователей: <https://lk.gosuslugi.ru/settings/third-party/agreements/acting> (тест: <https://svcdev-betalk.test.gosuslugi.ru/settings/third-party/agreements/acting>).
 
 ## Отладка
 

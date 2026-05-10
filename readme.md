@@ -2,6 +2,8 @@
 
 Проект автоматизации взаимодействия с API Единого портала государственных услуг (ЕПГУ): подача заявлений, подписание документов через КриптоПро, получение статусов и ответных документов.
 
+> Документация и справочники услуг сверены с [Порталом API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu). Дата актуализации: **2026-05-12**. Реализация ориентирована на спецификацию **API ЕПГУ v1.13** (с учётом правок v1.12.1 по разделам ГОСТ TLS / СМЭВ4).
+
 ## Состав репозитория
 
 | Каталог | Назначение |
@@ -43,16 +45,29 @@ flowchart LR
 3. **Обработка ответов** — статусы поданных заявлений, загрузка ответных документов.
 4. **Работа с сертификатами** — список, выбор активного, отображение субъекта.
 5. **Администрирование** — управление API-ключами, услугами (через переменную `SERVICES`).
+6. **Конфигурация сред** — переключение между тестовым контуром (`*.test.gosuslugi.ru`) и продом (`esia.gosuslugi.ru` / `lk.gosuslugi.ru`) через `.env`.
+
+## Поддерживаемые услуги
+
+| Код | Описание | Источник спецификации |
+|---|---|---|
+| `60010153` | Наличие исполнительного производства (ФССП) | [Prilozhenie_60010153_Nalichie_IP_v8.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx) |
+| `10000000367` | Подача заявлений / ходатайств / объяснений | [Specifikaciya_API_EPGU_Podacha_zayavlenij_..._10000000367_18_06_2024.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Podacha_zayavlenij_hodatajstv_obyasnenij_v1_3_kod_uslugi_10000000367_18_06_2024.docx) |
+| `10000000109` | Доставка пенсии и социальных выплат ПФР/СФР | [partners.gosuslugi.ru/catalog/api_for_gu](https://partners.gosuslugi.ru/catalog/api_for_gu) |
+| `60010154` | Предоставление информации о ходе ИП (ФССП) | [Specifikaciya_API_EPGU_Predostavlenie_informacii_o_hode_IP_v_7.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Predostavlenie_informacii_o_hode_IP_v_7.docx) |
+
+Полный каталог, среды и endpoint-ы — в [docs/SERVICES.md](./docs/SERVICES.md).
 
 ## Требования
 
 - Docker / Docker Compose
 - КриптоПро CSP (устанавливается в backend-образ), сертификат и закрытый ключ организации
-- API-ключ организации-потребителя ЕПГУ
+- API-ключ организации-потребителя ЕПГУ — получение описано в локальном `docs/Rukovodstvo_polzovatelya_dlya_organizacii-potrebitelya_...docx`
 
 ## Документация
 
 - [docs/README.md](./docs/README.md) — указатель по всей документации
+- [docs/SERVICES.md](./docs/SERVICES.md) — каталог услуг и спецификаций (актуально на 2026-05-12)
 - [docs/architecture.md](./docs/architecture.md) — компоненты и потоки
 - [docs/api.md](./docs/api.md) — справочник эндпоинтов
 - [docs/schemas.md](./docs/schemas.md) — XML/XSD и модели данных

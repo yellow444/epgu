@@ -11,7 +11,9 @@
 
 ## 2. Настройка окружения
 
-Создайте файл `.env` в корне репозитория:
+Создайте файл `.env` в корне репозитория.
+
+### 2.1. Тестовый контур (SVCDEV)
 
 ```env
 apikey=<GUID-API-ключа>
@@ -22,8 +24,24 @@ svcdev_host=https://svcdev-beta.test.gosuslugi.ru
 production=
 BACKEND_URL=/api
 key_folder=./api-gosuslugi-backend/xxx.000
-SERVICES={"10000000367":{"description":"Заявление/ходатайство/объяснение","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml"}}
+SERVICES={"60010153":{"description":"Наличие ИП (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-60010153","eServiceCode":"60010153","serviceTargetCode":"-60010153","region":"45000000000"},"10000000367":{"description":"Заявление/ходатайство/объяснение","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-10000000367","eServiceCode":"10000000367","serviceTargetCode":"-10000000367"},"10000000109":{"description":"Доставка пенсии и социальных выплат ПФР/СФР","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-10000000109","eServiceCode":"10000000109","serviceTargetCode":"-10000000109"},"60010154":{"description":"Ход исполнительного производства (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-60010154","eServiceCode":"60010154","serviceTargetCode":"-60010154"}}
 ```
+
+### 2.2. Промышленный контур (ГОСТ TLS)
+
+```env
+apikey=<GUID-API-ключа>
+KeyPin=<PIN-код контейнера>
+TSAAddress=http://www.cryptopro.ru/tsp/tsp.srf
+esia_host=https://esia.gosuslugi.ru
+svcdev_host=https://lk.gosuslugi.ru
+production=1
+BACKEND_URL=/api
+key_folder=/secure/keys/xxx.000
+SERVICES={"60010153":{"description":"Наличие ИП (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml"}}
+```
+
+Полный каталог услуг и сред — в [docs/SERVICES.md](./docs/SERVICES.md).
 
 Положите содержимое контейнера ключа в папку, указанную в `key_folder`.
 

@@ -45,27 +45,50 @@ schema = etree.XMLSchema(schema_root)
 CERTIFICATES = {}
 CURRENT_CERT_ID = None
 ACCESS_TKN_ESIA = ''
+from config import DEFAULT_SERVICES  # noqa: E402
+from routers import diagnostics_router  # noqa: E402
+
 services_json = os.environ.get("SERVICES")
 if services_json:
     try:
         services_dict = json.loads(services_json)
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=500, detail="Неверный формат переменной SERVICES")
+    except json.JSONDecodeError as exc:
+        logger.error("Неверный формат переменной SERVICES: %s", exc)
+        raise RuntimeError(
+            "Неверный формат переменной окружения SERVICES (ожидается JSON)"
+        ) from exc
 else:
-    # Значения по умолчанию, если переменная не задана
-    services_dict = {"service1": {"description": "Услуга 1", "req_file": "req.xml", "piev_epgu_file": "piev_epgu.xml"}, "service2": {"description": "Услуга 2",
-                                                                                                                                     "req_file": "req.xml", "piev_epgu_file": "piev_epgu.xml"}, "service3": {"description": "Услуга 3", "req_file": "req.xml", "piev_epgu_file": "piev_epgu.xml"}}
+    # Каталог услуг по умолчанию — см. config.DEFAULT_SERVICES и docs/SERVICES.md.
+    services_dict = dict(DEFAULT_SERVICES)
 
 # Инициализация FastAPI
 
-app = FastAPI(root_path="/api")
+app = FastAPI(
+    root_path="/api",
+    title="API Госуслуг (ЕПГУ) — backend",
+    description=(
+        "Реализация Спецификации API ЕПГУ v1.13 (правки v1.12.1 по разделам "
+        "ГОСТ TLS / СМЭВ4). Источник: https://partners.gosuslugi.ru/catalog/api_for_gu"
+    ),
+    version="1.13",
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
+)
+app.include_router(
+    diagnostics_router(
+        pycades_module=pycades,
+        services_dict=services_dict,
+        get_hosts=lambda: {
+            "esia_host": ESIA_HOST,
+            "svcdev_host": SVCDEV_HOST,
+            "tsa_address": TSA_ADDRESS,
+        },
+    )
 )
 
 
@@ -150,11 +173,17 @@ def get_current_certificate_details() -> dict:
 
 
 def validate_xml_content(xml_content: bytes) -> bool:
+    """Валидация по XSD с безопасным парсером (без resolve_entities, no_network).
+    Защищает от XXE / billion-laughs (см. docs/security.md)."""
     try:
-
-        xml_doc = etree.fromstring(xml_content)
+        secure_parser = etree.XMLParser(
+            resolve_entities=False, no_network=True, huge_tree=False,
+        )
+        xml_doc = etree.fromstring(xml_content, parser=secure_parser)
         schema.assertValid(xml_doc)
         return True
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"Invalid XML content: {e}")
         raise HTTPException(status_code=400, detail=f"Invalid XML: {e}")
@@ -580,9 +609,12 @@ async def get_xsd(simple_type_name):
 
 
 @app.get("/xml")
-async def get_xml(service: str = Query(..., description="Тип услуги: service1, service2, service3")):
+async def get_xml(service: str = Query(..., description="Код услуги (см. /services), например '60010153'")):
     if service not in services_dict:
-        raise HTTPException(status_code=400, detail="Неверный тип услуги")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Услуга '{service}' не зарегистрирована. Доступные коды: {sorted(services_dict.keys())}",
+        )
 
     service_data = services_dict[service]
     req_file_name = service_data.get("req_file")
@@ -719,3 +751,4 @@ async def push_chunked(
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("SERVER_PORT", 5000)))
+

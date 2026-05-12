@@ -1,8 +1,47 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import {
+  Layout,
+  Menu,
+  Button,
+  Card,
+  Select,
+  Input,
+  Space,
+  Typography,
+  Row,
+  Col,
+  Table,
+  DatePicker as AntDatePicker,
+  ConfigProvider,
+  theme,
+  Divider,
+  Tag,
+} from 'antd';
+import {
+  HomeOutlined,
+  CodeOutlined,
+  UnorderedListOutlined,
+  SafetyCertificateOutlined,
+  KeyOutlined,
+  DeleteOutlined,
+  PlusOutlined,
+  SendOutlined,
+  CloseCircleOutlined,
+  SearchOutlined,
+  DownloadOutlined,
+  FormatPainterOutlined,
+  SaveOutlined,
+  UploadOutlined,
+  ClearOutlined,
+  ReloadOutlined,
+  FileTextOutlined,
+  CopyOutlined,
+  CheckCircleOutlined,
+  ApiOutlined,
+} from '@ant-design/icons';
 import axios from 'axios';
 import moment from 'moment-timezone';
+import dayjs from 'dayjs';
 import xmlFormatter from 'xml-formatter';
 import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-xml';
@@ -13,6 +52,10 @@ import FileDropzone from './components/FileDropzone/FileDropzone';
 import logo from './logo.gosuslugi.svg';
 import { jwtDecode } from 'jwt-decode';
 import { openDB } from 'idb';
+
+const { Header, Content } = Layout;
+const { Title, Text, Paragraph } = Typography;
+const { Option } = Select;
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL || '/api';
@@ -182,7 +225,6 @@ function App() {
   });
   const [isFileAvailable, setIsFileAvailable] = useState(false);
   const [isFileItemAvailable, setIsFileItemAvailable] = useState(false);
-  const [copyButtonIndex, setCopyButtonIndex] = useState(null);
 
   // Axios-инстанс с токеном
   const api = axios.create({
@@ -901,27 +943,6 @@ function App() {
     setStatus('Поля XML, связанные с OrderId, обновлены.');
   }, [orderId]);
 
-  // Копирование в буфер обмена
-  const copyToClipboard = (text) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text);
-    } else {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.top = '-9999px';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-      } catch (e) {
-        console.error('Ошибка копирования:', e);
-      }
-      document.body.removeChild(textArea);
-    }
-  };
-
   // Обработка изменения ширины таблицы (пагинация)
   const handleMouseDown = (e) => {
     e.preventDefault();
@@ -987,25 +1008,31 @@ function App() {
     axios
       .get(`${BACKEND_URL}/services`)
       .then((response) => {
-        setServiceOptions(response.data);
-        if (response.data.length > 0) {
-          setSelectedService(response.data[0].serviceCode);
+        const services = Array.isArray(response.data) ? response.data : [];
+        setServiceOptions(services);
+        if (services.length > 0) {
+          setSelectedService(services[0].serviceCode);
         }
       })
       .catch((error) => {
         console.error('Ошибка получения услуг', error);
+        setServiceOptions([]);
       });
     const fetchCertificates = async () => {
       try {
         const res = await api.post('/get_certificates');
-        if (res.data && res.data.length > 0) {
-          setCertificates(res.data);
-          setSelectedCertId(res.data[0].id);
+        const certs = Array.isArray(res.data) ? res.data : [];
+        if (certs.length > 0) {
+          setCertificates(certs);
+          setSelectedCertId(certs[0].id);
         } else {
           setStatus('Нет доступных сертификатов.');
+          setCertificates([]);
         }
       } catch (e) {
+        console.error('Ошибка загрузки сертификатов:', e);
         setStatus('Ошибка загрузки сертификатов.');
+        setCertificates([]);
       }
     };
     fetchCertificates();
@@ -1033,1079 +1060,556 @@ function App() {
     };
   }, []);
 
+  const requestsColumns = [
+    {
+      title: 'Order ID',
+      dataIndex: 'orderId',
+      key: 'orderId',
+      render: (text, record) => (
+        <Paragraph
+          copyable={{ icon: [<CopyOutlined key="copy" />, <CheckCircleOutlined key="copied" />] }}
+          style={{ margin: 0, cursor: 'pointer' }}
+          onClick={() => checkOrderDetailsItem(record.orderId)}
+        >
+          {text}
+        </Paragraph>
+      ),
+    },
+    {
+      title: 'Статус',
+      dataIndex: ['status', 'statusName'],
+      key: 'status',
+      render: (text, record) => (
+        <Tag
+          color="processing"
+          style={{ cursor: 'pointer' }}
+          onClick={() => checkOrderDetailsItem(record.orderId)}
+        >
+          {text}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Обновлено',
+      dataIndex: ['status', 'updated'],
+      key: 'updated',
+      render: (text, record) => (
+        <Text
+          style={{ cursor: 'pointer' }}
+          onClick={() => checkOrderDetailsItem(record.orderId)}
+        >
+          {text}
+        </Text>
+      ),
+    },
+  ];
+
   return (
-    <>
-      <div
-        style={{
-          background: '#f0f4f8',
-          minHeight: '100vh',
-          padding: '20px',
-          fontFamily: 'Arial, sans-serif',
-        }}
-      >
-        <div
+    <ConfigProvider
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#1677ff',
+          borderRadius: 8,
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        },
+      }}
+    >
+      <Layout style={{ minHeight: '100vh', background: '#f5f7fa' }}>
+        <Header
           style={{
-            padding: '20px',
-            // left: 0,
-            // top:0,
-            // position: 'fixed',
-            // zIndex: 99999,
-            // width: '100%',
+            background: '#fff',
+            padding: '0 32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
+            height: 64,
           }}
         >
-          <div
-            style={{
-              padding: '10px',
-            }}
-          >
-            {/* Заголовок и навигация */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '20px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img
-                  src={logo}
-                  alt="Логотип"
-                  style={{ marginRight: '10px', height: '50px' }}
-                />
-                <h1 style={{ margin: 0 }}>API Client</h1>
-              </div>
-              <div>
-                <button
-                  onClick={() => setCurrentTab('main')}
-                  style={{
-                    marginRight: '10px',
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '5px',
-                    backgroundColor: currentTab === 'main' ? '#007bff' : '#ccc',
-                    color: 'white',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Главная
-                </button>
-                <button
-                  onClick={() => setCurrentTab('xml')}
-                  style={{
-                    marginRight: '10px',
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '5px',
-                    backgroundColor: currentTab === 'xml' ? '#007bff' : '#ccc',
-                    color: 'white',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Редактор XML
-                </button>
-                <button
-                  onClick={() => setCurrentTab('requests')}
-                  style={{
-                    padding: '10px 20px',
-                    border: 'none',
-                    borderRadius: '5px',
-                    backgroundColor:
-                      currentTab === 'requests' ? '#007bff' : '#ccc',
-                    color: 'white',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Запросы
-                </button>
-              </div>
-            </div>
-            {/* Блок статуса */}
-            <div
-              style={{
-                flex: 1,
-                gap: '20px',
-                marginBottom: '00px',
-                padding: '20px',
-                background: '#fff',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <h2 style={{ margin: '0 10px 0 0' }}>Статус</h2>
-                <button
-                  onClick={checkAPI}
-                  style={{
-                    padding: '5px 10px',
-                    borderRadius: '5px',
-                    border: 'none',
-                    background: '#6f42c1',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    marginRight: '10px',
-                  }}
-                >
-                  Проверить API Client
-                </button>
-                <p style={{ margin: 10, padding: '10px' }}>{status}</p>
-              </div>
-              <div
-                style={{
-                  background: '#f4f4f4',
-                  padding: '10px',
-                  borderRadius: '5px',
-                  position: 'relative',
-                }}
-                onMouseEnter={() => setCopyButtonIndex(2)}
-                onMouseLeave={() => setCopyButtonIndex(null)}
-              >
-                <pre style={{ margin: 10 }}>
-                  {responseData ? JSON.stringify(responseData, null, 2) : ''}
-                </pre>
-                {copyButtonIndex === 2 && (
-                  <button
-                    onClick={() =>
-                      copyToClipboard(
-                        responseData
-                          ? JSON.stringify(responseData, null, 2)
-                          : ''
-                      )
-                    }
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: '#007bff',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '5px',
-                      padding: '5px 10px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Копировать
-                  </button>
-                )}
-              </div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <img src={logo} alt="Логотип" style={{ height: 36 }} />
+            <Title level={4} style={{ margin: 0, fontWeight: 600 }}>
+              API Client
+            </Title>
           </div>
-        </div>
-        {/* Основная вкладка */}
-        <div
-          style={{
-            // marginTop: '40px', // отступ равный высоте фиксированного блока
-            padding: '20px',
-          }}
-        >
-          {currentTab === 'main' && (
-            <div style={{ padding: '10px' }}>
-              {/* Блок сертификатов и токена */}
-              <div
+          <Menu
+            mode="horizontal"
+            selectedKeys={[currentTab]}
+            onClick={({ key }) => setCurrentTab(key)}
+            style={{ border: 'none', fontWeight: 500 }}
+            items={[
+              { key: 'main', icon: <HomeOutlined />, label: 'Главная' },
+              { key: 'xml', icon: <CodeOutlined />, label: 'Редактор XML' },
+              { key: 'requests', icon: <UnorderedListOutlined />, label: 'Запросы' },
+            ]}
+          />
+        </Header>
+
+        <Content style={{ padding: '24px 32px', maxWidth: 1400, margin: '0 auto', width: '100%' }}>
+          {/* Блок статуса */}
+          <Card
+            size="small"
+            style={{ marginBottom: 24 }}
+            styles={{ body: { padding: '16px 24px' } }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: status || responseData ? 12 : 0 }}>
+              <Title level={5} style={{ margin: 0 }}>Статус</Title>
+              <Button icon={<ApiOutlined />} onClick={checkAPI}>
+                Проверить API Client
+              </Button>
+              {status && <Text type="secondary">{status}</Text>}
+            </div>
+            {responseData && (
+              <Paragraph
+                copyable
                 style={{
-                  flex: 1,
-                  gap: '20px',
-                  marginBottom: '20px',
-                  padding: '20px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  background: '#f8f9fa',
+                  padding: 12,
+                  borderRadius: 6,
+                  margin: 0,
+                  fontFamily: 'monospace',
+                  fontSize: 13,
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-all',
                 }}
               >
-                <div style={{ flex: 1 }}>
-                  <h2>Сертификаты и токен</h2>
-                  <div style={{ marginBottom: '10px' }}>
-                    <label style={{ marginRight: '10px' }}>
-                      Выберите сертификат:
-                    </label>
-                    <select
+                {typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2)}
+              </Paragraph>
+            )}
+          </Card>
+
+          {/* Основная вкладка */}
+          {currentTab === 'main' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {/* Блок сертификатов и токена */}
+              <Card title={<><SafetyCertificateOutlined style={{ marginRight: 8 }} />Сертификаты и токен</>}>
+                <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                  <div>
+                    <Text strong style={{ marginRight: 12 }}>Выберите сертификат:</Text>
+                    <Select
                       value={selectedCertId}
-                      onChange={(e) => setCurrentCertificate(e.target.value)}
-                      style={{ padding: '5px', borderRadius: '5px' }}
+                      onChange={(value) => setCurrentCertificate(value)}
+                      style={{ minWidth: 400 }}
+                      placeholder="Выберите сертификат"
                     >
-                      {certificates.map((cert) => (
-                        <option key={cert.id} value={cert.id}>
-                          {cert.subject} (Valid: {cert.valid_from} -{' '}
-                          {cert.valid_to})
-                        </option>
-                      ))}
-                    </select>
+                      {Array.isArray(certificates) && certificates.length > 0 ? (
+                        certificates.map((cert) => (
+                          <Option key={cert.id} value={cert.id}>
+                            {cert.subject} (Valid: {cert.valid_from} - {cert.valid_to})
+                          </Option>
+                        ))
+                      ) : (
+                        <Option value="" disabled>Сертификаты не найдены</Option>
+                      )}
+                    </Select>
                   </div>
-                  <div style={{ marginBottom: '10px' }}>
-                    <input
-                      type="text"
+                  <Space>
+                    <Input
                       placeholder="Введите API key"
+                      prefix={<KeyOutlined />}
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      style={{ padding: '5px', marginRight: '10px' }}
+                      style={{ width: 280 }}
                     />
-                    <button
+                    <Button
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
                       onClick={fetchAccessToken}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        border: 'none',
-                        background: '#28a745',
-                        color: '#fff',
-                        cursor: 'pointer',
-                      }}
                     >
                       Получить токен
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      danger
+                      icon={<DeleteOutlined />}
                       onClick={handleLogout}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        border: 'none',
-                        background: '#dc3545',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        marginLeft: '10px',
-                      }}
                     >
                       Удалить токен
-                    </button>
-                  </div>
-                  <div
-                    style={{
-                      background: '#f4f4f4',
-                      padding: '10px',
-                      borderRadius: '5px',
-                      position: 'relative',
-                      marginBottom: '10px',
-                    }}
-                    onMouseEnter={() => setCopyButtonIndex(1)}
-                    onMouseLeave={() => setCopyButtonIndex(null)}
-                  >
-                    <pre
+                    </Button>
+                  </Space>
+                  {token && (
+                    <Paragraph
+                      copyable
                       style={{
+                        background: '#f8f9fa',
+                        padding: 12,
+                        borderRadius: 6,
                         margin: 0,
+                        fontFamily: 'monospace',
+                        fontSize: 12,
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
-                        maxWidth: '100%',
+                        maxHeight: 120,
+                        overflow: 'auto',
                       }}
                     >
                       {token}
-                    </pre>
-                    {copyButtonIndex === 1 && (
-                      <button
-                        onClick={() => copyToClipboard(token)}
-                        style={{
-                          position: 'absolute',
-                          top: '10px',
-                          right: '10px',
-                          background: '#007bff',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '5px',
-                          padding: '5px 10px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Копировать
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Блок управления запросами */}
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '20px',
-                  marginBottom: '20px',
-                  padding: '20px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                }}
-              >
-                <div style={{ flex: 1 }}>
-                  <h2>Управление запросами</h2>
-                  {/* Блок выбора вида услуг */}
-                  <div style={{ marginBottom: '10px' }}>
-                    <h2>Вид услуги</h2>
-                    <select
-                      value={selectedService}
-                      onChange={(e) => setSelectedService(e.target.value)}
-                      style={{ padding: '5px', borderRadius: '5px' }}
-                    >
-                      {serviceOptions.map((opt) => (
-                        <option key={opt.serviceCode} value={opt.serviceCode}>
-                          {opt.description}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div style={{ marginBottom: '10px' }}>
-                    <input
-                      type="text"
-                      placeholder="Введите Order ID запроса"
-                      value={orderId}
-                      onChange={(e) => setOrderId(e.target.value)}
-                      style={{ padding: '5px', marginRight: '10px' }}
-                    />
-                  </div>
-                  <div style={{ marginBottom: '10px' }}>
-                    <button
-                      onClick={reserveOrder}
-                      style={
-                        allowBtn
-                          ? {
-                              padding: '5px 10px',
-                              borderRadius: '5px',
-                              border: 'none',
-                              background: '#005533',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              marginRight: '10px',
-                            }
-                          : {
-                              padding: '5px 10px',
-                              borderRadius: '5px',
-                              border: 'none',
-                              background: '#000',
-                              color: '#fff',
-                              cursor: 'not-allowed',
-                              marginRight: '10px',
-                            }
-                      }
-                      disabled={!allowBtn}
-                    >
-                      Зарезервировать новый запрос
-                    </button>
+                    </Paragraph>
+                  )}
+                </Space>
+              </Card>
 
-                    <button
-                      onClick={newOrder}
-                      style={
-                        allowBtn && zipSize <= 52428800
-                          ? {
-                              padding: '5px 10px',
-                              borderRadius: '5px',
-                              border: 'none',
-                              background: '#28a745',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              marginRight: '10px',
-                            }
-                          : {
-                              padding: '5px 10px',
-                              borderRadius: '5px',
-                              border: 'none',
-                              background: '#000',
-                              color: '#fff',
-                              cursor: 'not-allowed',
-                              marginRight: '10px',
-                            }
-                      }
-                      disabled={!allowBtn && zipSize <= 52428800}
-                    >
-                      Создать новый запрос
-                    </button>
-                    <button
-                      onClick={createOrderExtended}
-                      style={
-                        allowBtn
-                          ? {
-                              padding: '5px 10px',
-                              borderRadius: '5px',
-                              border: 'none',
-                              background: '#17a2b8',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              marginRight: '10px',
-                            }
-                          : {
-                              padding: '5px 10px',
-                              borderRadius: '5px',
-                              border: 'none',
-                              background: '#000',
-                              color: '#fff',
-                              cursor: 'not-allowed',
-                              marginRight: '10px',
-                            }
-                      }
-                      disabled={!allowBtn}
-                    >
-                      Создать расширенный запрос
-                    </button>
-                    <button
-                      onClick={cancelOrder}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        border: 'none',
-                        background: '#dc3545',
-                        color: '#fff',
-                        cursor: 'pointer',
-                        marginRight: '10px',
-                      }}
-                    >
-                      Отменить запрос
-                    </button>
-                    <button
-                      onClick={() => checkOrderDetailsMain(orderId)}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        border: 'none',
-                        background: '#ffc107',
-                        color: '#fff',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Проверить статус запроса
-                    </button>
-                  </div>
-                  <div style={{ marginBottom: '10px' }}>
-                    <p>
-                      Размер будущего архива:{' '}
-                      {(zipSize / (1024 * 1024)).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <div style={{ marginBottom: '10px' }}>
-                    <button
-                      onClick={handleFillXml}
-                      style={{
-                        padding: '5px 10px',
-                        borderRadius: '5px',
-                        border: 'none',
-                        background: '#6f42c1',
-                        color: '#fff',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Заполнить XML
-                    </button>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                    padding: '10px',
-                  }}
-                >
-                  <button
-                    onClick={() => downloadOrderFile(orderId)}
-                    disabled={!isFileAvailable}
-                    style={
-                      isFileAvailable
-                        ? {
-                            padding: '5px 10px',
-                            borderRadius: '5px',
-                            border: 'none',
-                            background: '#007bff',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            marginBottom: '10px',
-                          }
-                        : {
-                            padding: '5px 10px',
-                            borderRadius: '5px',
-                            border: 'none',
-                            background: '#a4a4a4',
-                            color: '#fff',
-                            cursor: 'none',
-                            marginBottom: '10px',
-                          }
-                    }
-                  >
-                    Скачать файл ответа
-                  </button>
-                  <div
-                    style={{
-                      flex: 1,
-                      overflowY: 'auto',
-                      margin: '10px',
-                      background: '#f4f4f4',
-                      padding: '10px',
-                      borderRadius: '5px',
-                    }}
-                    onMouseEnter={() => setCopyButtonIndex(4)}
-                    onMouseLeave={() => setCopyButtonIndex(null)}
-                  >
-                    {copyButtonIndex === 4 && (
-                      <button
-                        onClick={() =>
-                          copyToClipboard(
-                            JSON.stringify(responseStatusOrder, null, 2)
-                          )
-                        }
+              {/* Блок управления запросами */}
+              <Card title={<><SendOutlined style={{ marginRight: 8 }} />Управление запросами</>}>
+                <Row gutter={24}>
+                  <Col xs={24} lg={12}>
+                    <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+                      <div>
+                        <Text strong style={{ display: 'block', marginBottom: 8 }}>Вид услуги</Text>
+                        <Select
+                          value={selectedService}
+                          onChange={(value) => setSelectedService(value)}
+                          style={{ width: '100%' }}
+                          placeholder="Выберите услугу"
+                        >
+                          {Array.isArray(serviceOptions) && serviceOptions.length > 0 ? (
+                            serviceOptions.map((opt) => (
+                              <Option key={opt.serviceCode} value={opt.serviceCode}>
+                                {opt.description}
+                              </Option>
+                            ))
+                          ) : (
+                            <Option value="" disabled>Загрузка услуг...</Option>
+                          )}
+                        </Select>
+                      </div>
+                      <Input
+                        placeholder="Введите Order ID запроса"
+                        value={orderId}
+                        onChange={(e) => setOrderId(e.target.value)}
+                        style={{ width: '100%' }}
+                      />
+                      <Space wrap>
+                        <Button
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={reserveOrder}
+                          disabled={!allowBtn}
+                        >
+                          Зарезервировать
+                        </Button>
+                        <Button
+                          type="primary"
+                          icon={<SendOutlined />}
+                          onClick={newOrder}
+                          disabled={!allowBtn || zipSize > 52428800}
+                          style={{ background: allowBtn && zipSize <= 52428800 ? '#52c41a' : undefined }}
+                        >
+                          Создать запрос
+                        </Button>
+                        <Button
+                          icon={<PlusOutlined />}
+                          onClick={createOrderExtended}
+                          disabled={!allowBtn}
+                        >
+                          Расширенный запрос
+                        </Button>
+                        <Button
+                          danger
+                          icon={<CloseCircleOutlined />}
+                          onClick={cancelOrder}
+                        >
+                          Отменить
+                        </Button>
+                        <Button
+                          icon={<SearchOutlined />}
+                          onClick={() => checkOrderDetailsMain(orderId)}
+                        >
+                          Проверить статус
+                        </Button>
+                      </Space>
+                      <Text type="secondary">
+                        Размер будущего архива: {(zipSize / (1024 * 1024)).toFixed(2)} MB
+                      </Text>
+                      <Button
+                        icon={<FileTextOutlined />}
+                        onClick={handleFillXml}
+                      >
+                        Заполнить XML
+                      </Button>
+                    </Space>
+                  </Col>
+                  <Col xs={24} lg={12}>
+                    <Space direction="vertical" size="middle" style={{ width: '100%', height: '100%' }}>
+                      <Button
+                        type="primary"
+                        icon={<DownloadOutlined />}
+                        onClick={() => downloadOrderFile(orderId)}
+                        disabled={!isFileAvailable}
+                        block
+                      >
+                        Скачать файл ответа
+                      </Button>
+                      <div
                         style={{
-                          position: 'absolute',
-                          top: '50%',
-                          right: '5%',
-                          transform: 'translateY(-50%)',
-                          background: 'transparent',
-                          color: '#007bff',
-                          border: 'none',
-                          borderRadius: '5px',
-                          padding: '5px 10px',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          zIndex: 9999,
+                          flex: 1,
+                          background: '#f8f9fa',
+                          padding: 12,
+                          borderRadius: 6,
+                          minHeight: 200,
+                          maxHeight: 400,
+                          overflow: 'auto',
                         }}
                       >
-                        Копировать
-                      </button>
-                    )}
-                    <pre style={{ margin: 0 }}>
-                      {JSON.stringify(responseStatusOrder, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              </div>
+                        <Paragraph
+                          copyable={!!responseStatusOrder}
+                          style={{
+                            margin: 0,
+                            fontFamily: 'monospace',
+                            fontSize: 13,
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all',
+                          }}
+                        >
+                          {JSON.stringify(responseStatusOrder, null, 2)}
+                        </Paragraph>
+                      </div>
+                    </Space>
+                  </Col>
+                </Row>
+              </Card>
+
               {/* Блок File Upload */}
-              <div
-                style={{
-                  marginBottom: '20px',
-                  padding: '20px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                }}
-              >
-                <h2>File Upload</h2>
+              <Card title={<><UploadOutlined style={{ marginRight: 8 }} />Загрузка файлов</>}>
                 <FileDropzone
                   onDrop={handleFileDrop}
                   files={files}
                   setFiles={setFiles}
                   description="Перетащите файлы сюда или нажмите для выбора"
                 />
-              </div>
+              </Card>
             </div>
           )}
+
           {/* Таб для XML редактора */}
           {currentTab === 'xml' && (
-            <div
-              style={{
-                display: 'flex',
-                height: '600px',
-                marginBottom: '20px',
-                background: '#fff',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              }}
-            >
-              <div
-                style={{
-                  width: '250px',
-                  padding: '10px',
-                  borderRight: '1px solid #ccc',
-                  overflowY: 'auto',
-                }}
-              >
-                <h3>Список XML</h3>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  {xmlDocuments.map((doc, idx) => (
-                    <li
-                      key={idx}
-                      style={{
-                        padding: '10px',
-                        cursor: 'pointer',
-                        backgroundColor:
-                          selectedXmlIndex === idx ? '#007bff' : 'transparent',
-                        color: selectedXmlIndex === idx ? '#fff' : '#000',
-                        borderRadius: '5px',
-                        marginBottom: '5px',
-                      }}
-                      onClick={() => setSelectedXmlIndex(idx)}
-                    >
-                      {doc.name}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => {
-                    const newDoc = {
-                      name: `Document${xmlDocuments.length + 1}`,
-                      content: '<root>\n  <!-- Новый XML -->\n</root>',
-                    };
-                    setXmlDocuments([...xmlDocuments, newDoc]);
-                    setSelectedXmlIndex(xmlDocuments.length);
-                  }}
-                  style={{
-                    padding: '10px',
-                    borderRadius: '5px',
-                    border: 'none',
-                    background: '#007bff',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    width: '100%',
-                  }}
-                >
-                  Добавить новый XML
-                </button>
-              </div>
-              <div style={{ flexGrow: 1, padding: '10px' }}>
-                <h2>{xmlDocuments[selectedXmlIndex]?.name}</h2>
-                <AceEditor
-                  mode="xml"
-                  theme="github"
-                  onChange={updateXmlContent}
-                  value={xmlDocuments[selectedXmlIndex]?.content || ''}
-                  name="xml_editor"
-                  editorProps={{ $blockScrolling: true }}
-                  width="100%"
-                  height="500px"
-                  setOptions={{
-                    useWorker: true,
-                    highlightActiveLine: true,
-                    showLineNumbers: true,
-                    tabSize: 2,
-                  }}
-                />
+            <Card styles={{ body: { padding: 0 } }} style={{ overflow: 'hidden' }}>
+              <div style={{ display: 'flex', height: 650 }}>
                 <div
-                  style={{ marginTop: '40px', display: 'flex', gap: '10px' }}
+                  style={{
+                    width: 250,
+                    borderRight: '1px solid #f0f0f0',
+                    padding: 16,
+                    overflowY: 'auto',
+                    background: '#fafafa',
+                  }}
                 >
-                  <button
-                    onClick={prettifyXml}
-                    style={{
-                      padding: '10px',
-                      borderRadius: '5px',
-                      border: 'none',
-                      background: '#28a745',
-                      color: '#fff',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Форматировать XML
-                  </button>
-                  <button
-                    onClick={saveXmlFile}
-                    style={{
-                      padding: '10px',
-                      borderRadius: '5px',
-                      border: 'none',
-                      background: '#007bff',
-                      color: '#fff',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Сохранить XML
-                  </button>
-                  <label
-                    htmlFor="uploadXml"
-                    style={{
-                      padding: '5px 10px',
-                      borderRadius: '5px',
-                      border: 'none',
-                      background: '#17a2b8',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      marginRight: '10px',
-                    }}
-                  >
-                    Загрузить XML
-                  </label>
-                  <input
-                    id="uploadXml"
-                    type="file"
-                    accept=".xml"
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files.length > 0)
-                        loadXmlFromFile(e.target.files[0]);
-                    }}
+                  <Title level={5} style={{ marginTop: 0 }}>Список XML</Title>
+                  <Menu
+                    mode="inline"
+                    selectedKeys={[String(selectedXmlIndex)]}
+                    onClick={({ key }) => setSelectedXmlIndex(Number(key))}
+                    style={{ border: 'none', background: 'transparent' }}
+                    items={xmlDocuments.map((doc, idx) => ({
+                      key: String(idx),
+                      icon: <FileTextOutlined />,
+                      label: doc.name,
+                    }))}
                   />
-                  <button
-                    onClick={() => handleFillXml()}
-                    style={{
-                      padding: '5px 10px',
-                      borderRadius: '5px',
-                      border: 'none',
-                      background: '#6f42c1',
-                      color: '#fff',
-                      cursor: 'pointer',
+                  <Divider style={{ margin: '12px 0' }} />
+                  <Button
+                    type="dashed"
+                    icon={<PlusOutlined />}
+                    block
+                    onClick={() => {
+                      const newDoc = {
+                        name: `Document${xmlDocuments.length + 1}`,
+                        content: '<root>\n  <!-- Новый XML -->\n</root>',
+                      };
+                      setXmlDocuments([...xmlDocuments, newDoc]);
+                      setSelectedXmlIndex(xmlDocuments.length);
                     }}
                   >
-                    Заполнить XML
-                  </button>
-                  <button
-                    onClick={() => updateXmlDocuments(selectedService, true)}
-                    style={{
-                      padding: '5px 10px',
-                      borderRadius: '5px',
-                      border: 'none',
-                      background: '#dc3545',
-                      color: '#fff',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Очистить XML
-                  </button>
+                    Добавить XML
+                  </Button>
+                </div>
+                <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column' }}>
+                  <Title level={4} style={{ marginTop: 0 }}>
+                    {xmlDocuments[selectedXmlIndex]?.name}
+                  </Title>
+                  <div style={{ flex: 1 }}>
+                    <AceEditor
+                      mode="xml"
+                      theme="github"
+                      onChange={updateXmlContent}
+                      value={xmlDocuments[selectedXmlIndex]?.content || ''}
+                      name="xml_editor"
+                      editorProps={{ $blockScrolling: true }}
+                      width="100%"
+                      height="480px"
+                      setOptions={{
+                        useWorker: true,
+                        highlightActiveLine: true,
+                        showLineNumbers: true,
+                        tabSize: 2,
+                      }}
+                    />
+                  </div>
+                  <Divider style={{ margin: '12px 0' }} />
+                  <Space wrap>
+                    <Button
+                      type="primary"
+                      icon={<FormatPainterOutlined />}
+                      onClick={prettifyXml}
+                      style={{ background: '#52c41a' }}
+                    >
+                      Форматировать
+                    </Button>
+                    <Button
+                      type="primary"
+                      icon={<SaveOutlined />}
+                      onClick={saveXmlFile}
+                    >
+                      Сохранить
+                    </Button>
+                    <Button icon={<UploadOutlined />} onClick={() => document.getElementById('uploadXml').click()}>
+                      Загрузить
+                    </Button>
+                    <input
+                      id="uploadXml"
+                      type="file"
+                      accept=".xml"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0)
+                          loadXmlFromFile(e.target.files[0]);
+                      }}
+                    />
+                    <Button icon={<FileTextOutlined />} onClick={() => handleFillXml()}>
+                      Заполнить XML
+                    </Button>
+                    <Button
+                      danger
+                      icon={<ClearOutlined />}
+                      onClick={() => updateXmlDocuments(selectedService, true)}
+                    >
+                      Очистить
+                    </Button>
+                  </Space>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
 
           {/* Табы для запросов */}
           {currentTab === 'requests' && (
-            <div
-              style={{
-                background: '#fff',
-                padding: '20px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              }}
-            >
-              <h2>Запросы</h2>
-              <button
-                onClick={fetchUpdatedOrders}
-                style={{
-                  marginBottom: '10px',
-                  padding: '5px 10px',
-                  borderRadius: '5px',
-                  border: 'none',
-                  background: '#17a2b8',
-                  color: '#fff',
-                  cursor: 'pointer',
-                }}
-              >
-                Получить все запросы
-              </button>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ marginRight: '10px' }}>Дата обновления:</label>
-                <DatePicker
-                  selected={updatedAfter}
-                  onChange={(date) => {
-                    setUpdatedAfter(date);
-                  }}
-                  showTimeSelect
-                  dateFormat="yyyy-MM-dd HH:mm"
-                />
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ marginRight: '10px' }}>
-                  Элементов в запросе:
-                </label>
-                <select
-                  value={totalRecords}
-                  onChange={(e) => {
-                    setTotalRecords(Number(e.target.value));
-                    setPageNum(0);
-                    fetchUpdatedOrders();
-                  }}
-                  style={{ padding: '5px', borderRadius: '5px' }}
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>50</option>
-                  <option value={50}>100</option>
-                </select>
-              </div>
-              <div style={{ marginBottom: '10px' }}>
-                <label>Элементов на странице:</label>
-                <select
-                  value={pageSize}
-                  onChange={(e) => setPageSize(Number(e.target.value))}
-                  style={{ padding: '5px', borderRadius: '5px' }}
-                >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '10px',
-                }}
-              >
-                <button
-                  onClick={() => setPageNum((prev) => Math.max(prev - 1, 0))}
-                  disabled={pageNum === 0}
-                  style={{
-                    padding: '5px 10px',
-                    cursor: pageNum === 0 ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  Назад
-                </button>
-                <span>
-                  Страница: {pageNum + 1} из{' '}
-                  {Math.ceil((responseTable?.content?.length || 0) / pageSize)}
-                </span>
-                <button
-                  onClick={() =>
-                    setPageNum((prev) =>
-                      (prev + 1) * pageSize <
-                      (responseTable?.content?.length || 0)
-                        ? prev + 1
-                        : prev
-                    )
-                  }
-                  disabled={
-                    (pageNum + 1) * pageSize >=
-                    (responseTable?.content?.length || 0)
-                  }
-                  style={{
-                    padding: '5px 10px',
-                    cursor:
-                      (pageNum + 1) * pageSize >=
-                      (responseTable?.content?.length || 0)
-                        ? 'not-allowed'
-                        : 'pointer',
-                  }}
-                >
-                  Вперёд
-                </button>
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '20px',
-                  height: 'calc(100vh - 200px)',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${leftWidth}%`,
-                    borderRight: '1px solid #ccc',
-                    overflow: 'auto',
-                  }}
-                >
-                  <table
-                    style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      height: '100%',
-                    }}
+            <Card>
+              <Title level={4} style={{ marginTop: 0 }}>Запросы</Title>
+              <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 16 }}>
+                <Space wrap>
+                  <Button
+                    type="primary"
+                    icon={<ReloadOutlined />}
+                    onClick={fetchUpdatedOrders}
                   >
-                    <thead>
-                      <tr>
-                        <th
-                          style={{ border: '1px solid #ccc', padding: '10px' }}
-                        >
-                          Order ID
-                        </th>
-                        <th
-                          style={{ border: '1px solid #ccc', padding: '10px' }}
-                        >
-                          Статус
-                        </th>
-                        <th
-                          style={{ border: '1px solid #ccc', padding: '10px' }}
-                        >
-                          Обновлено
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {responseTable?.length > 0 ? (
-                        responseTable.map((item, idx) => (
-                          <tr
-                            key={idx}
-                            style={
-                              item?.orderId === selectItem
-                                ? { background: '#a4a4a4' }
-                                : {}
-                            }
-                          >
-                            <td
-                              style={{
-                                border: '1px solid #ccc',
-                                padding: '10px',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  position: 'relative',
-                                  margin: '10px',
-                                  background: '#f4f4f4',
-                                  padding: '10px',
-                                  borderRadius: '5px',
-                                  overflowX: 'auto',
-                                }}
-                                onClick={() =>
-                                  checkOrderDetailsItem(item.orderId)
-                                }
-                                onMouseEnter={() => setCopyButtonIndex(3)}
-                                onMouseLeave={() => setCopyButtonIndex(null)}
-                              >
-                                {item.orderId}
-                                {copyButtonIndex === 3 && (
-                                  <button
-                                    onClick={() =>
-                                      copyToClipboard(item.orderId)
-                                    }
-                                    style={{
-                                      position: 'absolute',
-                                      top: '50%',
-                                      right: '10px',
-                                      transform: 'translateY(-50%)',
-                                      background: 'transparent',
-                                      color: '#007bff',
-                                      border: 'none',
-                                      borderRadius: '5px',
-                                      padding: '5px 10px',
-                                      cursor: 'pointer',
-                                      fontSize: '14px',
-                                    }}
-                                  >
-                                    Копировать
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                            <td
-                              style={{
-                                border: '1px solid #ccc',
-                                padding: '10px',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  position: 'relative',
-                                  margin: '10px',
-                                  background: '#f4f4f4',
-                                  padding: '10px',
-                                  borderRadius: '5px',
-                                  overflowX: 'auto',
-                                }}
-                                onClick={() =>
-                                  checkOrderDetailsItem(item.orderId)
-                                }
-                              >
-                                {item.status.statusName}
-                              </div>
-                            </td>
-                            <td
-                              style={{
-                                border: '1px solid #ccc',
-                                padding: '10px',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  position: 'relative',
-                                  margin: '10px',
-                                  background: '#f4f4f4',
-                                  padding: '10px',
-                                  borderRadius: '5px',
-                                  overflowX: 'auto',
-                                }}
-                                onClick={() =>
-                                  checkOrderDetailsItem(item.orderId)
-                                }
-                              >
-                                {item.status.updated}
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td
-                            colSpan={3}
-                            style={{ textAlign: 'center', padding: '10px' }}
-                          >
-                            Нет данных для отображения
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <div
+                    Получить все запросы
+                  </Button>
+                  <Space>
+                    <Text>Дата обновления:</Text>
+                    <AntDatePicker
+                      showTime
+                      format="YYYY-MM-DD HH:mm"
+                      value={updatedAfter ? dayjs(updatedAfter) : null}
+                      onChange={(date) => {
+                        setUpdatedAfter(date ? date.toDate() : new Date());
+                      }}
+                    />
+                  </Space>
+                  <Space>
+                    <Text>Элементов в запросе:</Text>
+                    <Select
+                      value={totalRecords}
+                      onChange={(value) => {
+                        setTotalRecords(value);
+                        setPageNum(0);
+                        fetchUpdatedOrders();
+                      }}
+                      style={{ width: 80 }}
+                    >
+                      <Option value={10}>10</Option>
+                      <Option value={20}>50</Option>
+                      <Option value={50}>100</Option>
+                    </Select>
+                  </Space>
+                </Space>
+              </Space>
+
+              <Row gutter={16} style={{ height: 'calc(100vh - 320px)' }}>
+                <Col flex={`${leftWidth}%`} style={{ overflow: 'auto' }}>
+                  <Table
+                    columns={requestsColumns}
+                    dataSource={responseTable || []}
+                    rowKey={(record, idx) => record.orderId || idx}
+                    pagination={{
+                      pageSize,
+                      showSizeChanger: true,
+                      pageSizeOptions: ['10', '20', '50'],
+                      onShowSizeChange: (_, size) => setPageSize(size),
+                    }}
+                    size="small"
+                    onRow={(record) => ({
+                      style:
+                        record?.orderId === selectItem
+                          ? { background: '#e6f4ff' }
+                          : {},
+                      onClick: () => checkOrderDetailsItem(record.orderId),
+                    })}
+                    scroll={{ y: 'calc(100vh - 440px)' }}
+                  />
+                </Col>
+                <Col
                   style={{
-                    width: '5px',
+                    width: 6,
                     cursor: 'col-resize',
-                    backgroundColor: '#aaa',
+                    background: '#f0f0f0',
+                    borderRadius: 3,
+                    flexShrink: 0,
                   }}
                   onMouseDown={handleMouseDown}
-                ></div>
-                <div
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                    padding: '10px',
-                  }}
-                >
-                  <button
-                    onClick={() =>
-                      downloadOrderFile(responseStatusItem.order?.id)
-                    }
+                />
+                <Col flex="auto" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <Button
+                    type="primary"
+                    icon={<DownloadOutlined />}
+                    onClick={() => downloadOrderFile(responseStatusItem?.order?.id)}
                     disabled={!isFileItemAvailable}
-                    style={
-                      isFileItemAvailable
-                        ? {
-                            padding: '5px 10px',
-                            borderRadius: '5px',
-                            border: 'none',
-                            background: '#007bff',
-                            color: '#fff',
-                            cursor: 'pointer',
-                            marginBottom: '10px',
-                          }
-                        : {
-                            padding: '5px 10px',
-                            borderRadius: '5px',
-                            border: 'none',
-                            background: '#a4a4a4',
-                            color: '#fff',
-                            cursor: 'none',
-                            marginBottom: '10px',
-                          }
-                    }
+                    block
+                    style={{ marginBottom: 12 }}
                   >
                     Скачать файл ответа
-                  </button>
+                  </Button>
                   <div
                     style={{
                       flex: 1,
-                      overflowY: 'auto',
-                      margin: '10px',
-                      background: '#f4f4f4',
-                      padding: '10px',
-                      borderRadius: '5px',
+                      background: '#f8f9fa',
+                      padding: 12,
+                      borderRadius: 6,
+                      overflow: 'auto',
                     }}
-                    onMouseEnter={() => setCopyButtonIndex(4)}
-                    onMouseLeave={() => setCopyButtonIndex(null)}
                   >
-                    {copyButtonIndex === 4 && (
-                      <button
-                        onClick={() =>
-                          copyToClipboard(
-                            JSON.stringify(responseStatusItem, null, 2)
-                          )
-                        }
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          right: '5%',
-                          transform: 'translateY(-50%)',
-                          background: 'transparent',
-                          color: '#007bff',
-                          border: 'none',
-                          borderRadius: '5px',
-                          padding: '5px 10px',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          zIndex: 9999,
-                        }}
-                      >
-                        Копировать
-                      </button>
-                    )}
-                    <pre style={{ margin: 0 }}>
+                    <Paragraph
+                      copyable={!!responseStatusItem}
+                      style={{
+                        margin: 0,
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-all',
+                      }}
+                    >
                       {JSON.stringify(responseStatusItem, null, 2)}
-                    </pre>
+                    </Paragraph>
                   </div>
-                </div>
-              </div>
-            </div>
+                </Col>
+              </Row>
+            </Card>
           )}
-        </div>
-      </div>
-    </>
+        </Content>
+      </Layout>
+    </ConfigProvider>
   );
 }
 

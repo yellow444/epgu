@@ -1,7 +1,8 @@
 import pytest
 from pytest_mock import MockerFixture
 from fastapi.testclient import TestClient
-from app import app
+from app import app, services_dict
+from config import ENVIRONMENTS
 
 
 @pytest.fixture(scope="session")
@@ -26,6 +27,25 @@ with TestClient(app) as client:
         response = client.get("/hc")
         assert response.status_code == 200
         assert response.json() == {"status": "Ok"}
+
+    def test_version_route():
+        response = client.get("/version")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["spec_version"] == "1.13"
+        assert body["environment"] in {"test", "prod", "custom"}
+        assert "esia_host" in body["hosts"]
+        assert "svcdev_host" in body["hosts"]
+        assert body["services_count"] >= 1
+
+    def test_environments_route():
+        response = client.get("/environments")
+        assert response.status_code == 200
+        envs = response.json()
+        assert set(envs.keys()) == set(ENVIRONMENTS.keys())
+        for env_data in envs.values():
+            assert "esia_host" in env_data
+            assert "svcdev_host" in env_data
 
     # 2. Тест загрузки сертификатов (мокаем pycades)
 
@@ -65,3 +85,34 @@ with TestClient(app) as client:
     def test_access_tkn_esia_invalid_api_key():
         response = client.post("/accessTkn_esia", json={"api_key": ""})
         assert response.status_code >= 400
+
+    # 5. Каталог услуг — общий и по коду
+
+    def test_services_catalog():
+        response = client.get("/services")
+        assert response.status_code == 200
+        catalog = response.json()
+        assert isinstance(catalog, list)
+        assert len(catalog) >= 1
+        for entry in catalog:
+            assert "serviceCode" in entry
+            assert "description" in entry
+
+    def test_service_by_code_known():
+        # Берём первый известный код из загруженного каталога
+        sample_code = next(iter(services_dict.keys()))
+        response = client.get(f"/services/{sample_code}")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["serviceCode"] == sample_code
+
+    def test_service_by_code_unknown():
+        response = client.get("/services/nonexistent-code-zz")
+        assert response.status_code == 404
+
+    # 6. /xml выдаёт осмысленную ошибку для незарегистрированной услуги
+
+    def test_xml_unknown_service():
+        response = client.get("/xml", params={"service": "nonexistent"})
+        assert response.status_code == 400
+        assert "не зарегистрирована" in response.json().get("detail", "")

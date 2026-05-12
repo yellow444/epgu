@@ -68,6 +68,12 @@ RUN /opt/cprocsp/bin/amd64/certmgr -install -store mroot -f ./test_ca_rtk3.cer \
 RUN mkdir --parents /var/opt/cprocsp/keys/app \
  && chown app:app /var/opt/cprocsp/keys/app
 
+COPY --chown=app:app certs/entrypoint.sh /app/entrypoint.sh
+RUN apt install --assume-yes dos2unix \
+ && dos2unix /app/entrypoint.sh \
+ && chmod +x /app/entrypoint.sh
+
 USER app
 
 EXPOSE 5000
+ENTRYPOINT ["/app/entrypoint.sh"]

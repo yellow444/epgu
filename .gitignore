@@ -1,0 +1,27 @@
+# Local IDE/agent config
+.claude/
+.vscode/
+
+# Secrets / local env
+.env
+.env.local
+api-gosuslugi-backend/.env
+api-gosuslugi-backend/.env.local
+
+# Personal certs / keys (must never be committed)
+api-gosuslugi-backend/certs/personal/*
+!api-gosuslugi-backend/certs/personal/.gitignore
+!api-gosuslugi-backend/certs/personal/README.md
+api-gosuslugi-backend/xxx.000/
+api-gosuslugi-backend/*.000/
+
+# Build artifacts
+api-gosuslugi-client/build/
+api-gosuslugi-client/node_modules/
+api-gosuslugi-backend/__pycache__/
+api-gosuslugi-backend/.pytest_cache/
+**/__pycache__/
+
+# OS
+Thumbs.db
+.DS_Store

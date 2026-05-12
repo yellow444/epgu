@@ -37,6 +37,13 @@ with TestClient(app) as client:
         assert "esia_host" in body["hosts"]
         assert "svcdev_host" in body["hosts"]
         assert body["services_count"] >= 1
+        # Runtime-блок: CORS-конфигурация и наличие JWT
+        assert "runtime" in body, "Ожидаем рантайм-блок в /version"
+        runtime = body["runtime"]
+        assert "allowed_origins" in runtime
+        assert isinstance(runtime["allowed_origins"], list)
+        assert "has_access_tkn" in runtime
+        assert "access_tkn_exp" in runtime
 
     def test_environments_route():
         response = client.get("/environments")

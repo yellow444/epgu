@@ -112,8 +112,11 @@ Backend:
 | `esia_host` | `https://esia-portal1.test.gosuslugi.ru` | ЕСИА (тест). Для прод: `https://esia.gosuslugi.ru` |
 | `svcdev_host` | `https://svcdev-beta.test.gosuslugi.ru` | СМЭВ/ЕПГУ (тест). Для прод (ГОСТ TLS): `https://lk.gosuslugi.ru` |
 | `XSD_FILE` | `/xml/piev_epgu.xsd` | Схема для валидации |
-| `SERVICES` | см. `app.py` | JSON-справочник услуг |
+| `SERVICES` | см. `config.DEFAULT_SERVICES` | JSON-справочник услуг (пусто → дефолтный каталог из `config.py`) |
+| `ALLOWED_ORIGINS` | `*` | CORS allow_origins: список через запятую или `*`. В прод — конкретный домен |
 | `production` | пусто | Если пусто — включается `debugpy` на `:5678` |
+
+Полный шаблон — [.env.example](../.env.example).
 
 > **Подключение через СМЭВ4 (ПОДД)** — альтернатива прямому ГОСТ TLS. На тестовом контуре спецификация публикуется в `https://lkuv.gosuslugi.ru/paip-portal/`. На промышленном — на момент 2024-05 не опубликована. Подключение требует Агента ПОДД (см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/)). Бэкенд проксирует запросы по тому же контуру URL — переключение производится сменой `svcdev_host`.
 

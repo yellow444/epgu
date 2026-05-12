@@ -45,6 +45,21 @@ schema = etree.XMLSchema(schema_root)
 CERTIFICATES = {}
 CURRENT_CERT_ID = None
 ACCESS_TKN_ESIA = ''
+# Срок действия текущего JWT (unix timestamp). 0 — неизвестен.
+ACCESS_TKN_EXP = 0
+
+
+def _decode_jwt_exp(jwt: str) -> int:
+    """Извлечь exp (unix ts) из JWT без верификации подписи.
+    Возвращает 0, если поле отсутствует или JWT битый.
+    Подпись JWT проверяется на стороне ЕСИА; здесь нужен только срок жизни."""
+    try:
+        payload = jwt.split(".")[1]
+        payload += "=" * ((4 - len(payload) % 4) % 4)
+        data = json.loads(base64.urlsafe_b64decode(payload))
+        return int(data.get("exp", 0))
+    except Exception:
+        return 0
 from config import DEFAULT_SERVICES  # noqa: E402
 from routers import diagnostics_router  # noqa: E402
 
@@ -72,9 +87,16 @@ app = FastAPI(
     ),
     version="1.13",
 )
+# CORS: список доменов через запятую или "*" (см. docs/security.md, .env.example).
+_allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "*").strip()
+ALLOWED_ORIGINS = (
+    ["*"]
+    if _allowed_origins_raw in ("", "*")
+    else [o.strip() for o in _allowed_origins_raw.split(",") if o.strip()]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=['*'],
     allow_headers=['*'],
@@ -87,6 +109,11 @@ app.include_router(
             "esia_host": ESIA_HOST,
             "svcdev_host": SVCDEV_HOST,
             "tsa_address": TSA_ADDRESS,
+        },
+        get_runtime=lambda: {
+            "allowed_origins": ALLOWED_ORIGINS,
+            "access_tkn_exp": ACCESS_TKN_EXP,
+            "has_access_tkn": bool(ACCESS_TKN_ESIA),
         },
     )
 )
@@ -272,7 +299,7 @@ async def check_route():
 
 @app.post("/accessTkn_esia")
 async def access_tkn_esia(request: APIKeyRequest, client: httpx.AsyncClient = Depends(get_async_client)):
-    global ACCESS_TKN_ESIA, ESIA_HOST, API_KEY_DEFAULT
+    global ACCESS_TKN_ESIA, ACCESS_TKN_EXP, ESIA_HOST, API_KEY_DEFAULT
     api_key_data = request.api_key if request.api_key and request.api_key != "string" else API_KEY_DEFAULT
     if not api_key_data or api_key_data == "":
         raise HTTPException(status_code=400, detail="Некорректный API ключ.")
@@ -284,6 +311,8 @@ async def access_tkn_esia(request: APIKeyRequest, client: httpx.AsyncClient = De
         res = response.json()
         if "accessTkn" in res:
             ACCESS_TKN_ESIA = res["accessTkn"]
+            ACCESS_TKN_EXP = _decode_jwt_exp(res["accessTkn"])
+            res["exp"] = ACCESS_TKN_EXP
         return res
     except httpx.HTTPStatusError as err:
         logger.exception(f"HTTPError in accessTkn_esia: {err}")

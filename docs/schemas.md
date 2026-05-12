@@ -1,5 +1,7 @@
 # Схемы данных
 
+> Актуализировано: **2026-05-12** (см. [CHANGELOG.md](./CHANGELOG.md)). Источник истины по XML/XSD — спецификации отдельных услуг на [портале партнёров](https://partners.gosuslugi.ru/catalog/api_for_gu), полный каталог — [SERVICES.md](./SERVICES.md).
+
 ## XML / XSD
 
 Файлы в `api-gosuslugi-backend/xml/`:

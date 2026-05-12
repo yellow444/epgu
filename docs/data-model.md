@@ -1,5 +1,7 @@
 # Модель данных
 
+> Актуализировано: **2026-05-12** (см. [CHANGELOG.md](./CHANGELOG.md)).
+
 Проект не использует СУБД — данные хранятся **в памяти процесса бэкенда** и **в браузере** (IndexedDB / storage).
 
 ## Backend — in-memory state
@@ -9,7 +11,9 @@
 | `CERTIFICATES` | `dict[str, pycades.Certificate]` | thumbprint → объект сертификата | до рестарта |
 | `CURRENT_CERT_ID` | `str \| None` | активный сертификат | до рестарта |
 | `ACCESS_TKN_ESIA` | `str` | JWT от ЕСИА | до рестарта / нового вызова |
-| `services_dict` | `dict` | справочник услуг | весь запуск |
+| `ACCESS_TKN_EXP` | `int` | unix-timestamp срока действия JWT (`exp`); `0` — неизвестен | пересчитывается при получении токена |
+| `ALLOWED_ORIGINS` | `list[str]` | CORS allow_origins (из env `ALLOWED_ORIGINS`) | весь запуск |
+| `services_dict` | `dict` | справочник услуг (env `SERVICES` или `DEFAULT_SERVICES`) | весь запуск |
 | `schema` | `lxml.XMLSchema` | скомпилированный XSD | весь запуск |
 
 ## Таблицы «виртуальных» сущностей

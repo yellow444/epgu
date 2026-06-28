@@ -1,5 +1,4 @@
-# Local IDE/agent config
-.claude/
+# Local IDE config
 .vscode/
 
 # Secrets / local env

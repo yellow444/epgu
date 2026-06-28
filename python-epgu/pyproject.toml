@@ -1,0 +1,82 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "epgu-api"
+version = "0.1.0"
+description = "Python-клиент API Госуслуг (ЕПГУ/ЕСИА): подача заявлений, статусы, файлы - для граждан и организаций"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Maksim Sitnikov" }]
+keywords = [
+    "epgu",
+    "gosuslugi",
+    "esia",
+    "gusmev",
+    "smev",
+    "cryptopro",
+    "госуслуги",
+    "епгу",
+    "есиа",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: Russian",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+    "httpx>=0.23",
+]
+
+[project.optional-dependencies]
+# КриптоПро CSP + pycades - нужны только для GOST-подписи (CryptoProSigner).
+# Сам pycades устанавливается из дистрибутива КриптоПро, не из PyPI, поэтому
+# в этот extra включён только опциональный вспомогательный пакет валидации.
+cryptopro = []
+# Валидация XML по XSD-схемам ЕПГУ.
+xml = ["lxml>=4.6"]
+# Всё для разработки и тестов.
+dev = [
+    "pytest>=7",
+    "pytest-httpx>=0.21; python_version >= '3.8'",
+    "lxml>=4.6",
+    "build>=1.0",
+    "twine>=4.0",
+    "ruff>=0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/knightmc/epgu"
+Repository = "https://github.com/knightmc/epgu"
+Issues = "https://github.com/knightmc/epgu/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/epgu"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/epgu",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"

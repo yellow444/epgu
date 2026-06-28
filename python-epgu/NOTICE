@@ -1,0 +1,13 @@
+epgu-api
+Copyright (c) 2025 yellow444 <yellow444@gmail.com>
+
+This product is licensed under the GNU Affero General Public License v3.0
+or later (AGPL-3.0-or-later). A commercial license is also available;
+see COMMERCIAL-LICENSE.md.
+
+---
+
+This library is inspired by and partly modeled after go-api-epgu
+(https://github.com/ofstudio/go-api-epgu) by ofstudio, which is distributed
+under the MIT License. The Python implementation in this project is an
+independent rewrite.

@@ -2,12 +2,12 @@
 Конфигурационные структуры backend'а: известные среды ЕСИА/ЕПГУ и каталог услуг
 по умолчанию.
 
-Сверка с порталом партнёров — 2026-05-12.
+Сверка с порталом партнёров - 2026-05-12.
 Источник: https://partners.gosuslugi.ru/catalog/api_for_gu
 
 Эти константы экспортируются в `app.py` и используются роутерами в `routers.py`.
 Каталог по умолчанию полностью переопределяется переменной окружения `SERVICES`
-(JSON-объект code → {description, req_file, piev_epgu_file, region, targetCode,
+(JSON-объект code -> {description, req_file, piev_epgu_file, region, targetCode,
 eServiceCode, serviceTargetCode}).
 """
 
@@ -15,7 +15,7 @@ from typing import Any, Dict
 
 
 # Известные среды (актуальны на 2026-05-12).
-# - test: SVCDEV — тестовый контур (раздел 1.2 спец. v1.12.1)
+# - test: SVCDEV - тестовый контур (раздел 1.2 спец. v1.12.1)
 # - prod: продуктовый контур (ГОСТ TLS / lk.gosuslugi.ru)
 # См. также https://github.com/ofstudio/go-api-epgu (раздел «Адреса Портала Госуслуг»).
 ENVIRONMENTS: Dict[str, Dict[str, str]] = {
@@ -36,9 +36,9 @@ ENVIRONMENTS: Dict[str, Dict[str, str]] = {
 
 # Каталог услуг по умолчанию.
 # Коды соответствуют отдельным спецификациям из каталога партнёрского портала.
-#   - 60010153   : ФССП — наличие исполнительного производства
+#   - 60010153   : ФССП - наличие исполнительного производства
 #     Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx
-#   - 60010154   : ФССП — предоставление информации о ходе ИП
+#   - 60010154   : ФССП - предоставление информации о ходе ИП
 #     Specifikaciya_API_EPGU_Predostavlenie_informacii_o_hode_IP_v_7.docx
 #   - 10000000367: Подача заявлений/ходатайств/объяснений
 #     Specifikaciya_API_EPGU_Podacha_zayavlenij_..._v1.3_18_06_2024.docx

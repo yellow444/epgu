@@ -124,14 +124,14 @@ api.post('/accessTkn_esia', { api_key: apikey })
 
 ```plaintext
 src/
-├── components/
-│   ├── FileDropzone/
-│   │   └── FileDropzone.js
-├── App.js
-├── index.js
-├── .env
-├── styles/
-└── assets/
+ components/
+    FileDropzone/
+       FileDropzone.js
+ App.js
+ index.js
+ .env
+ styles/
+ assets/
 ```
 
 ## Доступные скрипты

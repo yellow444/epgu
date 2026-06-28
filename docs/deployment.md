@@ -49,7 +49,7 @@ npm ci && webpack build"] --> Nginx["nginx:alpine
 + default.conf.template + entrypoint.sh"]
 ```
 
-`entrypoint.sh` подставляет переменные (`BACKEND_API`) в `default.conf.template` → `/etc/nginx/conf.d/default.conf` и запускает Nginx. Путь `/api` проксируется на backend.
+`entrypoint.sh` подставляет переменные (`BACKEND_API`) в `default.conf.template` -> `/etc/nginx/conf.d/default.conf` и запускает Nginx. Путь `/api` проксируется на backend.
 
 ## Volumes
 
@@ -58,7 +58,7 @@ npm ci && webpack build"] --> Nginx["nginx:alpine
 | `./api-gosuslugi-backend/app.py` | `/app/app.py` | api |
 | `./api-gosuslugi-backend/.env` | `/app/.env` | api |
 | `${key_folder}` | `/var/opt/cprocsp/keys/app/xxx.000` | api |
-| `./api-gosuslugi-backend/certs` | `/certs` | api (внутри: `public/` — публичные CA, `personal/` — личные, gitignored) |
+| `./api-gosuslugi-backend/certs` | `/certs` | api (внутри: `public/` - публичные CA, `personal/` - личные, gitignored) |
 | `./api-gosuslugi-backend/xml` | `/xml` | api |
 | `./api-gosuslugi-client/default.conf.template` | `/etc/nginx/conf.d/default.conf.template` | frontend |
 | `./api-gosuslugi-client/entrypoint.sh` | `/entrypoint.sh` | frontend |
@@ -74,9 +74,9 @@ npm ci && webpack build"] --> Nginx["nginx:alpine
       - `esia_host=https://esia.gosuslugi.ru`
       - `svcdev_host=https://lk.gosuslugi.ru` (для прямого ГОСТ TLS)
 - [ ] Подключение по ГОСТ TLS: установить и доверять корневым CA Минцифры / ФСБ (в `certs/public/`).
-- [ ] Альтернатива: подключение через СМЭВ4 (ПОДД) — установить Агент ПОДД, см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/).
+- [ ] Альтернатива: подключение через СМЭВ4 (ПОДД) - установить Агент ПОДД, см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/).
 - [ ] Ограничить CORS `allow_origins` конкретным доменом.
-- [ ] `KeyPin` — через Docker secrets / Vault, а не env.
+- [ ] `KeyPin` - через Docker secrets / Vault, а не env.
 - [ ] HTTPS на frontend (отдельный reverse proxy / certs).
 - [ ] Журналирование операций подписания (audit log).
 - [ ] Мониторинг `/hc`, алерты на ошибки.
@@ -85,6 +85,6 @@ npm ci && webpack build"] --> Nginx["nginx:alpine
 
 ## Отладка
 
-- VS Code → Remote Attach → `localhost:5678`.
+- VS Code -> Remote Attach -> `localhost:5678`.
 - Логи: `docker-compose logs -f api frontend`.
 - Проверка health: `curl http://localhost:5000/hc`.

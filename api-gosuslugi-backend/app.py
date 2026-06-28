@@ -45,7 +45,7 @@ schema = etree.XMLSchema(schema_root)
 CERTIFICATES = {}
 CURRENT_CERT_ID = None
 ACCESS_TKN_ESIA = ''
-# Срок действия текущего JWT (unix timestamp). 0 — неизвестен.
+# Срок действия текущего JWT (unix timestamp). 0 - неизвестен.
 ACCESS_TKN_EXP = 0
 
 
@@ -73,14 +73,14 @@ if services_json:
             "Неверный формат переменной окружения SERVICES (ожидается JSON)"
         ) from exc
 else:
-    # Каталог услуг по умолчанию — см. config.DEFAULT_SERVICES и docs/SERVICES.md.
+    # Каталог услуг по умолчанию - см. config.DEFAULT_SERVICES и docs/SERVICES.md.
     services_dict = dict(DEFAULT_SERVICES)
 
 # Инициализация FastAPI
 
 app = FastAPI(
     root_path="/api",
-    title="API Госуслуг (ЕПГУ) — backend",
+    title="API Госуслуг (ЕПГУ) - backend",
     description=(
         "Реализация Спецификации API ЕПГУ v1.13 (правки v1.12.1 по разделам "
         "ГОСТ TLS / СМЭВ4). Источник: https://partners.gosuslugi.ru/catalog/api_for_gu"
@@ -584,7 +584,7 @@ async def download_file(
 @app.get("/services")
 async def get_services():
     """
-    Возвращает список услуг. Каждый элемент списка – объект с ключами:
+    Возвращает список услуг. Каждый элемент списка - объект с ключами:
     - serviceCode: номер сервиса (например, "1")
     - description: описание услуги
     - req_file: имя XML файла запроса

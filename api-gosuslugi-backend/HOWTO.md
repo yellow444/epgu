@@ -1,8 +1,8 @@
-# HOWTO — backend (FastAPI + КриптоПро)
+# HOWTO - backend (FastAPI + КриптоПро)
 
 ## Локальный запуск без Docker
 
-> Требуется установленный КриптоПро CSP + собранный `pycades.so` для текущей версии Python. В Windows это нетривиально — рекомендуем Docker.
+> Требуется установленный КриптоПро CSP + собранный `pycades.so` для текущей версии Python. В Windows это нетривиально - рекомендуем Docker.
 
 ```bash
 python -m venv .venv
@@ -53,7 +53,7 @@ curl http://localhost:5000/status    # версия PyCades
 pytest -c pytest.ini
 ```
 
-Для запуска в контейнере — `Dockerfile.test`.
+Для запуска в контейнере - `Dockerfile.test`.
 
 ## Частые задачи
 
@@ -70,7 +70,7 @@ pytest -c pytest.ini
 ### Подменить сертификат
 
 1. Заменить содержимое `${key_folder}` (по умолчанию `./xxx.000`).
-2. Перезапустить контейнер — startup-hook перечитает `CERTIFICATES`.
+2. Перезапустить контейнер - startup-hook перечитает `CERTIFICATES`.
 3. В UI выбрать нужный сертификат, либо `POST /set_current_certificate?cert_id=...`.
 
 ### Продиагностировать подпись

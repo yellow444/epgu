@@ -1,7 +1,7 @@
 # Каталог услуг и спецификаций API ЕПГУ
 
 > Актуализировано: **2026-05-12**.
-> Источник истины: [Портал API Госуслуг — раздел «API»](https://partners.gosuslugi.ru/catalog/api_for_gu).
+> Источник истины: [Портал API Госуслуг - раздел «API»](https://partners.gosuslugi.ru/catalog/api_for_gu).
 > Файлы спецификаций физически хранятся на `https://gu-st.ru/content/partners/api_for_gu/`.
 
 ## 1. Базовые документы
@@ -9,8 +9,8 @@
 | Документ | Версия (на портале) | Локальная копия | Ссылка |
 |---|---|---|---|
 | Спецификация API ЕПГУ (основная) | v1.13 (правки v1.12.1 для разделов GOST TLS / СМЭВ4) | `docs/Specifikaciya_API_EPGU_v1_13.docx` | [Specifikaciya_API_EPGU_v1_13.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_13.docx) |
-| Регламент подключения к API Госуслуг | v1.4 (09.11.2022) — публичный, v1.8 — локальная редакция | `docs/Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx` | [Reglament_podklyucheniya_k_API_Gosuslug._Versiya_1.4_ot_09.11.2022_g..pdf](https://gu-st.ru/content/partners/api_for_gu/Reglament_podklyucheniya_k_API_Gosuslug._Versiya_1.4_ot_09.11.2022_g..pdf) |
-| Инструкция по подключению к API ЕПГУ | актуальная | — | [Instrukciya_po_podklucheniyu_API_EPGU.pdf](https://gu-st.ru/content/partners/Instrukciya_po_podklucheniyu_API_EPGU.pdf) |
+| Регламент подключения к API Госуслуг | v1.4 (09.11.2022) - публичный, v1.8 - локальная редакция | `docs/Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx` | [Reglament_podklyucheniya_k_API_Gosuslug._Versiya_1.4_ot_09.11.2022_g..pdf](https://gu-st.ru/content/partners/api_for_gu/Reglament_podklyucheniya_k_API_Gosuslug._Versiya_1.4_ot_09.11.2022_g..pdf) |
+| Инструкция по подключению к API ЕПГУ | актуальная | - | [Instrukciya_po_podklucheniyu_API_EPGU.pdf](https://gu-st.ru/content/partners/Instrukciya_po_podklucheniyu_API_EPGU.pdf) |
 
 ## 2. Спецификации отдельных услуг
 
@@ -20,12 +20,12 @@
 | Наличие исполнительного производства (ФССП) | `60010153` | v8 | `docs/Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx` | [Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx) |
 | Предоставление информации о ходе ИП (ФССП) | `60010154`¹ | v7 | _нет (на портале)_ | [Specifikaciya_API_EPGU_Predostavlenie_informacii_o_hode_IP_v_7.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Predostavlenie_informacii_o_hode_IP_v_7.docx) |
 | Миграционный и регистрационный учёт гостиниц | `гостиничные коды` | v1.3 | `docs/Specifikaciya_API_EPGU_Servisy_migracionnogo_..._v1.3.docx` | [Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v1.3.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v1.3.docx) |
-| Уведомление о трудовой деятельности | — | v1.2 | `docs/Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.2.docx` | [Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.2.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.2.docx) |
-| Уведомление о расторжении трудового договора | — | актуальная | _нет (на портале)_ | [Specifikaciya_API_EPGU_Uvedomlenie_o_rastorzhenii_trudovogo_dogovora.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Uvedomlenie_o_rastorzhenii_trudovogo_dogovora.docx) |
-| Отправка документов на подпись в Госключ | — | v1.8 (локально) | `docs/Specifikaciya_API_EPGU_Otpravka_dokumentov_na_podpis_v_Gosklyuch_v1.8.docx` | [Specifikaciya_API_EPGU._Otpravka_dokumentov_na_podpis_v_Gosklyuch.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU._Otpravka_dokumentov_na_podpis_v_Gosklyuch.docx) |
+| Уведомление о трудовой деятельности | - | v1.2 | `docs/Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.2.docx` | [Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.2.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.2.docx) |
+| Уведомление о расторжении трудового договора | - | актуальная | _нет (на портале)_ | [Specifikaciya_API_EPGU_Uvedomlenie_o_rastorzhenii_trudovogo_dogovora.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Uvedomlenie_o_rastorzhenii_trudovogo_dogovora.docx) |
+| Отправка документов на подпись в Госключ | - | v1.8 (локально) | `docs/Specifikaciya_API_EPGU_Otpravka_dokumentov_na_podpis_v_Gosklyuch_v1.8.docx` | [Specifikaciya_API_EPGU._Otpravka_dokumentov_na_podpis_v_Gosklyuch.docx](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU._Otpravka_dokumentov_na_podpis_v_Gosklyuch.docx) |
 | Доставка пенсии и социальных выплат ПФР/СФР | `10000000109` | актуальная | _нет (на портале)_ | каталог `services/sfr/10000000109-zdp` ([см. референсный Go-клиент](https://github.com/ofstudio/go-api-epgu/tree/master/services/sfr/10000000109-zdp)) |
 
-¹ — код услуги «Ход ИП» на ЕПГУ публикуется отдельно. Уточнять в личном кабинете партнёра в момент заведения услуги.
+¹ - код услуги «Ход ИП» на ЕПГУ публикуется отдельно. Уточнять в личном кабинете партнёра в момент заведения услуги.
 
 ## 3. Получение API-ключа
 
@@ -34,14 +34,14 @@
 | Организация-потребитель | Руководство пользователя по формированию API-Key и получению маркера доступа, v3.3 (31.01.2023) | `docs/Rukovodstvo_polzovatelya_dlya_organizacii-potrebitelya_..._Versiya_3.3_...docx` | [Портал API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu) |
 | Организация-вендор | Руководство пользователя, v3.2 (26.10.2022) | `docs/Rukovodstvo_polzovatelya_dlya_organizacii-vendora_..._Versiya_3.2_...pdf` | [Портал API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu) |
 
-## 4. ЕСИА — методические материалы
+## 4. ЕСИА - методические материалы
 
 | Документ | Локально | Источник |
 |---|---|---|
 | Методические рекомендации по использованию ЕСИА (v3.48) | `docs/metodicheskierekomendatsiipoispolzovaniyuesiav348.docx` | [digital.gov.ru/ru/documents/6186](https://digital.gov.ru/ru/documents/6186/) |
-| Руководство пользователя ЕСИА | — | [digital.gov.ru/ru/documents/6182](https://digital.gov.ru/ru/documents/6182/) |
+| Руководство пользователя ЕСИА | - | [digital.gov.ru/ru/documents/6182](https://digital.gov.ru/ru/documents/6182/) |
 | Руководство пользователя технологического портала ЕСИА | `docs/rp-esia-tehportal-1328.pdf` | [digital.gov.ru/ru/documents/6190](https://digital.gov.ru/ru/documents/6190/) |
-| Методические рекомендации по REST API Цифрового профиля | — | [digital.gov.ru/ru/documents/7166](https://digital.gov.ru/ru/documents/7166/) |
+| Методические рекомендации по REST API Цифрового профиля | - | [digital.gov.ru/ru/documents/7166](https://digital.gov.ru/ru/documents/7166/) |
 
 ## 5. Среды и endpoint-ы
 
@@ -79,12 +79,12 @@
 
 | Код | Описание | Файлы (relative `xml/`) | Статус |
 |---|---|---|---|
-| `60010153` | Наличие ИП — ФССП | `req.xml`, `piev_epgu.xml`, валидируется по `piev_epgu.xsd` | ✅ полностью |
-| `10000000367` | Подача заявлений / ходатайств / объяснений | — | ⚠️ env `SERVICES` (без XSD) |
-| `10000000109` | Доставка пенсии ПФР/СФР | — | 🆕 добавляется в `SERVICES` по умолчанию |
-| `60010154` | Ход ИП (ФССП) | — | 🆕 добавляется в `SERVICES` по умолчанию |
+| `60010153` | Наличие ИП - ФССП | `req.xml`, `piev_epgu.xml`, валидируется по `piev_epgu.xsd` |  полностью |
+| `10000000367` | Подача заявлений / ходатайств / объяснений | - |  env `SERVICES` (без XSD) |
+| `10000000109` | Доставка пенсии ПФР/СФР | - | 🆕 добавляется в `SERVICES` по умолчанию |
+| `60010154` | Ход ИП (ФССП) | - | 🆕 добавляется в `SERVICES` по умолчанию |
 
-Добавление новой услуги — см. [HOWTO бэкенда: добавить услугу](../api-gosuslugi-backend/HOWTO.md#добавить-новую-услугу).
+Добавление новой услуги - см. [HOWTO бэкенда: добавить услугу](../api-gosuslugi-backend/HOWTO.md#добавить-новую-услугу).
 
 ## 7. Журнал актуализации
 

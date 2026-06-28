@@ -1,4 +1,4 @@
-# HOWTO — развёртывание и использование
+# HOWTO - развёртывание и использование
 
 Практическое руководство: от клонирования репозитория до успешной подачи заявления через ЕПГУ.
 
@@ -6,7 +6,7 @@
 
 - Docker ≥ 24 и Docker Compose v2
 - Сертификат организации (формат контейнера `xxx.000` для КриптоПро)
-- API-ключ организации-потребителя ЕПГУ (получение — см. [docs/](./docs) регламенты)
+- API-ключ организации-потребителя ЕПГУ (получение - см. [docs/](./docs) регламенты)
 - Доступ к тестовому контуру ЕПГУ: `*.test.gosuslugi.ru`
 
 ## 2. Настройка окружения
@@ -41,7 +41,7 @@ key_folder=/secure/keys/xxx.000
 SERVICES={"60010153":{"description":"Наличие ИП (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml"}}
 ```
 
-Полный каталог услуг и сред — в [docs/SERVICES.md](./docs/SERVICES.md).
+Полный каталог услуг и сред - в [docs/SERVICES.md](./docs/SERVICES.md).
 
 Положите содержимое контейнера ключа в папку, указанную в `key_folder`.
 
@@ -100,13 +100,13 @@ sequenceDiagram
     API-->>UI: StreamingResponse
 ```
 
-Подробнее о каждом эндпоинте — [docs/api.md](./docs/api.md).
+Подробнее о каждом эндпоинте - [docs/api.md](./docs/api.md).
 
 ## 5. Отладка
 
-- `production` не задан → backend запускает `debugpy` на `:5678`. Подключитесь из VS Code (launch config «Python: Remote Attach»).
+- `production` не задан -> backend запускает `debugpy` на `:5678`. Подключитесь из VS Code (launch config «Python: Remote Attach»).
 - Логи: `docker-compose logs -f api frontend`.
-- Проверка XML по XSD: эндпоинт `/push/chunked` валидирует `piev_epgu.xml`. Локально — `GET /xsd?simple_type_name=<name>` вернёт перечисления из XSD.
+- Проверка XML по XSD: эндпоинт `/push/chunked` валидирует `piev_epgu.xml`. Локально - `GET /xsd?simple_type_name=<name>` вернёт перечисления из XSD.
 
 ## 6. Частые проблемы
 

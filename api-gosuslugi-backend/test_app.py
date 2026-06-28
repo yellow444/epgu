@@ -93,7 +93,7 @@ with TestClient(app) as client:
         response = client.post("/accessTkn_esia", json={"api_key": ""})
         assert response.status_code >= 400
 
-    # 5. Каталог услуг — общий и по коду
+    # 5. Каталог услуг - общий и по коду
 
     def test_services_catalog():
         response = client.get("/services")

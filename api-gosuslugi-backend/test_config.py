@@ -1,5 +1,5 @@
 """
-Тесты на config.py и app._decode_jwt_exp — без зависимостей от pycades/CSP.
+Тесты на config.py и app._decode_jwt_exp - без зависимостей от pycades/CSP.
 Запускаются на любой Python-машине: pytest test_config.py.
 """
 
@@ -89,8 +89,8 @@ def test_spec_version_matches_app_version():
     from config import SPEC_VERSION
 
     # Импортируем app только если pycades доступен; иначе пропускаем мягко.
-    pytest.importorskip("pycades", reason="pycades недоступен — тест в CI без CSP")
-    from app import app  # noqa: WPS433 — поздний импорт ради опциональной зависимости
+    pytest.importorskip("pycades", reason="pycades недоступен - тест в CI без CSP")
+    from app import app  # noqa: WPS433 - поздний импорт ради опциональной зависимости
 
     assert app.version == SPEC_VERSION
 

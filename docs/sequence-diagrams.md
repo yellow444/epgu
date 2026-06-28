@@ -2,7 +2,7 @@
 
 > Актуализировано: **2026-05-12** (см. [CHANGELOG.md](./CHANGELOG.md)). Сценарии соответствуют поведению backend'а версии 1.13.
 
-## 1. Авторизация — получение токена ЕСИА
+## 1. Авторизация - получение токена ЕСИА
 
 ```mermaid
 sequenceDiagram
@@ -23,7 +23,7 @@ sequenceDiagram
     ESIA-->>API: { accessTkn: JWT, ... }
     API->>API: ACCESS_TKN_ESIA = accessTkn
     API-->>UI: { accessTkn, expires_in }
-    UI->>UI: jwtDecode → отобразить exp
+    UI->>UI: jwtDecode -> отобразить exp
 ```
 
 ## 2. Подача заявления (chunked)
@@ -37,7 +37,7 @@ sequenceDiagram
     UI->>API: POST /push/chunked
 (meta, orderId, chunks=1, chunk=1, files)
     API->>API: json.loads(meta)
-    API->>API: zipfile.ZipFile — собрать piev_epgu.zip
+    API->>API: zipfile.ZipFile - собрать piev_epgu.zip
     API->>API: validate piev_epgu.xml по XSD
     API->>EPGU: POST /api/gusmev/push/chunked
 (Authorization: Bearer JWT)
@@ -57,7 +57,7 @@ sequenceDiagram
         UI->>API: POST /order/{orderId}
         API->>EPGU: POST /api/gusmev/order/{orderId}
         EPGU-->>API: { order: "...json..." }
-        API->>API: safe_parse_order → orderResponseFiles
+        API->>API: safe_parse_order -> orderResponseFiles
         alt есть файлы
             API-->>UI: fileDetails + orderDetails
         else нет файлов
@@ -89,11 +89,11 @@ sequenceDiagram
     participant CSP
 
     Docker->>App: uvicorn app:app
-    App->>App: @on_event("startup") → load_certificates
+    App->>App: @on_event("startup") -> load_certificates
     App->>CSP: Store.Open(CONTAINER_STORE, MY_STORE)
     CSP-->>App: Certificates (N)
     App->>App: CERTIFICATES = {thumbprint: cert}
     App->>App: CURRENT_CERT_ID = first
-    Note over App: если production пуст — debugpy.listen(:5678)
+    Note over App: если production пуст - debugpy.listen(:5678)
     App-->>Docker: ready
 ```

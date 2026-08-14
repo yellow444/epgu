@@ -60,6 +60,7 @@ from config import (
     validate_service_catalog,
 )
 from routers import diagnostics_router
+from inbound_api import inbound_router
 
 try:
     import pycades
@@ -336,6 +337,9 @@ app.include_router(
         },
     )
 )
+# Журнал входящих запросов от ЕПГУ. Пишет его отдельный публичный приёмник
+# (inbound.py), здесь только чтение для оператора.
+app.include_router(inbound_router())
 
 # Pydantic-модели
 

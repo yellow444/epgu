@@ -14,7 +14,12 @@ RUN python -m pip install --no-cache-dir --upgrade pip \
  && python -m pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=app:app api-gosuslugi-backend/app.py api-gosuslugi-backend/config.py api-gosuslugi-backend/routers.py api-gosuslugi-backend/service_profiles.json ./
+COPY --chown=app:app api-gosuslugi-backend/inbound.py api-gosuslugi-backend/inbound_api.py api-gosuslugi-backend/inbound_store.py ./
 COPY --chown=app:app api-gosuslugi-backend/xml /xml
+
+# Каталог журнала входящих запросов. Владелец выставляется здесь, чтобы том
+# унаследовал права и приёмник мог писать не от root.
+RUN mkdir --parents /var/lib/epgu-inbound && chown app:app /var/lib/epgu-inbound
 
 ENV XML_ROOT=/xml \
     PYTHONUNBUFFERED=1

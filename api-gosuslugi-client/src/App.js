@@ -41,6 +41,7 @@ import {
   CheckCircleOutlined,
   ApiOutlined,
   VerticalAlignTopOutlined,
+  InboxOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import moment from 'moment-timezone';
@@ -58,6 +59,7 @@ import GoskeyForm, {
   isGoskeyServiceProfile,
 } from './components/GoskeyForm/GoskeyForm';
 import SetupGuide from './components/SetupGuide/SetupGuide';
+import InboundLog from './components/InboundLog/InboundLog';
 import {
   applyServiceTransforms,
   buildXmlFilesForService,
@@ -1058,6 +1060,7 @@ function App() {
               { key: 'setup', icon: <SettingOutlined />, label: 'Настройка' },
               { key: 'xml', icon: <CodeOutlined />, label: 'Редактор XML' },
               { key: 'requests', icon: <UnorderedListOutlined />, label: 'Запросы' },
+              { key: 'inbound', icon: <InboxOutlined />, label: 'Входящие' },
             ]}
           />
         </Header>
@@ -1486,6 +1489,7 @@ function App() {
           )}
 
           {currentTab === 'setup' && <SetupGuide />}
+          {currentTab === 'inbound' && <InboundLog />}
 
           {/* Таб для XML редактора */}
           {currentTab === 'xml' && (

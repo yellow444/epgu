@@ -30,6 +30,37 @@ services:
       # Backend хранит токен/сертификат в памяти процесса и рассчитан на одного
       # оператора. По умолчанию он доступен только с локальной машины.
       - "127.0.0.1:${API_PORT:-55000}:5000"
+    volumes:
+      # Журнал входящих запросов пишет приёмник. Оператору нужна запись только
+      # для очистки журнала между прогонами теста.
+      - inbound-data:/var/lib/epgu-inbound
+    restart: always
+
+  # Публичная точка входа: URL системы и URL для push сообщений, которые
+  # указываются при регистрации ИС. Отдельный процесс без доступа к
+  # сертификатам, маркеру доступа и методам подачи заявлений.
+  inbound:
+    image: api-gosuslugi-backend:latest
+    build:
+      context: .
+      dockerfile: ./api-gosuslugi-backend/Dockerfile
+    command: ["uvicorn", "inbound:app", "--host", "0.0.0.0", "--port", "5001"]
+    environment:
+      - IS_MNEMONIC=${IS_MNEMONIC:-}
+      - INBOUND_PUBLIC_URL=${INBOUND_PUBLIC_URL:-}
+      - INBOUND_MAX_BODY=${INBOUND_MAX_BODY:-1048576}
+    ports:
+      # Единственный порт, который смотрит наружу: сюда редиректится трафик
+      # с внешнего адреса ИС.
+      - "${INBOUND_PORT:-58080}:5001"
+    volumes:
+      - inbound-data:/var/lib/epgu-inbound
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5001/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
     restart: always
 
   frontend:
@@ -49,3 +80,7 @@ services:
       api:
         condition: service_healthy
     restart: always
+
+volumes:
+  # Журнал входящих запросов: пишет приёмник, читает операторский API.
+  inbound-data:

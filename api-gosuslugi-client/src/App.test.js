@@ -85,6 +85,19 @@ describe('App Component Basic Rendering Tests', () => {
     expect(await screen.findByLabelText('Наверх')).toBeInTheDocument();
   });
 
+  test('switches to Inbound tab and shows the registration addresses', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Входящие'));
+
+    expect(await screen.findByText('Адреса для регистрации ИС')).toBeInTheDocument();
+    expect(screen.getByText('Входящие запросы')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(axios.get).toHaveBeenCalledWith('/inbound/messages', {
+        params: { limit: 100 },
+      })
+    );
+  });
+
   test('switches to XML tab on click', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Редактор XML'));

@@ -1,12 +1,5 @@
-fastapi
-uvicorn
-debugpy
-requests
-python-dotenv
-python-multipart
-lxml
-httpx
-pytest
-pytest-asyncio
-pydantic
-pytest-mock
+-r requirements.txt
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-mock==3.15.1
+httpx2==2.10.0

@@ -1,0 +1,28 @@
+# Оверлей для стенда с КриптоПро: подпись, сертификаты, маркер доступа ЕСИА.
+#
+# Запуск:
+#   docker compose -f docker-compose.yml -f docker-compose.cryptopro.yml up -d --build
+#
+# Базовый docker-compose.yml собирает публичный образ без проприетарных
+# бинарников. Этот файл подменяет только сборку и то, что нужно для подписи:
+# ключевой контейнер и публичные сертификаты с хоста.
+#
+# Демонстрационная лицензия CSP живёт 90 дней с момента установки, то есть с
+# момента сборки образа. Когда срок вышел, пересоберите образ:
+#   docker compose -f docker-compose.yml -f docker-compose.cryptopro.yml build --no-cache api
+# Купленная лицензия задаётся переменной CRYPTOPRO_SERIAL в .env, тогда
+# демонстрационный срок роли не играет.
+
+services:
+  api:
+    image: api-gosuslugi-backend:cryptopro
+    build:
+      dockerfile: ./api-gosuslugi-backend/Dockerfile.cryptopro
+    environment:
+      - CRYPTOPRO_SERIAL=${CRYPTOPRO_SERIAL:-}
+      - KeyPin=${KeyPin:-}
+    volumes:
+      # Контейнер ключа КриптоПро. Путь на хосте задаётся key_folder в .env.
+      - "${key_folder:-./xxx.000}:/var/opt/cprocsp/keys/app/xxx.000"
+      # Только публичные сертификаты: корневые и промежуточные.
+      - ./api-gosuslugi-backend/certs/public:/certs/public:ro

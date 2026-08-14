@@ -1,0 +1,4 @@
+# Shell-скрипты монтируются в Linux-контейнеры как есть. При checkout с CRLF
+# шелл читает "\r" частью аргумента и падает: python: can't open file '/app/app.py\r'
+*.sh text eol=lf
+entrypoint.sh text eol=lf

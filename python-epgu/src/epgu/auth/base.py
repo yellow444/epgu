@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
+from ..errors import AuthError
 from .token import Token
 
 
@@ -22,7 +23,11 @@ class StaticToken:
     """Обёртка для заранее полученного маркера (например, вставленного вручную)."""
 
     def __init__(self, access_token: str) -> None:
-        self._token = Token(access_token=access_token)
+        try:
+            self._token = Token(access_token=access_token)
+        except ValueError as exc:
+            raise AuthError(str(exc)) from exc
 
     def get_token(self) -> Token:
+        """Вернуть неизменяемый заранее переданный маркер."""
         return self._token

@@ -1,11 +1,9 @@
-version: "3.9"
-
 services:
   api:
     image: api-gosuslugi-backend:latest
     build:
-      context: ./api-gosuslugi-backend
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./api-gosuslugi-backend/Dockerfile
       args:
         progress: plain
     deploy:
@@ -16,25 +14,22 @@ services:
         reservations:
           cpus: "0.5"
           memory: "256M"
-    entrypoint: [ "sh", "/certs/entrypoint.sh" ]
     environment:
-      - apikey=${apikey:-GUID}
+      - apikey=${apikey:-}
       - TSAAddress=${TSAAddress:-http://testca2012.cryptopro.ru/tsp/tsp.srf}
       - esia_host=${esia_host:-https://esia-portal1.test.gosuslugi.ru}
-      - svcdev_host=${svcdev_host:-https://svcdev-beta.test.gosuslugi.ru}
-      - KeyPin=${KeyPin:-1234567890}
+      - svcdev_host=${svcdev_host:-https://svcdev-gostapi.test.gosuslugi.ru}
+      - KeyPin=${KeyPin:-}
       - production=${production}
-      - SERVICES=${SERVICES}
+      # Отдельное имя не позволяет старому legacy SERVICES из локального .env
+      # незаметно подменить строгий versioned-каталог.
+      - SERVICES=${SERVICES_OVERRIDE:-}
+      - XML_ROOT=/xml
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:50080,http://127.0.0.1:50080}
     ports:
-      - "5000:5000"
-      - "5678:5678"
-    volumes:
-      - ./api-gosuslugi-backend/app.py:/app/app.py
-      - ./api-gosuslugi-backend/.env:/app/.env
-      # Если key_folder не задан в .env, по умолчанию берем ./api-gosuslugi-backend/xxx.000
-      - "${key_folder:-./api-gosuslugi-backend/xxx.000}:/var/opt/cprocsp/keys/app/xxx.000"
-      - ./api-gosuslugi-backend/certs:/certs
-      - ./api-gosuslugi-backend/xml:/xml
+      # Backend хранит токен/сертификат в памяти процесса и рассчитан на одного
+      # оператора. По умолчанию он доступен только с локальной машины.
+      - "127.0.0.1:${API_PORT:-55000}:5000"
     restart: always
 
   frontend:
@@ -46,12 +41,11 @@ services:
         progress: plain
         BACKEND_URL: "${BACKEND_URL:-/api}"
     container_name: react-nginx
-    entrypoint: [ "sh", "/entrypoint.sh" ]
     environment:
       - BACKEND_API=${BACKEND_API:-http://api:5000}
     ports:
-      - "5080:80"
-    volumes:
-      - ./api-gosuslugi-client/default.conf.template:/etc/nginx/conf.d/default.conf.template:ro
-      - ./api-gosuslugi-client/entrypoint.sh:/entrypoint.sh
+      - "127.0.0.1:${FRONTEND_PORT:-50080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: always

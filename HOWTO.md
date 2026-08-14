@@ -1,134 +1,121 @@
 # HOWTO — развёртывание и использование
 
-Практическое руководство: от клонирования репозитория до успешной подачи заявления через ЕПГУ.
+Текущий публичный Compose запускает каталог услуг, OpenAPI, XML-preview и неподписывающие функции. Он намеренно не содержит КриптоПро CSP, `pycades`, сертификат или закрытый ключ. Для получения токена ЕСИА, подписи и реальной отправки нужен отдельно собранный лицензированный signing-runtime; его нельзя распространять как часть публичного образа.
 
 ## 1. Предварительные требования
 
-- Docker ≥ 24 и Docker Compose v2
-- Сертификат организации (формат контейнера `xxx.000` для КриптоПро)
-- API-ключ организации-потребителя ЕПГУ (получение — см. [docs/](./docs) регламенты)
-- Доступ к тестовому контуру ЕПГУ: `*.test.gosuslugi.ru`
+- Docker 24+ и Docker Compose v2;
+- для локальной сборки frontend без Docker — Node.js 24 и npm;
+- для проверки реального тестового контура — выданные организации API-ключ, сертификат/закрытый ключ и доступ к ЕПГУ;
+- для подписания — законно установленный КриптоПро CSP с совместимым `pycades` в отдельном runtime.
 
-## 2. Настройка окружения
+## 2. Локальная конфигурация
 
-Создайте файл `.env` в корне репозитория.
+Скопируйте шаблон в локальный файл, который не коммитится:
 
-### 2.1. Тестовый контур (SVCDEV)
-
-```env
-apikey=<GUID-API-ключа>
-KeyPin=<PIN-код контейнера>
-TSAAddress=http://testca2012.cryptopro.ru/tsp/tsp.srf
-esia_host=https://esia-portal1.test.gosuslugi.ru
-svcdev_host=https://svcdev-beta.test.gosuslugi.ru
-production=
-BACKEND_URL=/api
-key_folder=./api-gosuslugi-backend/xxx.000
-SERVICES={"60010153":{"description":"Наличие ИП (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-60010153","eServiceCode":"60010153","serviceTargetCode":"-60010153","region":"45000000000"},"10000000367":{"description":"Заявление/ходатайство/объяснение","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-10000000367","eServiceCode":"10000000367","serviceTargetCode":"-10000000367"},"10000000109":{"description":"Доставка пенсии и социальных выплат ПФР/СФР","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-10000000109","eServiceCode":"10000000109","serviceTargetCode":"-10000000109"},"60010154":{"description":"Ход исполнительного производства (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml","targetCode":"-60010154","eServiceCode":"60010154","serviceTargetCode":"-60010154"}}
+```powershell
+Copy-Item .env.example .env.local
 ```
 
-### 2.2. Промышленный контур (ГОСТ TLS)
+Для Bash эквивалентная команда — `cp .env.example .env.local`. Значения `REPLACE_WITH_...` в `.env.example` являются плейсхолдерами, а не секретами. Подставленные реальные API-ключи и PIN-коды храните только локально или в secret manager.
 
-```env
-apikey=<GUID-API-ключа>
-KeyPin=<PIN-код контейнера>
-TSAAddress=http://www.cryptopro.ru/tsp/tsp.srf
-esia_host=https://esia.gosuslugi.ru
-svcdev_host=https://lk.gosuslugi.ru
-production=1
-BACKEND_URL=/api
-key_folder=/secure/keys/xxx.000
-SERVICES={"60010153":{"description":"Наличие ИП (ФССП)","req_file":"req.xml","piev_epgu_file":"piev_epgu.xml"}}
-```
+Официальные адреса контуров:
 
-Полный каталог услуг и сред — в [docs/SERVICES.md](./docs/SERVICES.md).
+| Контур | `esia_host` | `svcdev_host` |
+|---|---|---|
+| тестовый | `https://esia-portal1.test.gosuslugi.ru` | `https://svcdev-gostapi.test.gosuslugi.ru` |
+| промышленный | `https://esia.gosuslugi.ru` | `https://www.gosuslugi.ru` |
 
-Положите содержимое контейнера ключа в папку, указанную в `key_folder`.
+Оставьте `BACKEND_URL=/api`, `BACKEND_API=http://api:5000`, `API_PORT=55000` и `FRONTEND_PORT=50080`, если не требуется изменить локальные порты. Не задавайте старый JSON `SERVICES`: штатный источник — версионируемый `service_profiles.json`; для контролируемого частичного переопределения существует `SERVICES_OVERRIDE`.
 
 ## 3. Сборка и запуск
 
 ```bash
-docker-compose up -d --build
-docker-compose logs -f api
+docker compose --env-file .env.local config
+docker compose --env-file .env.local up -d --build
+docker compose --env-file .env.local logs -f api frontend
 ```
 
-Проверки:
+Открыть:
+
+- UI — <http://localhost:50080>;
+- Backend/OpenAPI — <http://localhost:55000/docs>;
+- core healthcheck — <http://localhost:55000/version>.
+
+Compose публикует оба порта только на `127.0.0.1`. Backend хранит выбранный сертификат и токен ЕСИА в глобальном состоянии процесса, поэтому это однопользовательский стенд для одного доверенного оператора. Не меняйте binding на `0.0.0.0` и не ставьте его за общедоступный proxy без отдельной аутентификации, TLS, изоляции сессий и аудита.
+
+В публичном core-образе `/hc` и `/status` закономерно отвечают `503`: эти endpoint-ы проверяют именно CSP/`pycades`. Успешный `/version` означает, что core-контейнер исправен.
+
+## 4. Выбор услуги
+
+Frontend получает реестр через `GET /services`; статического собственного списка у него нет. Сейчас в реестре ровно 21 профиль:
+
+- 3 исполняемых профиля Госключа: УНЭП `10000000374`, УКЭП для юридического лица/ИП `60025907`, УКЭП с сертификатом Федерального казначейства `60080470`;
+- 18 справочных: видны с причиной блокировки, но preview рабочего шаблона и отправка запрещены.
+
+Для ФССП `60010153` схема и транспорт каталогизированы, но XML из официальных материалов является демонстрационным. Профиль останется заблокированным до появления типизированной формы, fail-closed проверки placeholder/полей и проверки в авторизованном контуре.
+
+Для `10000000374` проверен только сценарий УНЭП. Возможность УКЭП физического лица остаётся справочной; `60079416` (расшифрование в Госключе) также не исполняется из-за противоречий официальных документов.
+
+После выбора услуги UI использует её собственные имена XML, XSD, transforms, ограничения файлов и режим `chunked`/`adaptive`. Код ОКАТО `region` вводится для конкретного заявления и не берётся из профиля как константа. Полная матрица — в [docs/SERVICES.md](./docs/SERVICES.md).
+
+## 5. Preview и отправка
+
+Обычный сценарий:
+
+1. Выберите доступную услугу и заполните её форму/XML.
+2. Укажите фактический ОКАТО пользователя и приложите документы, разрешённые профилем.
+3. Проверьте preview. Для Госключа он вызывается через `POST /goskey/preview` и не требует подписи или отправки.
+4. В лицензированном signing-runtime выберите сертификат, получите токен ЕСИА и отправьте заявление. Госключ использует `POST /goskey/submit`; обычная услуга — профильный `/push` или `/push/chunked`.
+5. Backend сам собирает ZIP, валидирует XML по XSD выбранной услуги и при chunked-режиме последовательно отправляет части `.z001` с индексами `0..N-1`.
+6. Проверяйте состояние через `/order/{orderId}`, затем скачивайте ответ через `/download_file/...`.
+
+Endpoint-ы и DTO подробно описаны в [docs/api.md](./docs/api.md), а работа формы Госключа — в [frontend HOWTO](./api-gosuslugi-client/HOWTO.md).
+
+## 6. Лицензированный signing-runtime
+
+Публичный `api-gosuslugi-backend/Dockerfile` — это переносимый core-образ без дистрибутива КриптоПро. Для реальной подписи подготовьте отдельный закрытый Dockerfile или контролируемый host-runtime, где:
+
+- CSP и `pycades` установлены из лицензированного источника;
+- сертификат и контейнер закрытого ключа передаются как секреты/защищённые mounts, а не добавляются в image layer;
+- `KeyPin` и API-ключ поступают из secret manager;
+- доступ остаётся однопользовательским либо backend предварительно доработан для per-session состояния.
+
+Не копируйте проприетарный архив CSP в публичный build context и не публикуйте производный образ.
+
+## 7. Проверка исходников
 
 ```bash
-curl http://localhost:5000/hc        # {"status":"Ok"}
-curl http://localhost:5000/status    # версия PyCades
+cd python-epgu
+python -m pip install -e ".[dev]"
+python -m pytest
+
+cd ../api-gosuslugi-backend
+python -m pip install -r requirements-test.txt
+python -m pytest -q
+
+cd ../api-gosuslugi-client
+npm ci
+npm audit --omit=dev --audit-level=high
+CI=true npm test -- --watchAll=false --runInBand
+npm run lint
+CI=true npm run build
 ```
 
-Открыть UI: <http://localhost:5080>.
+Последний зафиксированный результат перед финальным прогоном: SDK — 163 passed; backend после security/contract regressions — 44 passed и 5 CSP-зависимых skipped; frontend — 20 passed до добавления проверок очистки/ОКАТО. Точные итоговые числа формирует CI. Production dependency audit frontend — 0 уязвимостей; 57 advisories остаются в legacy CRA build/dev-дереве и являются отдельным долгом миграции.
 
-## 4. Типовой сценарий подачи заявления
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant UI as React
-    participant API as FastAPI
-    participant CP as КриптоПро
-    participant ESIA as ЕСИА
-    participant EPGU as ЕПГУ
-    User->>UI: Открыть приложение
-    UI->>API: POST /get_certificates
-    API->>CP: Список сертификатов
-    CP-->>API: []
-    API-->>UI: список
-    User->>UI: Выбрать сертификат
-    UI->>API: POST /set_current_certificate
-    User->>UI: Ввести API key, нажать «Получить токен»
-    UI->>API: POST /accessTkn_esia
-    API->>CP: Подписать api_key (CAdES-BES)
-    CP-->>API: signature
-    API->>ESIA: GET .../tkn?signature=...
-    ESIA-->>API: accessTkn (JWT)
-    User->>UI: Сформировать и отправить заявление
-    UI->>API: POST /push (meta + files)
-    API->>EPGU: POST /api/gusmev/push
-    EPGU-->>API: orderId
-    API-->>UI: orderId
-    UI->>API: POST /order/{orderId}
-    API->>EPGU: Статус заявления
-    EPGU-->>API: orderResponseFiles
-    API-->>UI: fileDetails
-    User->>UI: Скачать ответ
-    UI->>API: POST /download_file/...
-    API->>EPGU: GET файла
-    EPGU-->>API: zip
-    API-->>UI: StreamingResponse
-```
-
-Подробнее о каждом эндпоинте — [docs/api.md](./docs/api.md).
-
-## 5. Отладка
-
-- `production` не задан → backend запускает `debugpy` на `:5678`. Подключитесь из VS Code (launch config «Python: Remote Attach»).
-- Логи: `docker-compose logs -f api frontend`.
-- Проверка XML по XSD: эндпоинт `/push/chunked` валидирует `piev_epgu.xml`. Локально — `GET /xsd?simple_type_name=<name>` вернёт перечисления из XSD.
-
-## 6. Частые проблемы
-
-| Симптом | Причина | Решение |
-|---|---|---|
-| «Сертификаты не найдены» на старте | Контейнер не смонтирован / не прочитан | Проверить `key_folder`, права на файлы внутри контейнера |
-| 401 от ЕСИА | Неверный `apikey` или `KeyPin` | Сверить `.env`, проверить срок действия API-ключа |
-| `Invalid XML` на `/push/chunked` | `piev_epgu.xml` не соответствует XSD | Сверить структуру с [docs/schemas.md](./docs/schemas.md) |
-| CORS в браузере | Обращение не через Nginx-прокси | Ходить через `http://localhost:5080`, `/api` проксируется |
-
-## 7. Обновление
+## 8. Диагностика и остановка
 
 ```bash
-git pull
-docker-compose up -d --build
+docker compose --env-file .env.local ps
+docker compose --env-file .env.local logs api frontend
+docker compose --env-file .env.local down
 ```
 
-## 8. Очистка
-
-Windows:
-```cmd
-clear.bat
-```
-
-Или вручную: `docker-compose down -v` и удаление собранных образов.
+| Симптом | Объяснение / действие |
+|---|---|
+| `/hc` или `/status` возвращает `503` | Нормально для public core; для подписи нужен отдельный лицензированный CSP/`pycades` runtime. |
+| Услуга видна, но disabled | Это один из 18 `reference`-профилей либо справочная capability; причина приходит из backend. |
+| `Invalid XML` | XML не соответствует XSD выбранного профиля; проверьте service-specific контракт и [схемы](./docs/schemas.md). |
+| CORS/404 из браузера | Открывайте UI на `http://localhost:50080`; production Nginx снимает внешний префикс `/api`. |
+| 401 от ЕСИА | Проверьте контур, срок действия выданного API-ключа и выбранный сертификат, не выводя секреты в лог. |

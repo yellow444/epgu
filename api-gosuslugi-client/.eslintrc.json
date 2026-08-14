@@ -2,6 +2,7 @@
   "env": {
     "browser": true,
     "es2021": true,
+    "jest": true,
     "node": true
   },
   "extends": [
@@ -21,10 +22,7 @@
     "prettier"
   ],
   "rules": {
-    "linebreak-style": [
-      "error",
-      "windows"
-    ],
+    "linebreak-style": "off",
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "no-console": "warn",

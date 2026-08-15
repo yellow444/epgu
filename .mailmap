@@ -1,11 +1,9 @@
 # Каноничные подписи авторов репозитория.
-# Формат: <Каноничное Имя> <канонический@email> <прежнее имя> <прежний@email>
+# Формат: <Каноничное Имя> <канонический@email> [прежнее имя] [прежний@email]
 #
-# Вся история сведена к двум авторам; файл фиксирует соответствие
-# для git log/shortlog и сторонних инструментов.
+# Строка без прежней подписи приводит к каноничному виду имя любого коммита с
+# этим адресом. Сопоставлений по прежним адресам здесь нет: таких коммитов в
+# истории не осталось, вся история сведена к двум авторам.
 
-Maksim <yellow444@gmail.com> <maksim.sitnikov@xpress.com.ph>
-Maksim <yellow444@gmail.com> Maksim Sitnikov <yellow444@gmail.com>
-Maksim <yellow444@gmail.com> sitnikov <yellow444@gmail.com>
-Maksim <yellow444@gmail.com> yellow444 <yellow444@gmail.com>
+Maksim <yellow444@gmail.com>
 Maksim Shatov <maksim@shatov.info>

@@ -39,6 +39,8 @@ SKIPPED_PARTS = (
     "docs/api_for_gu/",
     "api-gosuslugi-backend/xml/",
     "node_modules/",
+    # Сам скрипт хранит запрещённые символы как данные таблицы замен.
+    "scripts/check_text_style.py",
 )
 
 REPLACEMENTS: List[Tuple[str, str]] = [

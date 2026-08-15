@@ -83,6 +83,12 @@ logging.basicConfig(
     level=log_level,
 )
 logger = logging.getLogger(__name__)
+# httpx печатает полный URL каждого запроса на уровне INFO, а в нём едут API-Key
+# (сегмент пути ext-app) и подпись. Код приложения специально не пускает этот
+# материал в логи, поэтому чужие логгеры приглушаем до предупреждений: иначе
+# ключ попадёт в docker compose logs при первом же обращении к ЕСИА.
+for _third_party_logger in ("httpx", "httpcore"):
+    logging.getLogger(_third_party_logger).setLevel(logging.WARNING)
 logger.info(f"log_level:{log_level}")
 logger.info(f"production:{production}")
 # Глобальные конфигурационные переменные
@@ -1144,6 +1150,11 @@ async def access_tkn_esia(request: APIKeyRequest, client: httpx.AsyncClient = De
         signature = signkey(api_key_data)
         encoded_api_key = quote(api_key_data, safe="")
         url = f"{ESIA_HOST}/esia-rs/api/public/v1/orgs/ext-app/{encoded_api_key}/tkn"
+        # Сам URL в лог не попадает: в нём API-Key и подпись.
+        logger.info(
+            "Запрос маркера ЕСИА: %s/esia-rs/api/public/v1/orgs/ext-app/<api-key>/tkn",
+            ESIA_HOST,
+        )
         response = await client.get(url, params={"signature": signature}, headers={"User-Agent": USER_AGENT})
         response.raise_for_status()
         try:

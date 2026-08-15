@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Абстракция ГОСТ-подписи (КЭП) и её реализации.
 
 Подпись вынесена за интерфейс :class:`Signer`, чтобы библиотека не зависела

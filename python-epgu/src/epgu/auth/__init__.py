@@ -1,10 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Аутентификация в ЕСИА: получение маркера доступа.
 
 Поддерживаются два сценария:
 
-* :class:`OrgTokenProvider` — для **организаций** (информационных систем):
+* :class:`OrgTokenProvider` - для **организаций** (информационных систем):
   маркер ``ext-app`` выдаётся по API-Key и ГОСТ-подписи (без участия человека).
-* :class:`AasClient` — для **граждан**: OAuth2 (Authorization Code) ЕСИА, когда
+* :class:`AasClient` - для **граждан**: OAuth2 (Authorization Code) ЕСИА, когда
   пользователь подтверждает доступ в браузере.
 """
 

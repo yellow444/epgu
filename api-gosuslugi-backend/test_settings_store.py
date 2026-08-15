@@ -111,6 +111,39 @@ def test_password_source_is_named_honestly(client, modules):
     secret_store.clear_runtime_secrets()
 
 
+def test_profile_is_saved_and_returned(client, modules):
+    settings_store, _, _, _ = modules
+    response = client.post(
+        "/setup/profile",
+        json={
+            "org_full_name": 'ООО "Ромашка"',
+            "org_inn": "1906302363",
+            "is_mnemonic": "TESTIS01",
+            "contact_name": "Иванов Иван",
+        },
+    )
+    assert response.status_code == 200
+    profile = response.json()["profile"]
+    assert profile["ORG_FULL_NAME"] == 'ООО "Ромашка"'
+    assert profile["ORG_INN"] == "1906302363"
+    assert settings_store.get("IS_MNEMONIC") == "TESTIS01"
+
+    fetched = client.get("/setup/profile").json()
+    assert fetched["profile"]["CONTACT_NAME"] == "Иванов Иван"
+    # Карта плейсхолдеров нужна фронту, чтобы подставлять значения в письма.
+    assert "мнемоника ИС" in fetched["placeholders"]["IS_MNEMONIC"]
+    assert "ИНН" in fetched["placeholders"]["ORG_INN"]
+
+
+def test_profile_shares_the_settings_file_with_mail(client, modules):
+    settings_store, _, mailbox, _ = modules
+    client.post("/mail/settings", json={"user": "smev@example.ru", "password": "secret"})
+    client.post("/setup/profile", json={"org_inn": "1906302363"})
+    # Реквизиты не затирают почту и наоборот.
+    assert mailbox.load_config().user == "smev@example.ru"
+    assert settings_store.get("ORG_INN") == "1906302363"
+
+
 def test_reset_wipes_settings_and_password(client, modules):
     settings_store, secret_store, mailbox, _ = modules
     client.post(

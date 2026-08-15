@@ -38,6 +38,33 @@ ALLOWED_KEYS = {
     "MAIL_PASSWORD",
     "IS_MNEMONIC",
     "INBOUND_PUBLIC_URL",
+    # Реквизиты организации: повторяются в каждом письме Оператору, поэтому
+    # вводятся один раз и подставляются в шаблоны.
+    "ORG_FULL_NAME",
+    "ORG_SHORT_NAME",
+    "ORG_INN",
+    "ORG_OGRN",
+    "ORG_OKTMO",
+    "ORG_ROLE",
+    "CONTACT_NAME",
+    "CONTACT_ROLE",
+    "CONTACT_PHONE",
+    "CONTACT_EMAIL",
+}
+
+# Поля реквизитов и плейсхолдеры писем, которые они закрывают.
+PROFILE_FIELDS = {
+    "ORG_FULL_NAME": ("полное наименование", "наименование организации"),
+    "ORG_SHORT_NAME": ("организация",),
+    "ORG_INN": ("ИНН",),
+    "ORG_OGRN": ("ОГРН",),
+    "ORG_OKTMO": ("ОКТМО",),
+    "ORG_ROLE": ("вендор / потребитель",),
+    "IS_MNEMONIC": ("мнемоника ИС",),
+    "CONTACT_NAME": ("ФИО",),
+    "CONTACT_ROLE": ("должность",),
+    "CONTACT_PHONE": ("телефон",),
+    "CONTACT_EMAIL": ("smev@домен организации",),
 }
 
 # Значения этих ключей наружу не отдаются никогда.

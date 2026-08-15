@@ -4,11 +4,13 @@ import {
   Button,
   Card,
   Checkbox,
+  Col,
   Descriptions,
   Empty,
   Input,
   Modal,
   Result,
+  Row,
   Select,
   Space,
   Steps,
@@ -26,6 +28,7 @@ import {
   DownloadOutlined,
   ExclamationCircleOutlined,
   FolderOpenOutlined,
+  FormOutlined,
   KeyOutlined,
   MailOutlined,
   MinusCircleOutlined,
@@ -87,6 +90,52 @@ function CopyButton({ value, title = 'Скопировать' }) {
   );
 }
 
+// Поля реквизитов в порядке показа. Ключи совпадают с тем, что ждёт backend.
+const PROFILE_FIELDS = [
+  { key: 'ORG_FULL_NAME', label: 'Полное наименование', placeholder: 'ООО "Ромашка"' },
+  { key: 'ORG_SHORT_NAME', label: 'Краткое наименование', placeholder: 'Ромашка' },
+  { key: 'ORG_INN', label: 'ИНН', placeholder: '1906302363' },
+  { key: 'ORG_OGRN', label: 'ОГРН', placeholder: '1137746099046' },
+  { key: 'ORG_OKTMO', label: 'ОКТМО', placeholder: 'нужен не во всех письмах' },
+  { key: 'ORG_ROLE', label: 'Роль', placeholder: 'потребитель или вендор' },
+  { key: 'IS_MNEMONIC', label: 'Мнемоника ИС', placeholder: 'из техпортала ЕСИА' },
+  { key: 'CONTACT_NAME', label: 'ФИО ответственного', placeholder: 'Иванов Иван Иванович' },
+  { key: 'CONTACT_ROLE', label: 'Должность', placeholder: 'руководитель проекта' },
+  { key: 'CONTACT_PHONE', label: 'Телефон', placeholder: '+7 900 000-00-00' },
+  { key: 'CONTACT_EMAIL', label: 'Почта организации', placeholder: 'smev@домен' },
+];
+
+const EMPTY_PROFILE = PROFILE_FIELDS.reduce(
+  (accumulator, field) => ({ ...accumulator, [field.key]: '' }),
+  {}
+);
+
+/** Что осталось незаполненным: любые угловые скобки в тексте. */
+function remainingPlaceholders(text) {
+  return Array.from(new Set((text || '').match(/<[^<>]{1,80}>/g) || []));
+}
+
+/**
+ * Подставить реквизиты в текст письма.
+ *
+ * Плейсхолдер, для которого нет значения, остаётся как был: пустая строка в
+ * письме Оператору хуже, чем видимая незаполненная скобка.
+ */
+function applyProfile(text, profile, placeholderMap, extras) {
+  let result = text || '';
+  Object.entries(placeholderMap).forEach(([key, names]) => {
+    const value = (profile[key] || '').trim();
+    if (!value) return;
+    names.forEach((name) => {
+      result = result.split(`<${name}>`).join(value);
+    });
+  });
+  Object.entries(extras || {}).forEach(([name, value]) => {
+    if (value) result = result.split(`<${name}>`).join(value);
+  });
+  return result;
+}
+
 function formatTime(value) {
   if (!value) return '';
   const parsed = new Date(value);
@@ -140,6 +189,9 @@ export default function SetupWizard() {
   const [messages, setMessages] = useState([]);
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
+  // Реквизиты организации: одни и те же во всех письмах Оператору.
+  const [profile, setProfile] = useState(EMPTY_PROFILE);
+  const [placeholders, setPlaceholders] = useState({});
   // Шаг 5: итог
   const [health, setHealth] = useState({ hc: IDLE, status: IDLE, detail: '' });
 
@@ -229,11 +281,28 @@ export default function SetupWizard() {
     [api, run]
   );
 
+  // Объявлять до useEffect ниже: он ссылается на этот колбэк, а const в теле
+  // компонента до объявления недоступен, и приложение падает целиком.
+  const loadProfile = useCallback(
+    () =>
+      run('profile', async () => {
+        try {
+          const res = await api.get('/setup/profile');
+          setProfile({ ...EMPTY_PROFILE, ...(res.data.profile || {}) });
+          setPlaceholders(res.data.placeholders || {});
+        } catch (error) {
+          setPlaceholders({});
+        }
+      }),
+    [api, run]
+  );
+
   useEffect(() => {
     loadEnvironment();
     loadCertificates();
     loadMail();
-  }, [loadEnvironment, loadCertificates, loadMail]);
+    loadProfile();
+  }, [loadEnvironment, loadCertificates, loadMail, loadProfile]);
 
   // ---------- Состояния шагов ----------
 
@@ -337,6 +406,49 @@ export default function SetupWizard() {
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Проверить почту не удалось.') });
       }
+    });
+  };
+
+  const saveProfile = async () => {
+    await run('profilesave', async () => {
+      const payload = {};
+      PROFILE_FIELDS.forEach((field) => {
+        payload[field.key.toLowerCase()] = profile[field.key] || '';
+      });
+      try {
+        const res = await api.post('/setup/profile', payload);
+        setProfile({ ...EMPTY_PROFILE, ...(res.data.profile || {}) });
+        setNotice({ type: 'success', text: 'Реквизиты сохранены.' });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Сохранить реквизиты не удалось.') });
+      }
+    });
+  };
+
+  const fillLetter = () => {
+    // Контур подставляем сам: он уже определён на первом шаге.
+    const extras = {
+      'тестовая SVCDEV / промышленная':
+        version && version.environment
+          ? version.environment.startsWith('test')
+            ? 'тестовая SVCDEV'
+            : 'промышленная'
+          : '',
+      'домен организации': (profile.CONTACT_EMAIL || '').split('@')[1] || '',
+      домен: (profile.CONTACT_EMAIL || '').split('@')[1] || '',
+    };
+    const filled = {
+      ...letter,
+      subject: applyProfile(letter.subject, profile, placeholders, extras),
+      body: applyProfile(letter.body, profile, placeholders, extras),
+    };
+    setLetter(filled);
+    const left = remainingPlaceholders(`${filled.subject}\n${filled.body}`);
+    setNotice({
+      type: left.length ? 'warning' : 'success',
+      text: left.length
+        ? `Подставлено. Осталось заполнить руками: ${left.join(', ')}`
+        : 'Подставлено, незаполненных полей не осталось.',
     });
   };
 
@@ -967,6 +1079,42 @@ export default function SetupWizard() {
       </div>
 
       <div>
+        <Title level={5}>Реквизиты организации</Title>
+        <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+          Эти данные повторяются во всех письмах Оператору. Введите один раз, и
+          кнопка под письмом подставит их в шаблон. Править письмо руками при
+          этом никто не мешает.
+        </Paragraph>
+        <Row gutter={[12, 12]}>
+          {PROFILE_FIELDS.map((field) => (
+            <Col key={field.key} xs={24} md={12} xl={8}>
+              <Input
+                addonBefore={field.label}
+                placeholder={field.placeholder}
+                value={profile[field.key] || ''}
+                onChange={(event) =>
+                  setProfile({ ...profile, [field.key]: event.target.value })
+                }
+              />
+            </Col>
+          ))}
+        </Row>
+        <Space style={{ marginTop: 12 }}>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={saveProfile}
+            loading={busy === 'profilesave'}
+          >
+            Сохранить реквизиты
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={loadProfile} loading={busy === 'profile'}>
+            Обновить
+          </Button>
+        </Space>
+      </div>
+
+      <div>
         <Title level={5}>Письмо в поддержку</Title>
         <Paragraph type="secondary">
           Отправляется с вашего ящика. Регламент ждёт адрес формата {SENDER_HINT}.
@@ -997,7 +1145,19 @@ export default function SetupWizard() {
             value={letter.body}
             onChange={(event) => setLetter({ ...letter, body: event.target.value })}
           />
-          <Space>
+          <Space wrap>
+            <Button icon={<FormOutlined />} onClick={fillLetter}>
+              Заполнить реквизитами
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => {
+                setLetter(LETTERS[letterId]);
+                setNotice({ type: 'info', text: 'Вернул исходный шаблон письма.' });
+              }}
+            >
+              Вернуть шаблон
+            </Button>
             <Button
               type="primary"
               icon={<SendOutlined />}
@@ -1008,6 +1168,16 @@ export default function SetupWizard() {
             </Button>
             <CopyButton value={letter.body} title="Скопировать текст" />
           </Space>
+          {remainingPlaceholders(`${letter.subject}\n${letter.body}`).length ? (
+            <Alert
+              type="warning"
+              showIcon
+              message="Осталось заполнить"
+              description={remainingPlaceholders(
+                `${letter.subject}\n${letter.body}`
+              ).join(', ')}
+            />
+          ) : null}
         </Space>
       </div>
 

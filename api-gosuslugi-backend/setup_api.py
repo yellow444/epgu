@@ -40,6 +40,22 @@ class ImportRequest(BaseModel):
     link_container: str = ""
 
 
+class ProfileRequest(BaseModel):
+    """Реквизиты организации, которыми заполняются письма Оператору."""
+
+    org_full_name: str = Field(default="", max_length=300)
+    org_short_name: str = Field(default="", max_length=200)
+    org_inn: str = Field(default="", max_length=12)
+    org_ogrn: str = Field(default="", max_length=15)
+    org_oktmo: str = Field(default="", max_length=11)
+    org_role: str = Field(default="", max_length=50)
+    is_mnemonic: str = Field(default="", max_length=100)
+    contact_name: str = Field(default="", max_length=200)
+    contact_role: str = Field(default="", max_length=200)
+    contact_phone: str = Field(default="", max_length=50)
+    contact_email: str = Field(default="", max_length=320)
+
+
 class ResetRequest(BaseModel):
     """Что стирать при общем сбросе. Настройки стираются всегда."""
 
@@ -116,6 +132,48 @@ def setup_router() -> APIRouter:
                 # Чтобы перенести настройки на другую машину или закрепить их
                 # в .env, который переживёт удаление тома.
                 "dotenv": settings_store.dotenv_fragment(),
+            }
+        )
+
+    @router.get("/setup/profile")
+    async def setup_profile_get_route():
+        """Реквизиты организации для подстановки в письма."""
+        saved = settings_store.load()
+        return JSONResponse(
+            content={
+                "profile": {
+                    key: saved.get(key, "")
+                    for key in settings_store.PROFILE_FIELDS
+                },
+                "placeholders": {
+                    key: list(values)
+                    for key, values in settings_store.PROFILE_FIELDS.items()
+                },
+            }
+        )
+
+    @router.post("/setup/profile")
+    async def setup_profile_save_route(profile: ProfileRequest):
+        """Сохранить реквизиты. Они не секретны, но и наружу не публикуются."""
+        values = {
+            key: (getattr(profile, key.lower(), "") or "").strip()
+            for key in settings_store.PROFILE_FIELDS
+        }
+        try:
+            settings_store.save(values)
+        except ValueError as err:
+            raise HTTPException(status_code=400, detail=str(err)) from err
+        except OSError as err:
+            logger.warning("Не удалось записать реквизиты: %s", type(err).__name__)
+            raise HTTPException(
+                status_code=500, detail="Не удалось записать файл настроек"
+            ) from err
+        saved = settings_store.load()
+        return JSONResponse(
+            content={
+                "profile": {
+                    key: saved.get(key, "") for key in settings_store.PROFILE_FIELDS
+                }
             }
         )
 

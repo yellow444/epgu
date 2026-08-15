@@ -29,6 +29,7 @@ import {
   MinusCircleOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SearchOutlined,
   SaveOutlined,
   SendOutlined,
   UsbOutlined,
@@ -84,6 +85,13 @@ function CopyButton({ value, title = 'Скопировать' }) {
   );
 }
 
+function formatTime(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleTimeString('ru-RU');
+}
+
 function errorText(error, fallback) {
   if (error.response) {
     const detail = error.response.data && error.response.data.detail;
@@ -126,6 +134,7 @@ export default function SetupWizard() {
     password: '',
   });
   const [dotenv, setDotenv] = useState('');
+  const [discovery, setDiscovery] = useState(null);
   const [messages, setMessages] = useState([]);
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
@@ -316,12 +325,51 @@ export default function SetupWizard() {
   };
 
   const checkMail = async () => {
+    // Прошлый результат убираем сразу: иначе непонятно, старая это ошибка
+    // или уже новая.
+    setMailCheck(null);
     await run('mailcheck', async () => {
       try {
         const res = await api.post('/mail/check');
         setMailCheck(res.data);
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Проверить почту не удалось.') });
+      }
+    });
+  };
+
+  const discoverMail = async () => {
+    const address = mailForm.user || (mailConfig && mailConfig.user) || '';
+    if (!address.includes('@') && !address.includes('.')) {
+      setNotice({ type: 'error', text: 'Сначала укажите адрес ящика, по нему ищем серверы.' });
+      return;
+    }
+    setDiscovery(null);
+    await run('discover', async () => {
+      try {
+        const res = await api.post('/mail/discover', { address });
+        setDiscovery(res.data);
+        const suggested = res.data.suggested || {};
+        if (res.data.found) {
+          setMailForm((previous) => ({
+            ...previous,
+            imap_host: suggested.imap_host || previous.imap_host,
+            imap_port: String(suggested.imap_port || previous.imap_port),
+            smtp_host: suggested.smtp_host || previous.smtp_host,
+            smtp_port: String(suggested.smtp_port || previous.smtp_port),
+          }));
+          setNotice({
+            type: 'success',
+            text: 'Серверы найдены и подставлены в форму. Проверьте и сохраните.',
+          });
+        } else {
+          setNotice({
+            type: 'warning',
+            text: 'Автоматически не нашлось. Ниже видно, что проверяли и почему не подошло.',
+          });
+        }
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Определить серверы не удалось.') });
       }
     });
   };
@@ -687,11 +735,27 @@ export default function SetupWizard() {
           />
           <Input.Password
             addonBefore="Пароль"
-            placeholder="пусто - оставить сохранённый"
+            placeholder={
+              mailConfig && mailConfig.password.configured
+                ? `сохранён, ${mailConfig.password.length} символов, источник: ${mailConfig.password.source}. Оставьте пустым, чтобы не менять`
+                : 'пароль приложения почтового сервиса'
+            }
             autoComplete="new-password"
             value={mailForm.password}
             onChange={(event) => setMailForm({ ...mailForm, password: event.target.value })}
           />
+          <Space>
+            <Button
+              icon={<SearchOutlined />}
+              onClick={discoverMail}
+              loading={busy === 'discover'}
+            >
+              Определить серверы по адресу
+            </Button>
+            <Text type="secondary">
+              Спросим DNS домена: SRV-записи, потом MX, потом привычные имена
+            </Text>
+          </Space>
           <Space>
             <Text type="secondary">Шифрование SSL</Text>
             <Switch
@@ -747,17 +811,58 @@ export default function SetupWizard() {
             description="Заполните MAIL_IMAP_HOST, MAIL_SMTP_HOST, MAIL_USER и MAIL_PASSWORD в .env и перезапустите контейнер api. Пароль нужен от приложения, а не основной пароль аккаунта."
           />
         ) : null}
+        {busy === 'mailcheck' ? (
+          <Alert style={{ marginTop: 12 }} type="info" message="Проверяю связь..." />
+        ) : null}
         {mailCheck ? (
           <Space direction="vertical" size={8} style={{ marginTop: 12, width: '100%' }}>
-            <Space>
+            <Text type="secondary">
+              Проверено {formatTime(mailCheck.checked_at)}
+            </Text>
+            <Space align="start">
               <StatusTag state={mailCheck.imap.ok ? OK : FAIL} />
-              <Text>IMAP: {mailCheck.imap.detail}</Text>
+              <Text>
+                IMAP {mailCheck.imap_host}: {mailCheck.imap.detail}
+              </Text>
             </Space>
-            <Space>
+            <Space align="start">
               <StatusTag state={mailCheck.smtp.ok ? OK : FAIL} />
-              <Text>SMTP: {mailCheck.smtp.detail}</Text>
+              <Text>
+                SMTP {mailCheck.smtp_host}: {mailCheck.smtp.detail}
+              </Text>
             </Space>
           </Space>
+        ) : null}
+        {discovery ? (
+          <div style={{ marginTop: 16 }}>
+            <Text type="secondary">
+              Поиск по домену {discovery.domain}, {formatTime(discovery.checked_at)}
+              {discovery.dns_available ? '' : '. DNS-резолвер недоступен, работали только привычные имена'}
+            </Text>
+            <Table
+              style={{ marginTop: 8 }}
+              rowKey={(item) => `${item.protocol}-${item.host}-${item.port}`}
+              size="small"
+              pagination={false}
+              dataSource={discovery.candidates}
+              columns={[
+                { title: 'Протокол', dataIndex: 'protocol', width: 100 },
+                { title: 'Сервер', dataIndex: 'host' },
+                { title: 'Порт', dataIndex: 'port', width: 80 },
+                { title: 'Откуда', dataIndex: 'source', width: 170 },
+                {
+                  title: 'Результат',
+                  width: 230,
+                  render: (_, item) => (
+                    <Space>
+                      <StatusTag state={item.reachable ? OK : FAIL} />
+                      <Text type="secondary">{item.detail}</Text>
+                    </Space>
+                  ),
+                },
+              ]}
+            />
+          </div>
         ) : null}
       </div>
 

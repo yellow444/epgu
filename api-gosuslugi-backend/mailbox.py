@@ -24,6 +24,7 @@ import logging
 import os
 import re
 import smtplib
+import socket
 import ssl
 from dataclasses import dataclass, field
 from email.header import decode_header, make_header
@@ -47,8 +48,38 @@ _SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]+")
 MAX_ATTACHMENT_BYTES = int(os.getenv("MAIL_MAX_ATTACHMENT", str(20 * 1024 * 1024)))
 
 
+CONNECT_TIMEOUT = int(os.getenv("MAIL_TIMEOUT", "20"))
+
+
 class MailError(RuntimeError):
     """Ошибка работы с почтой без раскрытия учётных данных."""
+
+
+def describe_network_error(exc: Exception, host: str, port: int) -> str:
+    """Человеческая причина отказа.
+
+    Общее "не удалось подключиться" бесполезно: чаще всего виноват неверный
+    адрес сервера, и это видно по типу ошибки. Учётные данные в текст не
+    попадают, только имя хоста и порт.
+    """
+    if isinstance(exc, socket.gaierror):
+        return (
+            f"Имя {host} не разрешается. Проверьте адрес сервера: у хостингов "
+            "он обычно отличается от домена почты."
+        )
+    if isinstance(exc, ConnectionRefusedError):
+        return f"{host} отклонил соединение на порту {port}. Проверьте порт."
+    if isinstance(exc, (socket.timeout, TimeoutError)):
+        return (
+            f"{host} не ответил за {CONNECT_TIMEOUT} с на порту {port}. "
+            "Порт закрыт или сервер недоступен."
+        )
+    if isinstance(exc, ssl.SSLError):
+        return (
+            f"Ошибка TLS при подключении к {host}:{port}. Проверьте порт и "
+            "переключатель шифрования: обычно 993 и 465 идут с SSL."
+        )
+    return f"Сеть недоступна при подключении к {host}:{port} ({type(exc).__name__})."
 
 
 @dataclass
@@ -134,20 +165,30 @@ def _imap_connect(config: MailConfig) -> imaplib.IMAP4:
     try:
         if config.use_ssl:
             client: imaplib.IMAP4 = imaplib.IMAP4_SSL(
-                config.imap_host, config.imap_port, ssl_context=ssl.create_default_context()
+                config.imap_host,
+                config.imap_port,
+                ssl_context=ssl.create_default_context(),
+                timeout=CONNECT_TIMEOUT,
             )
         else:
-            client = imaplib.IMAP4(config.imap_host, config.imap_port)
+            client = imaplib.IMAP4(
+                config.imap_host, config.imap_port, timeout=CONNECT_TIMEOUT
+            )
             client.starttls(ssl_context=ssl.create_default_context())
         client.login(config.user, password)
         return client
     except imaplib.IMAP4.error as err:
         # Текст ошибки IMAP может содержать логин, наружу его не отдаём.
         logger.warning("IMAP login failed: %s", type(err).__name__)
-        raise MailError("IMAP отклонил вход: проверьте адрес, пароль и доступ по IMAP") from err
+        raise MailError(
+            "IMAP отклонил вход. Проверьте логин и пароль приложения, а также "
+            "что доступ по IMAP включён в настройках ящика."
+        ) from err
     except OSError as err:
         logger.warning("IMAP connection failed: %s", type(err).__name__)
-        raise MailError("Не удалось подключиться к IMAP-серверу") from err
+        raise MailError(
+            describe_network_error(err, config.imap_host, config.imap_port)
+        ) from err
 
 
 def check_connection(config: MailConfig) -> Dict[str, Any]:
@@ -184,20 +225,32 @@ def _smtp_connect(config: MailConfig, password: str) -> smtplib.SMTP:
     try:
         if config.use_ssl and config.smtp_port == 465:
             server: smtplib.SMTP = smtplib.SMTP_SSL(
-                config.smtp_host, config.smtp_port, context=context, timeout=30
+                config.smtp_host, config.smtp_port, context=context, timeout=CONNECT_TIMEOUT
             )
         else:
-            server = smtplib.SMTP(config.smtp_host, config.smtp_port, timeout=30)
+            server = smtplib.SMTP(
+                config.smtp_host, config.smtp_port, timeout=CONNECT_TIMEOUT
+            )
             server.starttls(context=context)
         if password:
             server.login(config.user, password)
         return server
     except smtplib.SMTPAuthenticationError as err:
         logger.warning("SMTP auth failed: %s", type(err).__name__)
-        raise MailError("SMTP отклонил вход: проверьте адрес и пароль приложения") from err
-    except (smtplib.SMTPException, OSError) as err:
+        raise MailError(
+            "SMTP отклонил вход. Проверьте логин и пароль приложения."
+        ) from err
+    except OSError as err:
         logger.warning("SMTP connection failed: %s", type(err).__name__)
-        raise MailError("Не удалось подключиться к SMTP-серверу") from err
+        raise MailError(
+            describe_network_error(err, config.smtp_host, config.smtp_port)
+        ) from err
+    except smtplib.SMTPException as err:
+        logger.warning("SMTP protocol failure: %s", type(err).__name__)
+        raise MailError(
+            f"SMTP-сервер {config.smtp_host} ответил ошибкой протокола "
+            f"({type(err).__name__})."
+        ) from err
 
 
 def send_letter(

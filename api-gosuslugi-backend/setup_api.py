@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -18,6 +19,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 import certsources
+import maildiscovery
 import mailbox
 import secret_store
 import settings_store
@@ -36,6 +38,12 @@ class ImportRequest(BaseModel):
     path: str
     store: str = "uMy"
     link_container: str = ""
+
+
+class DiscoverRequest(BaseModel):
+    """Адрес ящика или домен, по которому ищем серверы."""
+
+    address: str = Field(min_length=3, max_length=320)
 
 
 class MailSettingsRequest(BaseModel):
@@ -104,13 +112,28 @@ def setup_router() -> APIRouter:
             }
         )
 
+    @router.post("/mail/discover")
+    async def mail_discover_route(request: DiscoverRequest):
+        """Определить адреса серверов по домену ящика через DNS."""
+        try:
+            result = maildiscovery.discover(request.address)
+        except ValueError as err:
+            raise HTTPException(status_code=400, detail=str(err)) from err
+        result["checked_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        return JSONResponse(content=result)
+
     @router.post("/mail/check")
     async def mail_check_route():
         """Проверить вход по IMAP и SMTP."""
         config = mailbox.load_config()
         if not config.imap_host and not config.smtp_host:
             raise HTTPException(status_code=400, detail="Почта не настроена")
-        return JSONResponse(content=mailbox.check_connection(config))
+        result = mailbox.check_connection(config)
+        # Время проверки: без него непонятно, свежий это результат или прошлый.
+        result["checked_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        result["imap_host"] = config.imap_host
+        result["smtp_host"] = config.smtp_host
+        return JSONResponse(content=result)
 
     @router.post("/mail/send")
     async def mail_send_route(letter: LetterRequest):

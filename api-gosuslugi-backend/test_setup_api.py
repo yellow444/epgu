@@ -85,6 +85,28 @@ def test_attachment_names_cannot_escape_the_folder(modules):
     assert "/" not in mailbox.safe_attachment_name("a/b/c.cer", 0)
 
 
+def test_network_errors_name_the_actual_reason(modules):
+    _, mailbox, _, _ = modules
+    import socket
+    import ssl
+
+    dns = mailbox.describe_network_error(socket.gaierror(-2, "nope"), "imap.wrong.ru", 993)
+    assert "не разрешается" in dns and "imap.wrong.ru" in dns
+
+    refused = mailbox.describe_network_error(ConnectionRefusedError(), "mail.ru", 993)
+    assert "отклонил соединение" in refused and "993" in refused
+
+    timed_out = mailbox.describe_network_error(socket.timeout(), "mail.ru", 993)
+    assert "не ответил" in timed_out
+
+    tls = mailbox.describe_network_error(ssl.SSLError(), "mail.ru", 143)
+    assert "TLS" in tls
+
+    # Ни в одном тексте нет ни логина, ни пароля: только хост и порт.
+    for text in (dns, refused, timed_out, tls):
+        assert "@" not in text
+
+
 def test_watched_addresses_cover_the_support_domains(modules):
     _, mailbox, _, _ = modules
     assert "sc.digital.gov.ru" in mailbox.WATCHED_DOMAINS

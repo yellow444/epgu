@@ -113,6 +113,18 @@ def save(values: Mapping[str, str]) -> Dict[str, str]:
     return describe(current)
 
 
+def clear() -> Dict[str, int]:
+    """Удалить все сохранённые настройки вместе с паролем."""
+    path = settings_path()
+    removed = len(load())
+    try:
+        path.unlink()
+    except FileNotFoundError:
+        removed = 0
+    logger.info("Настройки сброшены, удалено ключей: %s", removed)
+    return {"removed": removed}
+
+
 def describe(values: Mapping[str, str] | None = None) -> Dict[str, str]:
     """Сохранённые значения для интерфейса, без секретов."""
     values = load() if values is None else values

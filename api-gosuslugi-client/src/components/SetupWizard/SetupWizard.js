@@ -3,6 +3,7 @@ import {
   Alert,
   Button,
   Card,
+  Checkbox,
   Descriptions,
   Empty,
   Input,
@@ -19,6 +20,7 @@ import {
 } from 'antd';
 import {
   CheckCircleOutlined,
+  ClearOutlined,
   CloseCircleOutlined,
   CopyOutlined,
   DownloadOutlined,
@@ -335,6 +337,104 @@ export default function SetupWizard() {
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Проверить почту не удалось.') });
       }
+    });
+  };
+
+  const resetEverything = async (options) => {
+    await run('reset', async () => {
+      try {
+        const res = await api.post('/setup/reset', options);
+        // Сессия оператора живёт в памяти основного приложения, поэтому
+        // маркер и выбор сертификата чистятся отдельным вызовом.
+        try {
+          await api.post('/session/clear');
+        } catch (error) {
+          // Если сессии не было, это не ошибка сброса.
+        }
+        setMailConfig(res.data.config);
+        setMailCheck(null);
+        setDiscovery(null);
+        setDotenv('');
+        setMessages([]);
+        setApiKey('');
+        setTokenState({ state: IDLE, detail: '' });
+        setHealth({ hc: IDLE, status: IDLE, detail: '' });
+        setLinkContainer('');
+        setMailForm({
+          imap_host: '',
+          imap_port: '993',
+          smtp_host: '',
+          smtp_port: '465',
+          user: '',
+          sender: '',
+          use_ssl: true,
+          password: '',
+        });
+        setStep(0);
+        await loadCertificates();
+        const cleared = res.data.cleared || {};
+        setNotice({
+          type: 'success',
+          text:
+            `Сброшено. Настроек стёрто: ${cleared.settings || 0}` +
+            (cleared.files !== undefined ? `, файлов: ${cleared.files}` : '') +
+            (cleared.inbound_messages !== undefined
+              ? `, записей журнала: ${cleared.inbound_messages}`
+              : '') +
+            '. Вводите заново с первого шага.',
+        });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Сбросить не удалось.') });
+      }
+    });
+  };
+
+  const confirmReset = () => {
+    // Значения читаются на момент подтверждения, поэтому храним их снаружи.
+    const options = { clear_inbound: false, clear_files: false };
+    Modal.confirm({
+      title: 'Сбросить настройку стенда',
+      icon: <ExclamationCircleOutlined />,
+      width: 620,
+      content: (
+        <Space direction="vertical" size={12} style={{ width: '100%', marginTop: 12 }}>
+          <Text>Будет стёрто в любом случае:</Text>
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            <li>настройки почты, включая сохранённый пароль</li>
+            <li>маркер доступа ЕСИА и выбор текущего сертификата</li>
+            <li>введённый API-Key и результаты проверок в этом окне</li>
+          </ul>
+          <Text>Дополнительно, если отметить:</Text>
+          <Checkbox
+            onChange={(event) => {
+              options.clear_files = event.target.checked;
+            }}
+          >
+            удалить файлы из папки сертификатов
+          </Checkbox>
+          <Alert
+            type="warning"
+            showIcon
+            message="Файлы удаляются безвозвратно"
+            description="Там может лежать единственная копия сертификата организации из письма УЦ."
+          />
+          <Checkbox
+            onChange={(event) => {
+              options.clear_inbound = event.target.checked;
+            }}
+          >
+            очистить журнал входящих запросов от ЕПГУ
+          </Checkbox>
+          <Text type="secondary">
+            Не трогаем: ключевые контейнеры КриптоПро, установленные сертификаты
+            в хранилище и переменные из .env.
+          </Text>
+        </Space>
+      ),
+      okText: 'Сбросить',
+      okButtonProps: { danger: true },
+      cancelText: 'Отмена',
+      onOk: () => resetEverything(options),
     });
   };
 
@@ -1060,6 +1160,14 @@ export default function SetupWizard() {
       }
       extra={
         <Space>
+          <Button
+            danger
+            icon={<ClearOutlined />}
+            onClick={confirmReset}
+            loading={busy === 'reset'}
+          >
+            Сбросить всё
+          </Button>
           <Button disabled={step === 0} onClick={() => setStep(step - 1)}>
             Назад
           </Button>

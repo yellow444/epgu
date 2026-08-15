@@ -111,6 +111,39 @@ def test_password_source_is_named_honestly(client, modules):
     secret_store.clear_runtime_secrets()
 
 
+def test_reset_wipes_settings_and_password(client, modules):
+    settings_store, secret_store, mailbox, _ = modules
+    client.post(
+        "/mail/settings",
+        json={"imap_host": "imap.example.ru", "user": "a@b.ru", "password": "secret"},
+    )
+    assert mailbox.load_config().imap_host == "imap.example.ru"
+
+    response = client.post("/setup/reset", json={})
+    assert response.status_code == 200
+    assert response.json()["cleared"]["settings"] > 0
+    assert settings_store.load() == {}
+    # После сброса остаётся только то, что задано окружением контейнера.
+    assert mailbox.load_config().imap_host == "imap.from-environment.ru"
+    assert secret_store.get_secret("MAIL_PASSWORD") == "password-from-environment"
+
+
+def test_reset_keeps_certificate_files_unless_asked(client, modules):
+    _, _, _, _ = modules
+    import certsources
+
+    folder = certsources.cert_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "org.cer").write_bytes(b"cert")
+
+    client.post("/setup/reset", json={})
+    assert (folder / "org.cer").exists()
+
+    response = client.post("/setup/reset", json={"clear_files": True})
+    assert response.json()["cleared"]["files"] == 1
+    assert not (folder / "org.cer").exists()
+
+
 def test_unknown_keys_are_refused(modules):
     settings_store, _, _, _ = modules
     with pytest.raises(ValueError):

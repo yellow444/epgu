@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -38,6 +38,13 @@ class ImportRequest(BaseModel):
     path: str
     store: str = "uMy"
     link_container: str = ""
+
+
+class ResetRequest(BaseModel):
+    """Что стирать при общем сбросе. Настройки стираются всегда."""
+
+    clear_inbound: bool = False
+    clear_files: bool = False
 
 
 class DiscoverRequest(BaseModel):
@@ -109,6 +116,50 @@ def setup_router() -> APIRouter:
                 # Чтобы перенести настройки на другую машину или закрепить их
                 # в .env, который переживёт удаление тома.
                 "dotenv": settings_store.dotenv_fragment(),
+            }
+        )
+
+    @router.post("/setup/reset")
+    async def setup_reset_route(request: ResetRequest):
+        """Общий сброс: вернуть стенд к состоянию до настройки.
+
+        Что стирается, оператор выбирает сам. Файлы из каталога сертификатов
+        удаляются только по явному согласию: там может лежать единственная
+        копия сертификата организации.
+        """
+        cleared: Dict[str, Any] = {}
+
+        settings_result = settings_store.clear()
+        secret_store.clear_runtime_secrets()
+        cleared["settings"] = settings_result["removed"]
+
+        if request.clear_inbound:
+            import inbound_store
+
+            cleared["inbound_messages"] = inbound_store.count()
+            inbound_store.clear()
+
+        if request.clear_files:
+            folder = certsources.cert_dir()
+            removed = 0
+            if folder.exists():
+                for entry in folder.iterdir():
+                    if entry.is_file() and entry.name != "settings.env":
+                        try:
+                            entry.unlink()
+                            removed += 1
+                        except OSError:
+                            logger.info("Файл удалить не удалось: %s", entry.name)
+            cleared["files"] = removed
+
+        logger.info("Общий сброс выполнен: %s", cleared)
+        return JSONResponse(
+            content={
+                "cleared": cleared,
+                "config": mailbox.load_config().describe(),
+                # Сессию оператора чистит основное приложение: маркер и выбор
+                # сертификата живут в его памяти.
+                "next": "Очистите сессию через /session/clear и настройте заново",
             }
         )
 

@@ -12,7 +12,7 @@ export const certificateDetails = (certificate) => {
     { label: 'Субъект', value: String(subject) },
     { label: 'Организация', value: String(organization) },
     { label: 'Идентификатор', value: String(thumbprint) },
-    { label: 'Действителен', value: `${validFrom} — ${validTo}` },
+    { label: 'Действителен', value: `${validFrom} - ${validTo}` },
   ];
 };
 
@@ -20,5 +20,5 @@ export const certificateOptionLabel = (certificate) => {
   const identity = firstText(certificate.common_name, certificate.subject, 'Не указан');
   const organization = firstText(certificate.organization, 'Без организации');
   const validTo = firstText(certificate.valid_to, 'срок не указан');
-  return `${identity} — ${organization} (до ${validTo})`;
+  return `${identity} - ${organization} (до ${validTo})`;
 };

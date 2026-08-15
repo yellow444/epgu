@@ -14,7 +14,7 @@
 | `ACCESS_TKN_EXP` | `int` | unix-timestamp срока действия JWT (`exp`); `0` - неизвестен | пересчитывается при получении токена |
 | `ALLOWED_ORIGINS` | `list[str]` | CORS allow_origins (из env `ALLOWED_ORIGINS`) | весь запуск |
 | `services_dict` | `dict[str, ServiceProfile]` | 21 встроенный профиль + строгий deep-overlay из `SERVICES` | весь запуск |
-| `_load_schema` | LRU cache | до 32 `lxml.XMLSchema`, ключ — файл XSD выбранного профиля | весь запуск |
+| `_load_schema` | LRU cache | до 32 `lxml.XMLSchema`, ключ - файл XSD выбранного профиля | весь запуск |
 
 ## Таблицы «виртуальных» сущностей
 

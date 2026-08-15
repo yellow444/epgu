@@ -1,21 +1,22 @@
 # REST API бэкенда
 
-Базовый путь при запуске в Docker: `http://localhost:5000/` (через Nginx: `http://localhost:5080/api/`).
+Прямой адрес backend в Docker Compose: `http://localhost:55000/`. Frontend проксирует тот же API через `http://localhost:50080/api/`; Nginx снимает префикс `/api/`, поэтому `/api/version` превращается в upstream-запрос `/version`. Оба host-порта привязаны к `127.0.0.1` и доступны только с локальной машины.
 
-FastAPI автоматически публикует Swagger: <http://localhost:5000/docs>.
+FastAPI публикует Swagger напрямую на <http://localhost:55000/docs> и через frontend proxy на <http://localhost:50080/api/docs>.
 
-> Источник истины по внешним вызовам - [Спецификация API ЕПГУ v1.13](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_13.docx) (с правками v1.12.1 по ГОСТ TLS и СМЭВ4). Внутренние эндпоинты бэкенда транслируют соответствующие методы спецификации, добавляя криптооперации через `pycades` и валидацию XML по локальному XSD.
+Compose healthcheck использует `GET /version`, который работает в публичном core-образе без CryptoPro. `GET /hc` и `GET /status` проверяют именно CSP/pycades и без отдельного signing runtime закономерно возвращают `503`.
+
+> Источник истины по внешним вызовам — [каталог API для госорганов](https://partners.gosuslugi.ru/catalog/api_for_gu), локальный снимок которого зафиксирован в [docs/api_for_gu](./api_for_gu/README.md). Общий транспорт реализован по спецификации API ЕПГУ v1.14; XML, подпись и способ отправки выбираются из versioned-профиля конкретной услуги.
 
 ## Сводная таблица
 
-| Метод | Путь | Назначение | Источник в спец. v1.13 |
+| Метод | Путь | Назначение | Источник в спец. v1.14 |
 |---|---|---|---|
-| GET | `/hc` | Health-check (есть ли PyCades) | - (внутренний) |
+| GET | `/hc` | CSP readiness: `200` с PyCades, degraded/`503` без него | - (внутренний) |
 | GET | `/status` | Версия PyCades / модуля | - (внутренний) |
-| GET | `/version` | Расширенная диагностика: pycades, среда, host'ы, число услуг, версия спецификации | - (внутренний) |
+| GET | `/version` | Core readiness и диагностика: pycades, среда, hosts, число услуг, версия спецификации | - (внутренний) |
 | GET | `/environments` | Справочник известных сред (test/prod): host'ы ЕСИА/ЕПГУ, технологический портал, согласия | - (внутренний) |
 | POST | `/get_certificates` | Список сертификатов из хранилища CSP | - (внутренний) |
-| GET | `/get_certificates` | То же (fallback) | - (внутренний) |
 | POST | `/set_current_certificate?cert_id=...` | Выбор активного сертификата | - (внутренний) |
 | POST | `/get_current_certificate` | Текущий сертификат и его субъект | - (внутренний) |
 | POST | `/accessTkn_esia` | Получение JWT от ЕСИА | ЕСИА `/esia-rs/.../tkn` |
@@ -23,16 +24,19 @@ FastAPI автоматически публикует Swagger: <http://localhost
 | POST | `/order/{orderId}` | Детали заявления + список ответных файлов | `POST /api/gusmev/order/{id}` |
 | POST | `/order/{orderId}/cancel` | Отменить заявление | `POST /api/gusmev/order/{id}/cancel` |
 | GET  | `/getUpdatedAfter` | Заявления, обновлённые после даты | `GET /api/gusmev/order/getUpdatedAfter` |
-| GET  | `/getOrdersStatus/` | Статусы по списку orderIds | `GET /api/gusmev/order/getOrdersStatus` |
+| GET  | `/getOrdersStatus` | Статусы по списку orderIds | `GET /api/gusmev/order/getOrdersStatus` |
 | POST | `/dictionary/{code}` | Справочник НСИ | `POST /api/nsi/v1/dictionary/{code}` |
 | POST | `/download_file/{objectId}/{objectType}` | Скачать файл-ответ | `GET /api/gusmev/files/download/{id}/{type}` |
-| GET  | `/services` | Справочник услуг (из env `SERVICES`) | - (внутренний) |
-| GET  | `/services/{code}` | Описание одной услуги (404 если не зарегистрирована) | - (внутренний) |
-| GET  | `/xsd?simple_type_name=...` | Перечисления (`xs:enumeration`) из XSD | - (внутренний) |
-| GET  | `/xml?service=...` | Эталонные `req.xml` и `piev_epgu.xml` услуги | - (внутренний) |
+| GET  | `/services` | Справочник услуг + профиль отправки (режим, шаблоны файлов) | - (внутренний) |
+| GET  | `/services/{code}` | Описание одной услуги (404 если не зарегистрирована): `submissionMode`, `submissionDocuments`, `archiveNameTemplate` | - (внутренний) |
+| GET  | `/xsd?service=...&simple_type_name=...` | Перечисления из собственной XSD выбранной исполняемой услуги | - (внутренний) |
+| GET  | `/xml?service=...` | Локальные XML-шаблоны и метаданные профиля; генерируемый XML Госключа см. `/goskey/preview` | - (внутренний) |
 | POST | `/zipsize` | Размер будущего zip-архива из файлов | - (внутренний) |
 | POST | `/push` | Отправка заявления в ЕПГУ (одним куском) | `POST /api/gusmev/push` |
-| POST | `/push/chunked` | Chunked-отправка + XSD-валидация `piev_epgu.xml` | `POST /api/gusmev/push/chunked` |
+| POST | `/push/chunked` | Chunked-отправка + XSD-валидация по профилю документа | `POST /api/gusmev/push/chunked` |
+| GET | `/goskey/capabilities` | Верифицированные и reference-only контракты Госключа | - (внутренний) |
+| POST | `/goskey/preview` | Сгенерировать `req.xml` Госключа без подписи и отправки | - (внутренний) |
+| POST | `/goskey/submit` | Сгенерировать, подписать и отправить архив Госключа выбранным транспортом | `push` или `order` + `push/chunked` |
 
 ## Модели запросов
 
@@ -46,9 +50,13 @@ FastAPI автоматически публикует Swagger: <http://localhost
 
 | Поле | Тип | По умолчанию | Описание |
 |---|---|---|---|
-| region | string | `45000000000` | ОКТМО региона |
-| serviceCode | string | `60010153` | Код услуги ЕПГУ |
-| targetCode | string | `-60010153` | Код цели |
+| region | string | обязательное | ОКАТО пользователя, передаваемый во время выполнения |
+| serviceCode | string | обязательное | Код зарегистрированной услуги ЕПГУ |
+| targetCode | string | обязательное | Код цели из профиля выбранной услуги |
+
+### `GoskeyRequest`
+
+`POST /goskey/preview` принимает JSON этой модели. `POST /goskey/submit` принимает multipart: поле `request` с тем же JSON и одно или несколько полей `documents` с файлами. Срок `signExpiration` должен быть будущим временем в пределах 24 часов; точный набор идентификаторов получателя зависит от услуги и capability.
 
 ## Ключевые сценарии
 
@@ -77,16 +85,18 @@ Content-Type: multipart/form-data
 
 meta=<json>
 orderId=<id>
-chunks=<N>
-chunk=<i>
 files_upload=@piev_epgu.xml
 files_upload=@...
 ```
 
 Backend:
-1. Парсит `meta` как JSON.
-2. Собирает zip из всех `files_upload`; если среди них `piev_epgu.xml` - валидирует по XSD.
-3. Вызывает `{svcdev_host}/api/gusmev/push/chunked` с заголовком `Authorization: Bearer <ACCESS_TKN_ESIA>`.
+1. Проверяет `meta`, исполняемость услуги и соответствие `targetCode` профилю.
+2. Один раз собирает ZIP из `files_upload`, проверяет обязательные имена, well-formed XML, XSD и detached-подписи по профилю.
+3. Сам делит ZIP на части профиля (5–50 МБ) и последовательно вызывает `{svcdev_host}/api/gusmev/push/chunked`. В upstream-полях `chunk` используются индексы `0..N-1`; промежуточный ответ должен быть `206`, последний — `200`.
+
+Клиент не нарезает архив. Старые поля формы допустимы только как `chunks=1`, `chunk=0` либо не передаются. `orderId` предварительно резервируется через `POST /order`. Для нескольких частей имена идут как `.z001`, `.z002`, …, но значение поля `chunk` остаётся нулевым индексом.
+
+Frontend Nginx ограничивает исходное multipart-тело значением `64m` и использует таймауты чтения/отправки 300 секунд. Backend отдельно ограничивает каждый исходный файл и их сумму 50 000 000 байт; upstream chunk также не превышает 50 МБ.
 
 ### Скачивание ответного файла
 
@@ -98,35 +108,53 @@ Backend:
 |---|---|---|
 | 400 | backend | Неверный API-key, неверный XML, неверный JSON meta |
 | 404 | backend | Для `order/{id}` - пустой `orderResponseFiles` / не парсится |
+| 409 | backend | Профиль или вариант опубликован только для справки и не исполняется |
+| 413 | backend | Adaptive-архив больше 50 МБ и требует `order` + chunked |
 | 499 | backend | Клиент разорвал соединение при zip-сборке |
+| 502 | backend | ЕПГУ вернул некорректный ответ или неожиданный `orderId`/HTTP-код части |
+| 503 | backend | Для операции подписи недоступны `pycades`/CryptoPro CSP |
 | 500 | backend | Ошибка криптопровайдера / неизвестная ошибка |
 | любой | ЕПГУ | Проксируется `err.response.status_code` |
 
 ## Переменные окружения
 
-| Имя | По умолчанию | Назначение |
+Compose читает корневой `.env`, но передаёт контейнерам только переменные, перечисленные в `docker-compose.yml`.
+
+| Имя | Compose default | Назначение |
 |---|---|---|
-| `apikey` | `my api key` | API-ключ организации (выпускается на технологическом портале ЕСИА) |
-| `KeyPin` | `1234567890` | PIN контейнера ключа |
-| `TSAAddress` | `http://www.cryptopro.ru/tsp/tsp.srf` | TSA для CAdES |
+| `apikey` | пусто | API-ключ организации (выпускается на технологическом портале ЕСИА) |
+| `TSAAddress` | `http://testca2012.cryptopro.ru/tsp/tsp.srf` | Используется только отдельно подключённым signing runtime |
 | `esia_host` | `https://esia-portal1.test.gosuslugi.ru` | ЕСИА (тест). Для прод: `https://esia.gosuslugi.ru` |
-| `svcdev_host` | `https://svcdev-beta.test.gosuslugi.ru` | СМЭВ/ЕПГУ (тест). Для прод (ГОСТ TLS): `https://lk.gosuslugi.ru` |
-| `XSD_FILE` | `/xml/piev_epgu.xsd` | Схема для валидации |
-| `SERVICES` | см. `config.DEFAULT_SERVICES` | JSON-справочник услуг (пусто -> дефолтный каталог из `config.py`) |
-| `ALLOWED_ORIGINS` | `*` | CORS allow_origins: список через запятую или `*`. В прод - конкретный домен |
-| `production` | пусто | Если пусто - включается `debugpy` на `:5678` |
+| `svcdev_host` | `https://svcdev-gostapi.test.gosuslugi.ru` | ЕПГУ (формальный test endpoint). Для prod: `https://www.gosuslugi.ru` |
+| `XML_ROOT` | `/xml` | Встроенный в backend-образ корень XML/XSD; каждый профиль указывает собственную схему |
+| `SERVICES_OVERRIDE` | пусто | Compose overlay; внутри контейнера передаётся приложению как `SERVICES` |
+| `ALLOWED_ORIGINS` | `http://localhost:50080,http://127.0.0.1:50080` в compose | CORS allow-origins и обязательная Origin/Referer-проверка browser mutations; CLI/SDK без этих browser-заголовков поддерживаются |
+| `UPSTREAM_CONNECT_TIMEOUT` | `15` | Таймаут соединения с ЕПГУ, секунды |
+| `UPSTREAM_READ_TIMEOUT`, `UPSTREAM_WRITE_TIMEOUT` | `300` | Таймауты чтения/записи ЕПГУ для допустимых больших комплектов |
+| `UPSTREAM_POOL_TIMEOUT` | `30` | Таймаут ожидания соединения из пула |
+| `BACKEND_URL` | `/api` | Build-time base URL React; изменение требует пересборки frontend |
+| `BACKEND_API` | `http://api:5000` | Runtime upstream Nginx; указывается без `/api` |
+| `API_PORT` | `55000` | Loopback-only порт backend: `127.0.0.1:${API_PORT}:5000` |
+| `FRONTEND_PORT` | `50080` | Loopback-only порт frontend: `127.0.0.1:${FRONTEND_PORT}:80` |
 
 Полный шаблон - [.env.example](../.env.example).
 
-> **Подключение через СМЭВ4 (ПОДД)** - альтернатива прямому ГОСТ TLS. На тестовом контуре спецификация публикуется в `https://lkuv.gosuslugi.ru/paip-portal/`. На промышленном - на момент 2024-05 не опубликована. Подключение требует Агента ПОДД (см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/)). Бэкенд проксирует запросы по тому же контуру URL - переключение производится сменой `svcdev_host`.
+При standalone-запуске backend без Compose строгий overlay передаётся непосредственно в `SERVICES`; `SERVICES_OVERRIDE` — защитное имя только внешнего compose-контракта. Публичный образ не монтирует `.env`, ключи или сертификаты и не содержит CryptoPro/pycades.
+
+## Граница безопасности и tenancy
+
+Backend хранит `ACCESS_TKN_ESIA`, `CURRENT_CERT_ID` и загруженные сертификаты в глобальном состоянии процесса. Стандартный Compose поэтому предназначен для одного локального оператора и не имеет встроенной пользовательской authentication/authorization.
+
+Нельзя просто заменить loopback bind на `0.0.0.0` и считать систему общей. Для shared/LAN/public deployment необходим внешний reverse proxy с TLS, authentication, authorization, rate limiting и аудитом. Каждый оператор/tenant должен работать с отдельным backend process/runtime и собственным хранилищем секретов. Backend дополнительно отклоняет state-changing browser-запросы с чужим `Origin`/`Referer`; это защита локального оператора от CSRF, но не замена полноценной аутентификации API.
 
 ## Поддерживаемые услуги
 
-Полный каталог услуг и кодов - в [SERVICES.md](./SERVICES.md). По умолчанию в `app.py` зарегистрированы:
+Полный каталог из 21 профиля приведён в [SERVICES.md](./SERVICES.md). UI показывает также reference-only профили, но backend прекращает их обработку с `409` до внешнего вызова. На 2026-08-12 исполняемы три профиля Госключа:
 
-| Код | Описание | XML / XSD |
+| Код | Описание | Контракт |
 |---|---|---|
-| `60010153` | Наличие ИП (ФССП) | `req.xml`, `piev_epgu.xml` (XSD: `piev_epgu.xsd`) |
-| `10000000367` | Подача заявлений/ходатайств/объяснений | `req.xml`, `piev_epgu.xml` |
-| `10000000109` | Доставка пенсии и социальных выплат ПФР/СФР | `req.xml`, `piev_epgu.xml` |
-| `60010154` | Предоставление информации о ходе ИП (ФССП) | `req.xml`, `piev_epgu.xml` |
+| `10000000374` | Подписание физическим лицом в Госключе | УНЭП verified; УКЭП остаётся reference-only; adaptive |
+| `60025907` | Подписание УКЭП юридическими лицами | typed XML + detached CAdES, adaptive |
+| `60080470` | Подписание УКЭП с сертификатом Федерального казначейства | typed XML + detached CAdES, adaptive |
+
+ФССП `60010153` имеет каталогизированные XSD и chunked-транспорт, но доступный XML является демонстрационным, а не безопасным рабочим вводом. Профиль остаётся `reference` до типизированной формы, fail-closed проверки placeholder/полей и приёмки в авторизованном контуре. `60079416` (расшифрование в Госключе) каталогизирован, но не исполняется из-за противоречий официальных источников. Для всех Госключ-сценариев каждый файл, включая `req.xml`, получает отдельный файл `.sig`; операции `/goskey/submit` требуют лицензированного CryptoPro/pycades runtime.

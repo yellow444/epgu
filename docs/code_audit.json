@@ -1,0 +1,1180 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-08-12",
+  "scope": [
+    "api-gosuslugi-backend",
+    "api-gosuslugi-client/src",
+    "python-epgu/src",
+    "python-epgu/tests",
+    "scripts"
+  ],
+  "python": {
+    "files": 40,
+    "total": 9001,
+    "blank": 1272,
+    "commentOnly": 117,
+    "codeOrMixed": 7612,
+    "functions": 286,
+    "classes": 58,
+    "methods": 123,
+    "asyncFunctions": 36,
+    "variables": 1253,
+    "annotatedVariables": 198,
+    "publicApi": 310,
+    "documentedPublicApi": 123,
+    "arguments": 489,
+    "annotatedArguments": 403,
+    "publicCallableReturns": 253,
+    "annotatedPublicReturns": 85,
+    "testCases": 129,
+    "parseErrors": [],
+    "publicDocumentationPercent": 39.7,
+    "argumentAnnotationPercent": 82.4,
+    "returnAnnotationPercent": 33.6,
+    "variableAnnotationPercent": 15.8,
+    "byFile": [
+      {
+        "file": "api-gosuslugi-backend/app.py",
+        "functions": 52,
+        "classes": 3,
+        "methods": 0,
+        "asyncFunctions": 29,
+        "variables": 273,
+        "annotatedVariables": 30,
+        "publicApi": 34,
+        "documentedPublicApi": 11,
+        "arguments": 93,
+        "annotatedArguments": 91,
+        "publicCallableReturns": 31,
+        "annotatedPublicReturns": 6,
+        "testCases": 0,
+        "loc": {
+          "total": 1582,
+          "blank": 143,
+          "commentOnly": 18,
+          "codeOrMixed": 1421
+        }
+      },
+      {
+        "file": "api-gosuslugi-backend/config.py",
+        "functions": 9,
+        "classes": 1,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 41,
+        "annotatedVariables": 2,
+        "publicApi": 5,
+        "documentedPublicApi": 5,
+        "arguments": 15,
+        "annotatedArguments": 15,
+        "publicCallableReturns": 4,
+        "annotatedPublicReturns": 4,
+        "testCases": 0,
+        "loc": {
+          "total": 260,
+          "blank": 34,
+          "commentOnly": 1,
+          "codeOrMixed": 225
+        }
+      },
+      {
+        "file": "api-gosuslugi-backend/routers.py",
+        "functions": 1,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 3,
+        "variables": 9,
+        "annotatedVariables": 1,
+        "publicApi": 1,
+        "documentedPublicApi": 1,
+        "arguments": 5,
+        "annotatedArguments": 5,
+        "publicCallableReturns": 1,
+        "annotatedPublicReturns": 1,
+        "testCases": 0,
+        "loc": {
+          "total": 90,
+          "blank": 12,
+          "commentOnly": 1,
+          "codeOrMixed": 77
+        }
+      },
+      {
+        "file": "api-gosuslugi-backend/test_app.py",
+        "functions": 13,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 24,
+        "annotatedVariables": 0,
+        "publicApi": 13,
+        "documentedPublicApi": 0,
+        "arguments": 12,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 13,
+        "annotatedPublicReturns": 0,
+        "testCases": 12,
+        "loc": {
+          "total": 138,
+          "blank": 29,
+          "commentOnly": 0,
+          "codeOrMixed": 109
+        }
+      },
+      {
+        "file": "api-gosuslugi-backend/test_config.py",
+        "functions": 15,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 11,
+        "annotatedVariables": 0,
+        "publicApi": 14,
+        "documentedPublicApi": 1,
+        "arguments": 2,
+        "annotatedArguments": 1,
+        "publicCallableReturns": 14,
+        "annotatedPublicReturns": 0,
+        "testCases": 14,
+        "loc": {
+          "total": 169,
+          "blank": 47,
+          "commentOnly": 3,
+          "codeOrMixed": 119
+        }
+      },
+      {
+        "file": "api-gosuslugi-backend/test_goskey_api.py",
+        "functions": 10,
+        "classes": 1,
+        "methods": 2,
+        "asyncFunctions": 2,
+        "variables": 18,
+        "annotatedVariables": 0,
+        "publicApi": 10,
+        "documentedPublicApi": 0,
+        "arguments": 14,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 9,
+        "annotatedPublicReturns": 0,
+        "testCases": 6,
+        "loc": {
+          "total": 188,
+          "blank": 33,
+          "commentOnly": 0,
+          "codeOrMixed": 155
+        }
+      },
+      {
+        "file": "api-gosuslugi-backend/test_submission_contracts.py",
+        "functions": 9,
+        "classes": 1,
+        "methods": 2,
+        "asyncFunctions": 2,
+        "variables": 28,
+        "annotatedVariables": 0,
+        "publicApi": 9,
+        "documentedPublicApi": 1,
+        "arguments": 15,
+        "annotatedArguments": 1,
+        "publicCallableReturns": 8,
+        "annotatedPublicReturns": 0,
+        "testCases": 5,
+        "loc": {
+          "total": 199,
+          "blank": 34,
+          "commentOnly": 0,
+          "codeOrMixed": 165
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/__init__.py",
+        "functions": 0,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 2,
+        "annotatedVariables": 0,
+        "publicApi": 0,
+        "documentedPublicApi": 0,
+        "arguments": 0,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 0,
+        "annotatedPublicReturns": 0,
+        "testCases": 0,
+        "loc": {
+          "total": 80,
+          "blank": 8,
+          "commentOnly": 5,
+          "codeOrMixed": 67
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/archive.py",
+        "functions": 1,
+        "classes": 2,
+        "methods": 7,
+        "asyncFunctions": 0,
+        "variables": 14,
+        "annotatedVariables": 7,
+        "publicApi": 6,
+        "documentedPublicApi": 6,
+        "arguments": 7,
+        "annotatedArguments": 7,
+        "publicCallableReturns": 5,
+        "annotatedPublicReturns": 5,
+        "testCases": 0,
+        "loc": {
+          "total": 121,
+          "blank": 21,
+          "commentOnly": 3,
+          "codeOrMixed": 97
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/auth/__init__.py",
+        "functions": 0,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 1,
+        "annotatedVariables": 0,
+        "publicApi": 0,
+        "documentedPublicApi": 0,
+        "arguments": 0,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 0,
+        "annotatedPublicReturns": 0,
+        "testCases": 0,
+        "loc": {
+          "total": 24,
+          "blank": 4,
+          "commentOnly": 2,
+          "codeOrMixed": 18
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/auth/base.py",
+        "functions": 0,
+        "classes": 2,
+        "methods": 3,
+        "asyncFunctions": 0,
+        "variables": 1,
+        "annotatedVariables": 0,
+        "publicApi": 4,
+        "documentedPublicApi": 4,
+        "arguments": 1,
+        "annotatedArguments": 1,
+        "publicCallableReturns": 2,
+        "annotatedPublicReturns": 2,
+        "testCases": 0,
+        "loc": {
+          "total": 33,
+          "blank": 10,
+          "commentOnly": 2,
+          "codeOrMixed": 21
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/auth/citizen.py",
+        "functions": 2,
+        "classes": 1,
+        "methods": 13,
+        "asyncFunctions": 0,
+        "variables": 49,
+        "annotatedVariables": 1,
+        "publicApi": 6,
+        "documentedPublicApi": 6,
+        "arguments": 33,
+        "annotatedArguments": 33,
+        "publicCallableReturns": 5,
+        "annotatedPublicReturns": 5,
+        "testCases": 0,
+        "loc": {
+          "total": 301,
+          "blank": 33,
+          "commentOnly": 5,
+          "codeOrMixed": 263
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/auth/org.py",
+        "functions": 1,
+        "classes": 1,
+        "methods": 8,
+        "asyncFunctions": 0,
+        "variables": 16,
+        "annotatedVariables": 1,
+        "publicApi": 4,
+        "documentedPublicApi": 4,
+        "arguments": 9,
+        "annotatedArguments": 9,
+        "publicCallableReturns": 3,
+        "annotatedPublicReturns": 3,
+        "testCases": 0,
+        "loc": {
+          "total": 135,
+          "blank": 21,
+          "commentOnly": 3,
+          "codeOrMixed": 111
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/auth/token.py",
+        "functions": 0,
+        "classes": 1,
+        "methods": 4,
+        "asyncFunctions": 0,
+        "variables": 6,
+        "annotatedVariables": 5,
+        "publicApi": 3,
+        "documentedPublicApi": 3,
+        "arguments": 1,
+        "annotatedArguments": 1,
+        "publicCallableReturns": 2,
+        "annotatedPublicReturns": 2,
+        "testCases": 0,
+        "loc": {
+          "total": 53,
+          "blank": 10,
+          "commentOnly": 3,
+          "codeOrMixed": 40
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/client.py",
+        "functions": 0,
+        "classes": 1,
+        "methods": 22,
+        "asyncFunctions": 0,
+        "variables": 77,
+        "annotatedVariables": 7,
+        "publicApi": 11,
+        "documentedPublicApi": 11,
+        "arguments": 51,
+        "annotatedArguments": 51,
+        "publicCallableReturns": 10,
+        "annotatedPublicReturns": 10,
+        "testCases": 0,
+        "loc": {
+          "total": 504,
+          "blank": 53,
+          "commentOnly": 10,
+          "codeOrMixed": 441
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/const.py",
+        "functions": 0,
+        "classes": 1,
+        "methods": 1,
+        "asyncFunctions": 0,
+        "variables": 7,
+        "annotatedVariables": 0,
+        "publicApi": 1,
+        "documentedPublicApi": 1,
+        "arguments": 2,
+        "annotatedArguments": 2,
+        "publicCallableReturns": 0,
+        "annotatedPublicReturns": 0,
+        "testCases": 0,
+        "loc": {
+          "total": 48,
+          "blank": 11,
+          "commentOnly": 9,
+          "codeOrMixed": 28
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/errors.py",
+        "functions": 0,
+        "classes": 8,
+        "methods": 3,
+        "asyncFunctions": 0,
+        "variables": 5,
+        "annotatedVariables": 0,
+        "publicApi": 8,
+        "documentedPublicApi": 8,
+        "arguments": 7,
+        "annotatedArguments": 7,
+        "publicCallableReturns": 0,
+        "annotatedPublicReturns": 0,
+        "testCases": 0,
+        "loc": {
+          "total": 76,
+          "blank": 24,
+          "commentOnly": 3,
+          "codeOrMixed": 49
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/models.py",
+        "functions": 2,
+        "classes": 7,
+        "methods": 23,
+        "asyncFunctions": 0,
+        "variables": 96,
+        "annotatedVariables": 53,
+        "publicApi": 18,
+        "documentedPublicApi": 18,
+        "arguments": 15,
+        "annotatedArguments": 15,
+        "publicCallableReturns": 11,
+        "annotatedPublicReturns": 11,
+        "testCases": 0,
+        "loc": {
+          "total": 415,
+          "blank": 64,
+          "commentOnly": 4,
+          "codeOrMixed": 347
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/services/__init__.py",
+        "functions": 0,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 1,
+        "annotatedVariables": 0,
+        "publicApi": 0,
+        "documentedPublicApi": 0,
+        "arguments": 0,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 0,
+        "annotatedPublicReturns": 0,
+        "testCases": 0,
+        "loc": {
+          "total": 13,
+          "blank": 3,
+          "commentOnly": 2,
+          "codeOrMixed": 8
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/services/goskey.py",
+        "functions": 25,
+        "classes": 21,
+        "methods": 20,
+        "asyncFunctions": 0,
+        "variables": 153,
+        "annotatedVariables": 67,
+        "publicApi": 36,
+        "documentedPublicApi": 32,
+        "arguments": 56,
+        "annotatedArguments": 56,
+        "publicCallableReturns": 15,
+        "annotatedPublicReturns": 15,
+        "testCases": 0,
+        "loc": {
+          "total": 975,
+          "blank": 167,
+          "commentOnly": 7,
+          "codeOrMixed": 801
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/services/submit.py",
+        "functions": 2,
+        "classes": 1,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 15,
+        "annotatedVariables": 5,
+        "publicApi": 2,
+        "documentedPublicApi": 2,
+        "arguments": 13,
+        "annotatedArguments": 13,
+        "publicCallableReturns": 1,
+        "annotatedPublicReturns": 1,
+        "testCases": 0,
+        "loc": {
+          "total": 105,
+          "blank": 16,
+          "commentOnly": 3,
+          "codeOrMixed": 86
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/signature/__init__.py",
+        "functions": 1,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 1,
+        "annotatedVariables": 0,
+        "publicApi": 0,
+        "documentedPublicApi": 0,
+        "arguments": 1,
+        "annotatedArguments": 1,
+        "publicCallableReturns": 0,
+        "annotatedPublicReturns": 0,
+        "testCases": 0,
+        "loc": {
+          "total": 29,
+          "blank": 8,
+          "commentOnly": 5,
+          "codeOrMixed": 16
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/signature/base.py",
+        "functions": 0,
+        "classes": 1,
+        "methods": 1,
+        "asyncFunctions": 0,
+        "variables": 0,
+        "annotatedVariables": 0,
+        "publicApi": 2,
+        "documentedPublicApi": 2,
+        "arguments": 1,
+        "annotatedArguments": 1,
+        "publicCallableReturns": 1,
+        "annotatedPublicReturns": 1,
+        "testCases": 0,
+        "loc": {
+          "total": 20,
+          "blank": 6,
+          "commentOnly": 2,
+          "codeOrMixed": 12
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/signature/callable.py",
+        "functions": 0,
+        "classes": 1,
+        "methods": 2,
+        "asyncFunctions": 0,
+        "variables": 2,
+        "annotatedVariables": 0,
+        "publicApi": 2,
+        "documentedPublicApi": 2,
+        "arguments": 2,
+        "annotatedArguments": 2,
+        "publicCallableReturns": 1,
+        "annotatedPublicReturns": 1,
+        "testCases": 0,
+        "loc": {
+          "total": 38,
+          "blank": 9,
+          "commentOnly": 3,
+          "codeOrMixed": 26
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/signature/cryptopro.py",
+        "functions": 0,
+        "classes": 1,
+        "methods": 5,
+        "asyncFunctions": 0,
+        "variables": 28,
+        "annotatedVariables": 0,
+        "publicApi": 3,
+        "documentedPublicApi": 3,
+        "arguments": 7,
+        "annotatedArguments": 7,
+        "publicCallableReturns": 2,
+        "annotatedPublicReturns": 2,
+        "testCases": 0,
+        "loc": {
+          "total": 130,
+          "blank": 19,
+          "commentOnly": 8,
+          "codeOrMixed": 103
+        }
+      },
+      {
+        "file": "python-epgu/src/epgu/xml_validation.py",
+        "functions": 2,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 7,
+        "annotatedVariables": 0,
+        "publicApi": 1,
+        "documentedPublicApi": 1,
+        "arguments": 4,
+        "annotatedArguments": 4,
+        "publicCallableReturns": 1,
+        "annotatedPublicReturns": 1,
+        "testCases": 0,
+        "loc": {
+          "total": 62,
+          "blank": 12,
+          "commentOnly": 4,
+          "codeOrMixed": 46
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_archive.py",
+        "functions": 9,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 7,
+        "annotatedVariables": 0,
+        "publicApi": 9,
+        "documentedPublicApi": 0,
+        "arguments": 2,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 9,
+        "annotatedPublicReturns": 0,
+        "testCases": 9,
+        "loc": {
+          "total": 75,
+          "blank": 24,
+          "commentOnly": 0,
+          "codeOrMixed": 51
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_auth_citizen.py",
+        "functions": 15,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 30,
+        "annotatedVariables": 0,
+        "publicApi": 15,
+        "documentedPublicApi": 0,
+        "arguments": 14,
+        "annotatedArguments": 5,
+        "publicCallableReturns": 15,
+        "annotatedPublicReturns": 1,
+        "testCases": 13,
+        "loc": {
+          "total": 252,
+          "blank": 47,
+          "commentOnly": 0,
+          "codeOrMixed": 205
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_auth_org.py",
+        "functions": 6,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 15,
+        "annotatedVariables": 0,
+        "publicApi": 6,
+        "documentedPublicApi": 0,
+        "arguments": 5,
+        "annotatedArguments": 3,
+        "publicCallableReturns": 6,
+        "annotatedPublicReturns": 0,
+        "testCases": 6,
+        "loc": {
+          "total": 112,
+          "blank": 23,
+          "commentOnly": 0,
+          "codeOrMixed": 89
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_client.py",
+        "functions": 26,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 29,
+        "annotatedVariables": 0,
+        "publicApi": 26,
+        "documentedPublicApi": 0,
+        "arguments": 20,
+        "annotatedArguments": 13,
+        "publicCallableReturns": 26,
+        "annotatedPublicReturns": 0,
+        "testCases": 25,
+        "loc": {
+          "total": 390,
+          "blank": 73,
+          "commentOnly": 0,
+          "codeOrMixed": 317
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_goskey.py",
+        "functions": 22,
+        "classes": 2,
+        "methods": 2,
+        "asyncFunctions": 0,
+        "variables": 46,
+        "annotatedVariables": 0,
+        "publicApi": 22,
+        "documentedPublicApi": 0,
+        "arguments": 17,
+        "annotatedArguments": 6,
+        "publicCallableReturns": 20,
+        "annotatedPublicReturns": 2,
+        "testCases": 18,
+        "loc": {
+          "total": 444,
+          "blank": 63,
+          "commentOnly": 1,
+          "codeOrMixed": 380
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_models.py",
+        "functions": 8,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 12,
+        "annotatedVariables": 0,
+        "publicApi": 8,
+        "documentedPublicApi": 0,
+        "arguments": 1,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 8,
+        "annotatedPublicReturns": 0,
+        "testCases": 8,
+        "loc": {
+          "total": 188,
+          "blank": 23,
+          "commentOnly": 0,
+          "codeOrMixed": 165
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_services.py",
+        "functions": 6,
+        "classes": 1,
+        "methods": 5,
+        "asyncFunctions": 0,
+        "variables": 13,
+        "annotatedVariables": 0,
+        "publicApi": 11,
+        "documentedPublicApi": 0,
+        "arguments": 10,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 10,
+        "annotatedPublicReturns": 0,
+        "testCases": 5,
+        "loc": {
+          "total": 89,
+          "blank": 24,
+          "commentOnly": 0,
+          "codeOrMixed": 65
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_token_and_config.py",
+        "functions": 4,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 4,
+        "annotatedVariables": 0,
+        "publicApi": 4,
+        "documentedPublicApi": 0,
+        "arguments": 0,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 4,
+        "annotatedPublicReturns": 0,
+        "testCases": 4,
+        "loc": {
+          "total": 41,
+          "blank": 11,
+          "commentOnly": 0,
+          "codeOrMixed": 30
+        }
+      },
+      {
+        "file": "python-epgu/tests/test_xml_validation.py",
+        "functions": 4,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 3,
+        "annotatedVariables": 0,
+        "publicApi": 4,
+        "documentedPublicApi": 0,
+        "arguments": 1,
+        "annotatedArguments": 0,
+        "publicCallableReturns": 4,
+        "annotatedPublicReturns": 0,
+        "testCases": 4,
+        "loc": {
+          "total": 43,
+          "blank": 10,
+          "commentOnly": 0,
+          "codeOrMixed": 33
+        }
+      },
+      {
+        "file": "scripts/audit_repository.py",
+        "functions": 13,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 76,
+        "annotatedVariables": 7,
+        "publicApi": 2,
+        "documentedPublicApi": 0,
+        "arguments": 11,
+        "annotatedArguments": 11,
+        "publicCallableReturns": 2,
+        "annotatedPublicReturns": 2,
+        "testCases": 0,
+        "loc": {
+          "total": 352,
+          "blank": 37,
+          "commentOnly": 1,
+          "codeOrMixed": 314
+        }
+      },
+      {
+        "file": "scripts/build_service_profiles.py",
+        "functions": 3,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 22,
+        "annotatedVariables": 3,
+        "publicApi": 3,
+        "documentedPublicApi": 0,
+        "arguments": 12,
+        "annotatedArguments": 12,
+        "publicCallableReturns": 3,
+        "annotatedPublicReturns": 3,
+        "testCases": 0,
+        "loc": {
+          "total": 368,
+          "blank": 17,
+          "commentOnly": 1,
+          "codeOrMixed": 350
+        }
+      },
+      {
+        "file": "scripts/check_repository_hygiene.py",
+        "functions": 8,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 30,
+        "annotatedVariables": 1,
+        "publicApi": 1,
+        "documentedPublicApi": 0,
+        "arguments": 8,
+        "annotatedArguments": 8,
+        "publicCallableReturns": 1,
+        "annotatedPublicReturns": 1,
+        "testCases": 0,
+        "loc": {
+          "total": 247,
+          "blank": 34,
+          "commentOnly": 3,
+          "codeOrMixed": 210
+        }
+      },
+      {
+        "file": "scripts/extract_api_for_gu_assets.py",
+        "functions": 8,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 51,
+        "annotatedVariables": 4,
+        "publicApi": 3,
+        "documentedPublicApi": 1,
+        "arguments": 5,
+        "annotatedArguments": 5,
+        "publicCallableReturns": 3,
+        "annotatedPublicReturns": 3,
+        "testCases": 0,
+        "loc": {
+          "total": 239,
+          "blank": 28,
+          "commentOnly": 3,
+          "codeOrMixed": 208
+        }
+      },
+      {
+        "file": "scripts/sync_api_for_gu_docs.py",
+        "functions": 9,
+        "classes": 0,
+        "methods": 0,
+        "asyncFunctions": 0,
+        "variables": 30,
+        "annotatedVariables": 4,
+        "publicApi": 3,
+        "documentedPublicApi": 0,
+        "arguments": 17,
+        "annotatedArguments": 17,
+        "publicCallableReturns": 3,
+        "annotatedPublicReturns": 3,
+        "testCases": 0,
+        "loc": {
+          "total": 373,
+          "blank": 27,
+          "commentOnly": 2,
+          "codeOrMixed": 344
+        }
+      }
+    ]
+  },
+  "javascript": {
+    "files": 14,
+    "total": 5408,
+    "blank": 377,
+    "commentOnly": 100,
+    "codeOrMixed": 4931,
+    "functionsApprox": 109,
+    "classes": 3,
+    "variables": 409,
+    "exports": 36,
+    "testCases": 28,
+    "jsdocBlocks": 14,
+    "parser": "conservative regular-expression inventory; ESLint/Jest provide syntax validation",
+    "byFile": [
+      {
+        "file": "api-gosuslugi-client/src/App.js",
+        "loc": {
+          "total": 1781,
+          "blank": 71,
+          "commentOnly": 35,
+          "codeOrMixed": 1675
+        },
+        "functionsApprox": 44,
+        "classes": 0,
+        "variables": 153,
+        "exports": 0,
+        "testCases": 0,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/App.test.js",
+        "loc": {
+          "total": 85,
+          "blank": 11,
+          "commentOnly": 7,
+          "codeOrMixed": 67
+        },
+        "functionsApprox": 1,
+        "classes": 0,
+        "variables": 0,
+        "exports": 0,
+        "testCases": 4,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/__mocks__/ace-builds/webpack-resolver.js",
+        "loc": {
+          "total": 1,
+          "blank": 0,
+          "commentOnly": 0,
+          "codeOrMixed": 1
+        },
+        "functionsApprox": 0,
+        "classes": 0,
+        "variables": 0,
+        "exports": 0,
+        "testCases": 0,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/FileDropzone/FileDropzone.js",
+        "loc": {
+          "total": 107,
+          "blank": 7,
+          "commentOnly": 0,
+          "codeOrMixed": 100
+        },
+        "functionsApprox": 3,
+        "classes": 0,
+        "variables": 4,
+        "exports": 0,
+        "testCases": 0,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/GoskeyForm/GoskeyForm.js",
+        "loc": {
+          "total": 638,
+          "blank": 46,
+          "commentOnly": 6,
+          "codeOrMixed": 586
+        },
+        "functionsApprox": 19,
+        "classes": 0,
+        "variables": 66,
+        "exports": 11,
+        "testCases": 7,
+        "jsdocBlocks": 6
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/GoskeyForm/GoskeyForm.test.js",
+        "loc": {
+          "total": 172,
+          "blank": 16,
+          "commentOnly": 0,
+          "codeOrMixed": 156
+        },
+        "functionsApprox": 1,
+        "classes": 0,
+        "variables": 13,
+        "exports": 0,
+        "testCases": 9,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/JsonViewer/JsonViewer.js",
+        "loc": {
+          "total": 22,
+          "blank": 4,
+          "commentOnly": 0,
+          "codeOrMixed": 18
+        },
+        "functionsApprox": 1,
+        "classes": 0,
+        "variables": 0,
+        "exports": 0,
+        "testCases": 0,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/SetupGuide/SetupGuide.js",
+        "loc": {
+          "total": 1671,
+          "blank": 124,
+          "commentOnly": 28,
+          "codeOrMixed": 1519
+        },
+        "functionsApprox": 19,
+        "classes": 0,
+        "variables": 91,
+        "exports": 1,
+        "testCases": 1,
+        "jsdocBlocks": 2
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/SetupGuide/letters.js",
+        "loc": {
+          "total": 201,
+          "blank": 37,
+          "commentOnly": 10,
+          "codeOrMixed": 154
+        },
+        "functionsApprox": 3,
+        "classes": 0,
+        "variables": 5,
+        "exports": 5,
+        "testCases": 0,
+        "jsdocBlocks": 4
+      },
+      {
+        "file": "api-gosuslugi-client/src/components/SetupGuide/playbook.js",
+        "loc": {
+          "total": 137,
+          "blank": 6,
+          "commentOnly": 8,
+          "codeOrMixed": 123
+        },
+        "functionsApprox": 0,
+        "classes": 0,
+        "variables": 6,
+        "exports": 6,
+        "testCases": 0,
+        "jsdocBlocks": 2
+      },
+      {
+        "file": "api-gosuslugi-client/src/index.js",
+        "loc": {
+          "total": 7,
+          "blank": 1,
+          "commentOnly": 0,
+          "codeOrMixed": 6
+        },
+        "functionsApprox": 0,
+        "classes": 0,
+        "variables": 2,
+        "exports": 0,
+        "testCases": 0,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/serviceProfiles.js",
+        "loc": {
+          "total": 376,
+          "blank": 27,
+          "commentOnly": 0,
+          "codeOrMixed": 349
+        },
+        "functionsApprox": 18,
+        "classes": 0,
+        "variables": 55,
+        "exports": 13,
+        "testCases": 1,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/serviceProfiles.test.js",
+        "loc": {
+          "total": 149,
+          "blank": 16,
+          "commentOnly": 0,
+          "codeOrMixed": 133
+        },
+        "functionsApprox": 0,
+        "classes": 0,
+        "variables": 14,
+        "exports": 0,
+        "testCases": 6,
+        "jsdocBlocks": 0
+      },
+      {
+        "file": "api-gosuslugi-client/src/setupTests.js",
+        "loc": {
+          "total": 61,
+          "blank": 11,
+          "commentOnly": 6,
+          "codeOrMixed": 44
+        },
+        "functionsApprox": 0,
+        "classes": 3,
+        "variables": 0,
+        "exports": 0,
+        "testCases": 0,
+        "jsdocBlocks": 0
+      }
+    ]
+  },
+  "serviceContracts": {
+    "profileSchemaVersion": 1,
+    "catalogObservedAt": "2026-08-12",
+    "services": 21,
+    "availableServices": 3,
+    "referenceOnlyServices": 18,
+    "documents": 32,
+    "modes": {
+      "adaptive": 4,
+      "chunked": 17
+    },
+    "statuses": {
+      "reference": 18,
+      "verified": 3
+    },
+    "documentSignatures": {
+      "detached-cades": 7,
+      "none": 25
+    },
+    "integrityFailures": []
+  },
+  "officialDocuments": {
+    "documents": 28,
+    "serviceSpecifications": 21,
+    "extractedXmlXsdBlocks": 134
+  },
+  "documentation": {
+    "markdownFiles": 75,
+    "markdownLines": 7117
+  },
+  "limitations": [
+    "Structural metrics do not prove semantic or remote-contour correctness.",
+    "JavaScript symbol counts are approximate; ESLint, Jest and the production build are the syntax gates.",
+    "Reference-only service profiles intentionally cannot be submitted until service-specific golden/XSD tests pass."
+  ],
+  "gateFailures": []
+}

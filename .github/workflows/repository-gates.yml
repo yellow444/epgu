@@ -1,0 +1,109 @@
+name: Backend, frontend and repository gates
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repository-gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-hygiene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Check tracked secrets and forbidden artifacts
+        run: python scripts/check_repository_hygiene.py
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: api-gosuslugi-backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            api-gosuslugi-backend/requirements.txt
+            api-gosuslugi-backend/requirements-test.txt
+            python-epgu/pyproject.toml
+      - name: Install backend and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-test.txt "ruff>=0.8,<1" "pip-audit>=2.7,<3"
+          python -m pip check
+          python -m pip_audit --local --skip-editable
+      - name: Lint backend source and tests
+        run: python -m ruff check .
+      - name: Run backend tests
+        run: python -m pytest
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: api-gosuslugi-client
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: api-gosuslugi-client/package-lock.json
+      - name: Install exact frontend dependency lock
+        run: npm ci
+      - name: Audit production frontend dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Lint frontend source and tests
+        run: npm run lint
+      - name: Run frontend tests
+        env:
+          CI: "true"
+        run: npm test -- --watchAll=false --runInBand
+      - name: Build production frontend
+        env:
+          CI: "true"
+        run: npm run build
+
+  catalog-and-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Install catalogue verifier dependency
+        run: python -m pip install --upgrade pip "python-docx==1.2.0"
+      - name: Download and verify official document snapshot hashes
+        run: python scripts/sync_api_for_gu_docs.py --check
+      - name: Extract and verify XML and XSD evidence
+        run: |
+          python scripts/extract_api_for_gu_assets.py
+          python scripts/extract_api_for_gu_assets.py --check
+      - name: Verify generated service-profile registry
+        run: python scripts/build_service_profiles.py --check
+      - name: Verify deterministic repository audit
+        run: python scripts/audit_repository.py --check

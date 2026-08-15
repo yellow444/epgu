@@ -1,79 +1,33 @@
 ARG PYTHON_VERSION=3.12
-
-FROM python:${PYTHON_VERSION}-bookworm AS base
+FROM python:${PYTHON_VERSION}-slim-bookworm
 
 ARG UID=1000
 ARG GID=1000
-ARG WORKDIR=/app
-
-WORKDIR ${WORKDIR}
+WORKDIR /app
 
 RUN groupadd --gid ${GID} app \
- && useradd --uid ${UID} --gid ${GID} --no-create-home --shell /bin/bash app \
- && mkdir --parents ${WORKDIR} \
- && chown app:app ${WORKDIR}
+ && useradd --uid ${UID} --gid ${GID} --no-create-home --shell /usr/sbin/nologin app
 
-RUN apt update \
- && apt install --assume-yes \
-    libpcsclite1:amd64 \
- && apt clean
+COPY python-epgu /python-epgu
+COPY api-gosuslugi-backend/requirements.txt ./
+RUN python -m pip install --no-cache-dir --upgrade pip \
+ && python -m pip install --no-cache-dir -r requirements.txt
 
-ADD linux-amd64_deb.tgz ./
-RUN linux-amd64_deb/install.sh \
- && apt install --assume-yes \
-    ./linux-amd64_deb/cprocsp-pki-cades-*.deb \
-    ./linux-amd64_deb/cprocsp-rdr-pcsc-*.deb \
-    ./linux-amd64_deb/cprocsp-rdr-rutoken-*.deb \
-    ./linux-amd64_deb/lsb-cprocsp-devel_5.0*.deb \
- && rm -rf linux-amd64_deb
+COPY --chown=app:app api-gosuslugi-backend/app.py api-gosuslugi-backend/config.py api-gosuslugi-backend/routers.py api-gosuslugi-backend/service_profiles.json ./
+COPY --chown=app:app api-gosuslugi-backend/inbound.py api-gosuslugi-backend/inbound_api.py api-gosuslugi-backend/inbound_store.py ./
+COPY --chown=app:app api-gosuslugi-backend/xml /xml
 
+# Каталог журнала входящих запросов. Владелец выставляется здесь, чтобы том
+# унаследовал права и приёмник мог писать не от root.
+RUN mkdir --parents /var/lib/epgu-inbound && chown app:app /var/lib/epgu-inbound
 
-FROM base AS build
-
-RUN apt update \
- && apt install --assume-yes \
-    build-essential \
-    cmake \
-    libboost-all-dev \
-    python3-dev \
-    unzip \
- && apt clean
-
-ADD https://cryptopro.ru/sites/default/files/products/cades/pycades/pycades.zip ./pycades.zip
-ARG PYTHON_VERSION
-RUN unzip ./pycades.zip \
- && cd pycades_* \
- && mkdir build \
- && cd build \
- && cmake .. \
- && make -j4 \
- && cp pycades.so /usr/local/lib/python${PYTHON_VERSION}/ \
- && rm -rf /usr/src/pycades*
-
-
-FROM base AS runtime
-
-ARG PYTHON_VERSION
-COPY --from=build /usr/local/lib/python${PYTHON_VERSION}/pycades.so /usr/local/lib/python${PYTHON_VERSION}/pycades.so
-COPY --from=build /opt/cprocsp /opt/cprocsp
-
-COPY requirements.txt ./
-RUN pip install -U pip
-RUN pip install -r requirements.txt
-
-ADD http://certenroll.test.gosuslugi.ru/cdp/test_ca_rtk3.cer ./
-RUN /opt/cprocsp/bin/amd64/certmgr -install -store mroot -f ./test_ca_rtk3.cer \
- && rm -rf ./test_ca_rtk3.cer
-
-RUN mkdir --parents /var/opt/cprocsp/keys/app \
- && chown app:app /var/opt/cprocsp/keys/app
-
-COPY --chown=app:app certs/entrypoint.sh /app/entrypoint.sh
-RUN apt install --assume-yes dos2unix \
- && dos2unix /app/entrypoint.sh \
- && chmod +x /app/entrypoint.sh
-
+ENV XML_ROOT=/xml \
+    PYTHONUNBUFFERED=1
 USER app
-
 EXPOSE 5000
-ENTRYPOINT ["/app/entrypoint.sh"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/version', timeout=3).read()"]
+
+# Public image intentionally contains no proprietary CryptoPro binaries.
+# Mount/use a separately licensed image providing pycades for signing endpoints.
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]

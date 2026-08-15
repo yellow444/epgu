@@ -1,0 +1,109 @@
+name: Python package
+
+on:
+  push:
+    paths:
+      - "python-epgu/**"
+      - ".github/workflows/python-package.yml"
+  pull_request:
+    paths:
+      - "python-epgu/**"
+      - ".github/workflows/python-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: python-package-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: python-epgu
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python-epgu/pyproject.toml
+      - run: python -m pip install --upgrade pip "ruff>=0.8,<1" "mypy>=1.8,<2"
+      - run: python -m ruff check .
+      - run: python -m ruff format --check .
+      - run: python -m mypy src/epgu
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: python-epgu/pyproject.toml
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e ".[test,xml]"
+      - run: python -m pytest --cov=epgu --cov-report=term-missing --cov-report=xml
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: matrix.python-version == '3.13'
+        with:
+          name: python-coverage
+          path: python-epgu/coverage.xml
+          if-no-files-found: error
+
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python-epgu/pyproject.toml
+      - run: python -m pip install --upgrade pip "build>=1.2,<2" "twine>=7,<8"
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - name: Smoke-test the built wheel in an isolated environment
+        run: |
+          python -m venv .wheel-venv
+          .wheel-venv/bin/python -m pip install dist/*.whl
+          .wheel-venv/bin/python -c "import epgu, importlib.metadata; assert epgu.__version__ == importlib.metadata.version('epgu-api')"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: epgu-api-distributions
+          path: python-epgu/dist/*
+          if-no-files-found: error
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: python-epgu/pyproject.toml
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install -e . "pip-audit>=2.7,<3"
+      - run: python -m pip_audit --local --skip-editable

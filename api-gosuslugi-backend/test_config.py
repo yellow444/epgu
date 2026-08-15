@@ -12,26 +12,69 @@ import pytest
 def test_default_services_has_known_codes():
     from config import DEFAULT_SERVICES
 
-    # Услуги, описанные в docs/SERVICES.md как «по умолчанию».
-    for code in ("60010153", "60010154", "10000000367", "10000000109"):
+    # Коды присутствуют в свежем официальном каталоге, а не в старом env-примере.
+    for code in ("60010153", "10000000352", "10000000367", "10000000109"):
         assert code in DEFAULT_SERVICES, f"Услуга {code} должна быть в DEFAULT_SERVICES"
+    assert len(DEFAULT_SERVICES) == 21
 
 
 def test_default_services_shape():
     from config import DEFAULT_SERVICES
 
     required = {
+        "serviceCode",
         "description",
-        "req_file",
-        "piev_epgu_file",
+        "agency",
+        "protocol",
         "region",
         "targetCode",
         "eServiceCode",
         "serviceTargetCode",
+        "status",
+        "available",
+        "spec",
+        "submission",
     }
     for code, value in DEFAULT_SERVICES.items():
         missing = required - value.keys()
         assert not missing, f"У услуги {code} не хватает полей: {missing}"
+        assert value["serviceCode"] == code
+        assert value["spec"]["source"].startswith("https://gu-st.ru/")
+        assert len(value["spec"]["sha256"]) == 64
+        assert value["submission"]["documents"]
+
+
+def test_only_golden_and_typed_goskey_profiles_are_enabled():
+    from config import DEFAULT_SERVICES
+
+    enabled = [code for code, profile in DEFAULT_SERVICES.items() if profile["available"]]
+    assert enabled == ["10000000374", "60025907", "60080470"]
+    assert all(DEFAULT_SERVICES[code]["status"] == "verified" for code in enabled)
+    for code, profile in DEFAULT_SERVICES.items():
+        if code not in enabled:
+            assert profile["status"] == "reference"
+            assert profile["unavailableReason"]
+    assert DEFAULT_SERVICES["10000000374"]["capabilities"][0]["state"] == "verified"
+    assert DEFAULT_SERVICES["10000000374"]["capabilities"][1]["state"] == "reference"
+    assert "демонстрационные данны" in DEFAULT_SERVICES["60010153"]["unavailableReason"]
+
+
+def test_services_override_is_lossless():
+    from config import load_services
+
+    services = load_services('{"60010153":{"title":"Локальное название"}}')
+    profile = services["60010153"]
+    assert profile["title"] == "Локальное название"
+    assert profile["submission"]["mode"] == "chunked"
+    assert len(profile["submission"]["documents"]) == 2
+
+
+@pytest.mark.parametrize("payload", ["[]", '{"60010153":{"submission":{"chunkSize":1}}}'])
+def test_services_override_rejects_invalid_profile(payload):
+    from config import ServiceConfigError, load_services
+
+    with pytest.raises(ServiceConfigError):
+        load_services(payload)
 
 
 def test_environments_have_test_and_prod():
@@ -45,7 +88,7 @@ def test_environments_have_test_and_prod():
 
 
 def test_detect_environment_test():
-    from config import detect_environment, ENVIRONMENTS
+    from config import ENVIRONMENTS, detect_environment
 
     assert (
         detect_environment(
@@ -57,7 +100,7 @@ def test_detect_environment_test():
 
 
 def test_detect_environment_prod():
-    from config import detect_environment, ENVIRONMENTS
+    from config import ENVIRONMENTS, detect_environment
 
     assert (
         detect_environment(

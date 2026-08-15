@@ -1,39 +1,60 @@
-# 01 - Обзор системы
+# 01 — Обзор системы
 
 ## Назначение
 
-Информационная система для взаимодействия с **тестовой версией ЕПГУ** (Единый портал госуслуг) через API.
-Автоматизирует подачу заявлений, обработку результатов и работу с документами; подпись данных - через **КриптоПро CSP / PyCades**.
+Проект предоставляет Python-библиотеку, FastAPI backend и React frontend для интеграции с API ЕПГУ/ЕСИА. Система каталогизирует официальные профили услуг, формирует требуемые XML/ZIP-контракты, выбирает `push`/`chunked`/adaptive-транспорт и обрабатывает статусы и ответные документы.
 
-Базовый сценарий, заложенный в конфиг по умолчанию:
-услуга **`10001449665`** - «Предоставление информации о наличии исполнительного производства онлайн»
-(`eServiceCode=60010153`, `region=45000000000`, `targetCode=10001505301`, `serviceTargetCode=-60010153`).
+По умолчанию используется тестовый контур. Production endpoints задаются конфигурацией; форматы XML/XSD и способ отправки всегда определяет versioned-профиль конкретной услуги.
+
+Каталог содержит 21 профиль. Исполняемы только проверенные профили с `available=true`; reference-only услуги видны во frontend, но блокируются до внешнего вызова. Актуальный перечень: [SERVICES.md](../SERVICES.md).
 
 ## Состав
 
-- **Backend** - FastAPI (Python 3.8) + КриптоПро CSP + PyCades. Подпись XML, работа с API ЕПГУ/ЕСИА, валидация по XSD.
-- **Frontend** - React (Create React App), отдаётся через nginx. Форма подачи заявлений, drag-and-drop файлов, редактор XML, управление сертификатами, статусы.
+- **`python-epgu`** — публикуемая Python-библиотека с транспортными моделями, архивами, подписью через абстракцию signer и typed-контрактами Госключа.
+- **Backend** — FastAPI на Python 3.12: каталог услуг, XML/XSD-проверка, proxy к ЕСИА/ЕПГУ и API для frontend.
+- **Frontend** — React-приложение, собранное на Node 24 и отдаваемое Nginx; Nginx проксирует `/api/` во внутренний backend.
 
-## Тестовые контуры (среды)
+Публичный backend-образ запускается non-root и не содержит CryptoPro CSP или `pycades`. Core/catalogue, Swagger, профили и preview работают без них. Операции реальной подписи требуют отдельного лицензированного signing runtime.
 
-| Среда | Адрес |
-| --- | --- |
-| ЕСИА | https://esia-portal1.test.gosuslugi.ru |
-| ЕПГУ | https://svcdev-beta.test.gosuslugi.ru |
-| Техпортал ЕПГУ | https://svcdev-partners.test.gosuslugi.ru |
-| Техпортал ЕСИА | https://esia-portal1.test.gosuslugi.ru/console/tech/ |
-| TSA (штампы времени) | http://testca2012.cryptopro.ru/tsp/tsp.srf |
+## Среды по умолчанию
 
-## Что нужно для реальной работы (вне локального запуска)
+| Назначение | Test | Production |
+|---|---|---|
+| ЕСИА | `https://esia-portal1.test.gosuslugi.ru` | `https://esia.gosuslugi.ru` |
+| API ЕПГУ | `https://svcdev-gostapi.test.gosuslugi.ru` | `https://www.gosuslugi.ru` |
+| Техпортал ЕСИА | `https://esia-portal1.test.gosuslugi.ru/console/tech` | `https://esia.gosuslugi.ru/console/tech/` |
 
-1. Учётные записи физлица и организации в **тестовой ЕСИА**.
-2. **Тестовый сертификат** (КЭП) + PIN - заявка на `sd@sc.digital.gov.ru`.
-3. Зарегистрированная **ИС** в техпортале ЕСИА (мнемоника + сертификат).
-4. **API-Key** организации-потребителя (раздел «Мои системы» техпортала).
+## Локальный запуск
 
-Подробный пошаговый сценарий: [`step/STEP.md`](../../step/STEP.md).
+```bash
+docker compose up -d --build
+```
 
-## Статус / ограничения
+- UI: <http://localhost:50080/>
+- API напрямую: <http://localhost:55000/version>
+- API через UI proxy: <http://localhost:50080/api/version>
 
-- БД пока не используется (хранение - файлы `xml/`, ключи, сертификаты).
-- Идеи на будущее (из STEP.md): хранить XML и XSD в БД, Helm Chart, all-in-one образ.
+Frontend ждёт healthy-состояния backend. Compose проверяет backend через `/version`; `/hc` предназначен для CSP readiness и в публичном образе возвращает degraded/`503`.
+
+Порты `50080` и `55000` привязаны к `127.0.0.1`, поэтому стандартный Compose — локальный single-operator стенд. Nginx ограничивает multipart body значением 512 МБ и использует API proxy timeouts 300 секунд.
+
+## Что требуется для интеграционного контура
+
+1. Зарегистрированная ИС и API key организации для соответствующей среды.
+2. Согласованное подключение к ЕСИА и ЕПГУ.
+3. Точная среда и разрешённый frontend origin в конфигурации.
+4. Отдельный лицензированный CryptoPro/`pycades` runtime и доверенная цепочка CA, если сценарий выполняет подпись.
+5. Хранение API key и signing secrets вне репозитория и публичных образов.
+
+Для shared/LAN/public сценария нужен внешний auth reverse proxy с TLS, authentication, authorization, rate limits и аудитом. Из-за process-global access token и выбранного сертификата каждому оператору/tenant требуется отдельный backend process/runtime; прямое открытие compose-портов недопустимо.
+
+Пошаговые материалы: [step/STEP.md](../../step/STEP.md).
+
+## Ограничения
+
+- СУБД нет: активный токен и выбранный сертификат живут в памяти процесса, пользовательские файлы frontend — в IndexedDB.
+- Backend хранит один глобальный access token на процесс и не является мультитенантным.
+- CORS не является authentication; стандартный frontend/backend нельзя безопасно разделять между несколькими пользователями.
+- Публичный Docker runtime не выполняет криптографические операции без отдельно установленного CSP.
+- Reference-only профиль нельзя отправить, пока его XML/XSD-контракт не прошёл проверку.
+- ZIP формируется backend в памяти; ingress limit 512 МБ должен быть согласован с memory limit и реальной нагрузкой.

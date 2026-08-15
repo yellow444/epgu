@@ -111,7 +111,7 @@ CI=true npm run build
 - ESLint по `src`: успешно;
 - production build и Docker build-stage на Node 24: успешно.
 
-Полный `npm audit` намеренно показывает остаток legacy CRA build/dev-дерева: **57 advisories** — 3 critical, 28 high, 13 moderate и 13 low; единственная прямая уязвимая зависимость — `react-scripts`. Они отсутствуют из `npm audit --omit=dev` и финального nginx-runtime, но остаются риском CI/build-среды. `npm audit fix --force` не применяется: npm предлагает некорректное разрушительное разрешение для `react-scripts`. Долг устраняется отдельной контролируемой миграцией с Create React App, а не принудительным изменением lockfile.
+Полный `npm audit` намеренно показывает остаток legacy CRA build/dev-дерева: **57 advisories** - 3 critical, 28 high, 13 moderate и 13 low; единственная прямая уязвимая зависимость - `react-scripts`. Они отсутствуют из `npm audit --omit=dev` и финального nginx-runtime, но остаются риском CI/build-среды. `npm audit fix --force` не применяется: npm предлагает некорректное разрушительное разрешение для `react-scripts`. Долг устраняется отдельной контролируемой миграцией с Create React App, а не принудительным изменением lockfile.
 
 Текущая сборка также предупреждает о неподдерживаемом CRA, старом `caniuse-lite`, одном source map и большом bundle; это не делает текущий build ошибочным, но должно войти в план миграции и оптимизации.
 
@@ -128,13 +128,13 @@ src/
     SetupGuide/
 ```
 
-- `App.js` — вкладки, API-вызовы и orchestration состояния;
-- `serviceProfiles.js` — нормализация backend-профилей, режимы отправки, имена документов и XML transforms;
-- `GoskeyForm/` — DTO/валидация/маршруты Госключа и тесты;
-- `FileDropzone/` — загрузка вложений;
-- `SetupGuide/` — встроенные инструкции оператора.
+- `App.js` - вкладки, API-вызовы и orchestration состояния;
+- `serviceProfiles.js` - нормализация backend-профилей, режимы отправки, имена документов и XML transforms;
+- `GoskeyForm/` - DTO/валидация/маршруты Госключа и тесты;
+- `FileDropzone/` - загрузка вложений;
+- `SetupGuide/` - встроенные инструкции оператора.
 
-Дополнительные команды и диагностика приведены в [`HOWTO.md`](./HOWTO.md), backend-контракт — в [`../api-gosuslugi-backend/README.md`](../api-gosuslugi-backend/README.md).
+Дополнительные команды и диагностика приведены в [`HOWTO.md`](./HOWTO.md), backend-контракт - в [`../api-gosuslugi-backend/README.md`](../api-gosuslugi-backend/README.md).
 
 ## Лицензия
 

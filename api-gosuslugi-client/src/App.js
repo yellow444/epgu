@@ -617,7 +617,7 @@ function App() {
       setResponseData(res.data);
       setStatus(
         `Запрос Госключа отправлен: ${res.data?.transport || 'транспорт не указан'}, ` +
-          `подписано файлов: ${res.data?.signedFiles ?? '—'}, частей: ${res.data?.chunks ?? '—'}.`
+          `подписано файлов: ${res.data?.signedFiles ?? '-'}, частей: ${res.data?.chunks ?? '-'}.`
       );
     } catch (error) {
       handleError(error);
@@ -1208,7 +1208,7 @@ function App() {
                           {Array.isArray(serviceOptions) && serviceOptions.length > 0 ? (
                             serviceOptions.map((opt) => (
                               <Option key={opt.serviceCode} value={opt.serviceCode}>
-                                {`${opt.description} — ${opt.serviceCode}${
+                                {`${opt.description} - ${opt.serviceCode}${
                                   opt.available ? '' : ' [справочно]'
                                 }`}
                               </Option>
@@ -1269,7 +1269,7 @@ function App() {
                             <Space wrap>
                               <Text>Способ отправки:</Text>
                               {activeServiceUsesGoskey ? (
-                                <Tag>adaptive — выбирает backend</Tag>
+                                <Tag>adaptive - выбирает backend</Tag>
                               ) : submissionModes.length > 1 ? (
                                 <Select
                                   aria-label="Способ отправки"

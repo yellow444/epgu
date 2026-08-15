@@ -1,4 +1,4 @@
-# 03 — Конфигурация и известные особенности
+# 03 - Конфигурация и известные особенности
 
 ## Корневой `.env` для Compose
 
@@ -54,7 +54,7 @@ BACKEND_API=http://api:5000
 
 Axios использует `/api` как browser base URL. Nginx принимает `/api/...` и благодаря `proxy_pass ${BACKEND_API}/` снимает префикс перед отправкой в FastAPI.
 
-Не добавляйте `/api` к `BACKEND_API`: значение `http://api:5000/api` превратит `/api/version` в upstream `/api/version`, тогда как backend route — `/version`.
+Не добавляйте `/api` к `BACKEND_API`: значение `http://api:5000/api` превратит `/api/version` в upstream `/api/version`, тогда как backend route - `/version`.
 
 `BACKEND_URL` встраивается на этапе React build и требует пересборки frontend. `BACKEND_API` подставляется entrypoint-скриптом при старте контейнера.
 
@@ -70,9 +70,9 @@ Nginx настроен на:
 
 ## Healthcheck без CSP
 
-- `/version` — core readiness; используется Dockerfile и работает без CryptoPro.
-- `/hc` — CSP readiness; публичный образ отвечает degraded/`503`.
-- `/status` — версия pycades; без signing runtime отвечает `503`.
+- `/version` - core readiness; используется Dockerfile и работает без CryptoPro.
+- `/hc` - CSP readiness; публичный образ отвечает degraded/`503`.
+- `/status` - версия pycades; без signing runtime отвечает `503`.
 
 Не настраивайте compose readiness на `/hc`: frontend тогда никогда не дождётся публичного core-образа.
 
@@ -97,9 +97,9 @@ docker compose up -d --build frontend
 
 Compose публикует API и UI только на loopback:
 
-- <http://localhost:55000/> — прямой FastAPI;
-- <http://localhost:50080/> — UI;
-- <http://localhost:50080/api/> — тот же API через Nginx.
+- <http://localhost:55000/> - прямой FastAPI;
+- <http://localhost:50080/> - UI;
+- <http://localhost:50080/api/> - тот же API через Nginx.
 
 Для production задайте `ALLOWED_ORIGINS` точным HTTPS origin. Debug-порт стандартным Compose не публикуется.
 

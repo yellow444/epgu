@@ -358,7 +358,7 @@ class OrderRequest(BaseModel):
     region: str = Field(
         ...,
         pattern="^[0-9]{2,11}$",
-        description='Runtime OKATO region code (2–11 digits)',
+        description='Runtime OKATO region code (2-11 digits)',
     )
     serviceCode: str = Field(..., min_length=1, description='Service code')
     targetCode: str = Field(..., min_length=1, description='Target code')
@@ -373,7 +373,7 @@ class GoskeyRequest(BaseModel):
     region: str = Field(
         ...,
         pattern="^[0-9]{2,11}$",
-        description="Runtime OKATO code (2–11 digits)",
+        description="Runtime OKATO code (2-11 digits)",
     )
     variant: Optional[Literal["unep", "ukep"]] = None
     recipientType: Literal["individual", "russian-legal", "foreign-legal"] = "individual"

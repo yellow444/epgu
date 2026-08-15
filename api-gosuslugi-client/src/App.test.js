@@ -212,7 +212,7 @@ describe('App Component Basic Rendering Tests', () => {
     const certificateInput = screen.getByLabelText('Сертификат подписи');
     fireEvent.keyDown(certificateInput, { key: 'Enter', code: 'Enter' });
     const certificateLabels = await screen.findAllByText(
-      /Иван Иванов — ООО Ромашка/
+      /Иван Иванов - ООО Ромашка/
     );
     fireEvent.click(
       certificateLabels.find((element) =>
@@ -228,7 +228,7 @@ describe('App Component Basic Rendering Tests', () => {
       )
     );
     expect(await screen.findByTestId('selected-certificate-details')).toHaveTextContent(
-      '2026-01-01 — 2027-01-01'
+      '2026-01-01 - 2027-01-01'
     );
     expect(sessionStorage.getItem('token')).toBeNull();
     expect(screen.queryByText('session-token')).not.toBeInTheDocument();

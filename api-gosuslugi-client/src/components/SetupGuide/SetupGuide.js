@@ -144,7 +144,7 @@ function downloadText(filename, text, mime = 'text/plain;charset=utf-8') {
 
 const abbreviatedIdentifier = (value) => {
   const text = String(value || '');
-  return text.length > 12 ? `${text.slice(0, 6)}…${text.slice(-4)}` : text;
+  return text.length > 12 ? `${text.slice(0, 6)}...${text.slice(-4)}` : text;
 };
 
 /** Кнопка копирования, которая сама сообщает об успехе. */
@@ -420,7 +420,7 @@ function explainError(error, scope) {
       return `ЕСИА не знает такой ИС. Сверьте мнемонику и то, что ключ выпущен для того же контура, что и esia_host.${tail}`;
     }
     if (status >= 500) {
-      return `Ошибка на стороне ЕСИА или КриптоПро. Посмотрите docker compose logs -f api — там будет трассировка подписи.${tail}`;
+      return `Ошибка на стороне ЕСИА или КриптоПро. Посмотрите docker compose logs -f api - там будет трассировка подписи.${tail}`;
     }
   }
 
@@ -1073,7 +1073,7 @@ export default function SetupGuide() {
               title: 'Результат',
               render: (_, row) => (
                 <Text type={checks[row.key]?.state === 'fail' ? 'danger' : undefined}>
-                  {checks[row.key]?.summary || '—'}
+                  {checks[row.key]?.summary || '-'}
                 </Text>
               ),
             },
@@ -1133,7 +1133,7 @@ export default function SetupGuide() {
                 </Title>
                 <Paragraph>
                   Публикуемый backend намеренно не содержит проприетарные КриптоПро и
-                  PyCades. Каталог, XML и безопасные API доступны без них; подпись — нет.
+                  PyCades. Каталог, XML и безопасные API доступны без них; подпись - нет.
                 </Paragraph>
                 <CopyableCode>{publicRuntimeSnippet}</CopyableCode>
               </div>
@@ -1161,7 +1161,7 @@ export default function SetupGuide() {
                   3. Запустить и проверить
                 </Title>
                 <Paragraph>
-                  UI доступен на `:50080`, Swagger backend — на `:55000/docs`.
+                  UI доступен на `:50080`, Swagger backend - на `:55000/docs`.
                   `/version` проверяет liveness API; `/hc` и `/status` отдельно показывают
                   готовность лицензированного signing runtime.
                 </Paragraph>
@@ -1252,7 +1252,7 @@ export default function SetupGuide() {
                     value={envServices}
                     onChange={(e) => setEnvServices(e.target.value)}
                     autoSize={{ minRows: 2, maxRows: 6 }}
-                    placeholder='Пусто — используется встроенный service_profiles.json'
+                    placeholder='Пусто - используется встроенный service_profiles.json'
                   />
                 </div>
               </Space>

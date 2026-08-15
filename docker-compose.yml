@@ -26,6 +26,19 @@ services:
       - SERVICES=${SERVICES_OVERRIDE:-}
       - XML_ROOT=/xml
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:50080,http://127.0.0.1:50080}
+      # Почта поддержки: заявки в УЦ и разбор ответов. Пароль приложения на
+      # стенде берётся из .env, в проде провайдер секретов заменяется.
+      - MAIL_IMAP_HOST=${MAIL_IMAP_HOST:-}
+      - MAIL_IMAP_PORT=${MAIL_IMAP_PORT:-993}
+      - MAIL_SMTP_HOST=${MAIL_SMTP_HOST:-}
+      - MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-465}
+      - MAIL_USER=${MAIL_USER:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - MAIL_FROM=${MAIL_FROM:-}
+      - MAIL_USE_SSL=${MAIL_USE_SSL:-1}
+      - MAIL_INBOX_DIR=/var/lib/epgu-mail
+      - CERT_INBOX_DIR=/var/lib/epgu-mail
+      - SECRET_PROVIDER=${SECRET_PROVIDER:-env}
     ports:
       # Backend хранит токен/сертификат в памяти процесса и рассчитан на одного
       # оператора. По умолчанию он доступен только с локальной машины.
@@ -34,6 +47,8 @@ services:
       # Журнал входящих запросов пишет приёмник. Оператору нужна запись только
       # для очистки журнала между прогонами теста.
       - inbound-data:/var/lib/epgu-inbound
+      # Вложения из писем УЦ и сертификаты, положенные руками.
+      - mail-data:/var/lib/epgu-mail
     restart: always
 
   # Публичная точка входа: URL системы и URL для push сообщений, которые
@@ -84,3 +99,5 @@ services:
 volumes:
   # Журнал входящих запросов: пишет приёмник, читает операторский API.
   inbound-data:
+  # Вложения из почты и сертификаты, которые кладут в папку руками.
+  mail-data:

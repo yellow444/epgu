@@ -61,6 +61,7 @@ from config import (
 )
 from routers import diagnostics_router
 from inbound_api import inbound_router
+from setup_api import setup_router
 
 try:
     import pycades
@@ -346,6 +347,9 @@ app.include_router(
 # Журнал входящих запросов от ЕПГУ. Пишет его отдельный публичный приёмник
 # (inbound.py), здесь только чтение для оператора.
 app.include_router(inbound_router())
+# Мастер настройки: почта поддержки и источники сертификатов. Доступен только
+# с localhost, наружу эти методы не публикуются.
+app.include_router(setup_router())
 
 # Pydantic-модели
 

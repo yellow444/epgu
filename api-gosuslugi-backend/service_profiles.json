@@ -1,0 +1,2251 @@
+{
+  "schemaVersion": 1,
+  "catalogObservedAt": "2026-08-12",
+  "catalogSource": "https://partners.gosuslugi.ru/catalog/api_for_gu",
+  "services": {
+    "10000000374": {
+      "agency": "Минцифры / Госключ",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [
+        "УНЭП",
+        "УКЭП"
+      ],
+      "submission": {
+        "mode": "adaptive",
+        "endpoints": [
+          "/api/gusmev/push",
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business",
+            "generator": "goskey"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000374",
+      "title": "Отправка документов на подпись в Госключ",
+      "description": "Отправка документов на подпись в Госключ",
+      "region": "",
+      "targetCode": "-10000000374",
+      "eServiceCode": "10000000374",
+      "serviceTargetCode": "-10000000374",
+      "status": "verified",
+      "available": true,
+      "unavailableReason": "",
+      "spec": {
+        "version": "10000000374__Specifikaciya_API_EPGU_Prilozhenie_10000000374_v1.9",
+        "published": "2025-08-28",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000374_v1.9.docx",
+        "sha256": "ad78aacb591ef37989e6fdd1dd715bfb1b8ec486b13e16e4bca5a9b00a9eab1d",
+        "localFile": "source/10000000374__Specifikaciya_API_EPGU_Prilozhenie_10000000374_v1.9.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000374/example-01.xml",
+          "kind": "example",
+          "sha256": "0c47c3cb35da3f55f3ffefc98fd85e03bc3ed9f54fe84e716e1a98d732f0adbf",
+          "wellFormed": false,
+          "rootName": "ns:SignRequest",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/10000000374/example-02.xml",
+          "kind": "example",
+          "sha256": "ce16868a28ff414eb41eba3b4a307cedae9a8b6b390d47536312f29aae4bf590",
+          "wellFormed": false,
+          "rootName": "ns:SignRequest",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/10000000374/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "f46480dbe996a62bb7a1fd9201fc47115bd3616befb27eff03377351523a206b",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "unep",
+          "label": "УНЭП физического лица",
+          "state": "verified",
+          "namespace": "urn://mpkey.gosuslugi.ru/sign_document/1.0.0",
+          "reason": "Проверено по опубликованной XSD."
+        },
+        {
+          "id": "ukep",
+          "label": "УКЭП физического лица",
+          "state": "reference",
+          "namespace": "urn://mpkey.gosuslugi.ru/sign_document_ukep/1.0.0",
+          "reason": "Для опубликованного UKEP namespace в документе отсутствует XSD."
+        }
+      ]
+    },
+    "10000000352": {
+      "agency": "ФССП России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "transport",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          },
+          {
+            "id": "request",
+            "outputName": "piev_epgu.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000352",
+      "title": "Предоставление информации о ходе исполнительного производства онлайн",
+      "description": "Предоставление информации о ходе исполнительного производства онлайн",
+      "region": "",
+      "targetCode": "-10000000352",
+      "eServiceCode": "10000000352",
+      "serviceTargetCode": "-10000000352",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000352__Specifikaciya_API_EPGU_Prilozhenie_10000000352_Hod_IP_v9",
+        "published": "2025-09-24",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000352_Hod_IP_v9.docx",
+        "sha256": "e9d24d1076de92e209e57fc888f00826cce5fdd08fb057d3cf730c68cb64d21e",
+        "localFile": "source/10000000352__Specifikaciya_API_EPGU_Prilozhenie_10000000352_Hod_IP_v9.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000352/example-01.xml",
+          "kind": "example",
+          "sha256": "a940e0b29a323aac3de96885cc724692ec1e0d3857c37434906f790a10af5fbb",
+          "wellFormed": true,
+          "rootName": "EPGURequest",
+          "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1"
+        },
+        {
+          "path": "extracted/10000000352/example-02.xml",
+          "kind": "example",
+          "sha256": "289a441ee062b5084eeb1a608beb6665f93ff1179c552197c2c9b3b4854fc8c2",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/example-03.xml",
+          "kind": "example",
+          "sha256": "319da6cd2cd82926c2ab7434a59ec28a93dac7faa23ce3e5374673d14fc5ab3c",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/example-04.xml",
+          "kind": "example",
+          "sha256": "a86cf34670229d7b335879cc4ddd056f0539fb1217831f16aa4b8e00b40c750b",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/example-05.xml",
+          "kind": "example",
+          "sha256": "ee217202e843a202544e554d607805b0b6845b6f44c6c4891b40a7780894d1cb",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/example-06.xml",
+          "kind": "example",
+          "sha256": "7b1dcd295b05f71a692fa914ee2f83a9f8b198d9189031f9c5cfaf0713f65757",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/example-07.xml",
+          "kind": "example",
+          "sha256": "407b0a60fec6fb00a526804afc73d57e669805eada1569c699e5f8758f2fa8f4",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/example-08.xml",
+          "kind": "example",
+          "sha256": "c3d3ce3a122160ca59b35fa2b2f134c0026231a97c78863ce65cf193fabe3197",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000352/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "4ac6b7d43333bfad66f34566834666a3572c55a56edbae0679997f42dc541840",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ]
+    },
+    "60010153": {
+      "agency": "ФССП России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "transport",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport",
+            "sourceFile": "req.xml",
+            "validation": "well-formed"
+          },
+          {
+            "id": "request",
+            "outputName": "piev_epgu.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business",
+            "sourceFile": "piev_epgu.xml",
+            "schemaFile": "piev_epgu.xsd",
+            "validation": "xsd"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60010153",
+      "title": "Предоставление информации о наличии исполнительного производства онлайн",
+      "description": "Предоставление информации о наличии исполнительного производства онлайн",
+      "region": "",
+      "targetCode": "-60010153",
+      "eServiceCode": "60010153",
+      "serviceTargetCode": "-60010153",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Официальная схема и транспорт проверены, но текущий XML содержит демонстрационные данны. Отправка закрыта до типизированной формы и fail-closed валидации полей.",
+      "spec": {
+        "version": "60010153__Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8",
+        "published": "2024-07-17",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx",
+        "sha256": "55a3321abd90ee26bd086ba95e7ed667c23ab5586a0d594948720eae164668e2",
+        "localFile": "source/60010153__Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60010153/example-01.xml",
+          "kind": "example",
+          "sha256": "02b2815b6f16291d8236b7be5f8f0c71c03545f6451f2004f08fc1b79c798e15",
+          "wellFormed": true,
+          "rootName": "EPGURequest",
+          "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1"
+        },
+        {
+          "path": "extracted/60010153/example-02.xml",
+          "kind": "example",
+          "sha256": "5c454d84fe982abcb66575bcfd9bb442df2ca9cc7ac3a9082fd736c22c1aaee7",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/example-03.xml",
+          "kind": "example",
+          "sha256": "67c41f54bd6c3edcda670c3e743bd54f902292ad0127fbe192669a422766156e",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/example-04.xml",
+          "kind": "example",
+          "sha256": "9177ab0115ec261528161e6402aa56db22f027ae1ae4652208cc53d6be22fd42",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/example-05.xml",
+          "kind": "example",
+          "sha256": "889a06a360be90054d1cc466f24d6398bccf7ed023bae14faf640639a9ab2326",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/example-06.xml",
+          "kind": "example",
+          "sha256": "9ecfb603728712c64db86b128156e3cfb698924ef6dd156b778eedc443da0a65",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/example-07.xml",
+          "kind": "example",
+          "sha256": "600506a140f49c0c98cf120d7dca7fba63699a922558cf9f52cc99162ff1aac6",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/example-08.xml",
+          "kind": "example",
+          "sha256": "e4dd46810e2725fbf37bad54431375566214fc9796728a9c863337c27d28e7d8",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/60010153/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "4ac6b7d43333bfad66f34566834666a3572c55a56edbae0679997f42dc541840",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ],
+      "transforms": [
+        {
+          "documentId": "transport",
+          "selector": {
+            "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1",
+            "localName": "OrderId"
+          },
+          "value": "{orderId}"
+        },
+        {
+          "documentId": "transport",
+          "selector": {
+            "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1",
+            "localName": "Date"
+          },
+          "value": "{now}"
+        },
+        {
+          "documentId": "transport",
+          "selector": {
+            "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1",
+            "localName": "StatementDate"
+          },
+          "value": "{date}"
+        },
+        {
+          "documentId": "request",
+          "selector": {
+            "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1",
+            "localName": "ExternalKey"
+          },
+          "value": "{orderId}"
+        },
+        {
+          "documentId": "request",
+          "selector": {
+            "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1",
+            "localName": "DocDate"
+          },
+          "value": "{date}"
+        }
+      ]
+    },
+    "10000000367": {
+      "agency": "ФССП России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [
+        "Petition",
+        "IRequestOther"
+      ],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "transport",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          },
+          {
+            "id": "request",
+            "outputName": "piev_epgu.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000367",
+      "title": "Подача заявлений, ходатайств, объяснений, отводов и жалоб по исполнительному производству",
+      "description": "Подача заявлений, ходатайств, объяснений, отводов и жалоб по исполнительному производству",
+      "region": "",
+      "targetCode": "-10000000367",
+      "eServiceCode": "10000000367",
+      "serviceTargetCode": "-10000000367",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000367__Specifikaciya_API_EPGU_Prilozhenie_10000000367_Podacha_zayavleni_hodatajstv_obyasnenij_v1.4",
+        "published": "2026-03-31",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000367_Podacha_zayavleni_hodatajstv_obyasnenij_v1.4.docx",
+        "sha256": "f955bad0cd9341964c2c1c3a58426a9a044beb2106164af5d277e0c9b848cc5e",
+        "localFile": "source/10000000367__Specifikaciya_API_EPGU_Prilozhenie_10000000367_Podacha_zayavleni_hodatajstv_obyasnenij_v1.4.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000367/example-01.xml",
+          "kind": "example",
+          "sha256": "2e32bd9411f6dcbd45e1db15b7b4e09945b6f5a9bd7d0b4ceecd8885cd8f1110",
+          "wellFormed": true,
+          "rootName": "EPGURequest",
+          "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1"
+        },
+        {
+          "path": "extracted/10000000367/example-02.xml",
+          "kind": "example",
+          "sha256": "3d8c05af8702abbe5b64cf6accb5ad560358d84189fa11a7a13844a5b84691f0",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-03.xml",
+          "kind": "example",
+          "sha256": "59614bcac22973d40653bb73a431fc887ea2817c247537137b16733bd557dadc",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-04.xml",
+          "kind": "example",
+          "sha256": "e368005463a7a13629d0109d42fe4fe454edc9e73c4202214eaf57825639a11e",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-05.xml",
+          "kind": "example",
+          "sha256": "6bd063c28b751148b9d7ba9d7fb64c08453415b81d67261a54088241743d601f",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-06.xml",
+          "kind": "example",
+          "sha256": "178bc224971ecff0b73d4bba662aac3b99719c964f54d1b6c45fe84475d13ce3",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-07.xml",
+          "kind": "example",
+          "sha256": "fe81719760bfda6448d182233ac962546f8c9b65cedb386cd5f5ea42b9466be8",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-08.xml",
+          "kind": "example",
+          "sha256": "26dc989d75e7b6a39f2aeaa4cd4158c241e029072cf1c20ceda0c039fa5b4d4d",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-09.xml",
+          "kind": "example",
+          "sha256": "a8a7e6c5f6976dfea91b89adf7eba12f13ea17c51cc328ca667931ca99d34798",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-10.xml",
+          "kind": "example",
+          "sha256": "03d9f56da49136dc084e099e93ae6f6847aa67535fb10124ae7a678be0d7727e",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-11.xml",
+          "kind": "example",
+          "sha256": "d79802e4fd95ddb85494e36135c862309941b262e09ec092758655bc542c3227",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-12.xml",
+          "kind": "example",
+          "sha256": "e238d47cb5c437683202e1fc043cd84be2afa2358f7fd9a282087a28af147a68",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-13.xml",
+          "kind": "example",
+          "sha256": "0882f5f5e4d660c87d7e23a8792cf8242a8d10a9c8827fbaac5efdfb1e0ef21f",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-14.xml",
+          "kind": "example",
+          "sha256": "82104ac097c70371836f2f130ec93df949d635a5190eab8163b71bb52992e7cb",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-15.xml",
+          "kind": "example",
+          "sha256": "e855973697d76900e3fb10ee30c5b2404493cf9678d5ce42ff22a37f6d70e500",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-16.xml",
+          "kind": "example",
+          "sha256": "c1a1a6b118e9306fca450050775a6935778221a610be987b6a18d23bffe7a187",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-17.xml",
+          "kind": "example",
+          "sha256": "a438f791fe2609278a7a46798bac008cb14bfeca7463dc6c011deb9d417ccac2",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-18.xml",
+          "kind": "example",
+          "sha256": "d1cf31626cafae81a15407e8b6160e4d6097e66514984d054fdf1ed8cad0164f",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-19.xml",
+          "kind": "example",
+          "sha256": "e191874f7bc5221516ebfebdcf6920f9ec84f094c05cb1615c00133db98ea1d7",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-20.xml",
+          "kind": "example",
+          "sha256": "aac25611455f1be4406698afc743adf07daefa5cd7ed6b6137b31672d6fed4c4",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-21.xml",
+          "kind": "example",
+          "sha256": "f9fe409fe517b49f767f3d75a17e23de5afe138123bed4dafdae81778ae598f7",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-22.xml",
+          "kind": "example",
+          "sha256": "97c65d717dd7d29e3c92bc7c47dca08f0b339ba5062f29cd5b457358123e2449",
+          "wellFormed": true,
+          "rootName": "IRequestOther",
+          "namespace": "http://www.fssprus.ru/namespace/IRequestOther/2021/1"
+        },
+        {
+          "path": "extracted/10000000367/example-23.xml",
+          "kind": "example",
+          "sha256": "e41d289a04db2f152754dab6c01577d122d57e4f7e5573307894756fbd3af1e5",
+          "wellFormed": true,
+          "rootName": "IRequestOther",
+          "namespace": "http://www.fssprus.ru/namespace/IRequestOther/2021/1"
+        },
+        {
+          "path": "extracted/10000000367/example-24.xml",
+          "kind": "example",
+          "sha256": "6781c5ed9086655d6734eedcfb37d52581f02cd4536de470029a8150a00507f8",
+          "wellFormed": true,
+          "rootName": "IRequestOther",
+          "namespace": "http://www.fssprus.ru/namespace/IRequestOther/2021/1"
+        },
+        {
+          "path": "extracted/10000000367/example-25.xml",
+          "kind": "example",
+          "sha256": "9ca4b3e1db74a47c6eb8df040b8c9d672b30f60ea9b13821742f473346ef757a",
+          "wellFormed": true,
+          "rootName": "IRequestOther",
+          "namespace": "http://www.fssprus.ru/namespace/IRequestOther/2021/1"
+        },
+        {
+          "path": "extracted/10000000367/example-26.xml",
+          "kind": "example",
+          "sha256": "acf72ea572d6e984e557bff20b895688968f766602180176f56dd39cc92845aa",
+          "wellFormed": true,
+          "rootName": "IRequestOther",
+          "namespace": "http://www.fssprus.ru/namespace/IRequestOther/2021/1"
+        },
+        {
+          "path": "extracted/10000000367/example-27.xml",
+          "kind": "example",
+          "sha256": "cabd33fa694b574d2a5cb3bc07626d7a19f1e3201b5bfb95621bfbfa6d32a8d7",
+          "wellFormed": true,
+          "rootName": "IRequestOther",
+          "namespace": "http://www.fssprus.ru/namespace/IRequestOther/2021/1"
+        },
+        {
+          "path": "extracted/10000000367/example-28.xml",
+          "kind": "example",
+          "sha256": "8d81aa5561f63b0e528101aee9d476ec9419461f782454126fb764135e02e9ce",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-29.xml",
+          "kind": "example",
+          "sha256": "7c19ed5f61d4e7254f67c1ff6a216bfcf092401c598cd2ecb22415f9d6c48b45",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-30.xml",
+          "kind": "example",
+          "sha256": "98adb592d88ad649adab054ea57410bd92787ff76992bd159b26d78b182d3eab",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-31.xml",
+          "kind": "example",
+          "sha256": "15fd94ef24d25ef889968a921f0149aa8dd0ad2a1a246f603fde6b19804c2403",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-32.xml",
+          "kind": "example",
+          "sha256": "398891f1ebb793c1eadb5645b158d9b9e3e33acf69156aa105b9fea571de9b42",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-33.xml",
+          "kind": "example",
+          "sha256": "78dcf6c1744d7da7e40af775f8956266a8eaa3e04d2d5dc45a8c950bc0a0441d",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-34.xml",
+          "kind": "example",
+          "sha256": "95657e341ed350b59ecc460e697c48b7a357551a1431809377c3ca4bd30ee235",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-35.xml",
+          "kind": "example",
+          "sha256": "a58f5459d16ce550ad9b94e31612a4b528f10b2f36b5b16e5449db0a1ed5c207",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-36.xml",
+          "kind": "example",
+          "sha256": "1f0b349afcca4a1a7d6116f939d2983ac56a9fc46720084e3828f8447c8b6b1e",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-37.xml",
+          "kind": "example",
+          "sha256": "54eee9c2dab289b3b64bd6387877ea65c7596026e0c2d1e4f11d9c8e22a603e9",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-38.xml",
+          "kind": "example",
+          "sha256": "3f9901c1b2d4434c22bd896bf2deb2222828e41fbd92afa816c1a088fdf0e82f",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-39.xml",
+          "kind": "example",
+          "sha256": "abaa36a46a4d571425ec5f82b31e31afd0379a45144d1fc90ce645670b33f0d4",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/example-40.xml",
+          "kind": "example",
+          "sha256": "e6d840de167d402ee3d3d10376b8edb14f0f117ca59256db22e015779822dc6f",
+          "wellFormed": true,
+          "rootName": "Petition",
+          "namespace": "http://www.fssp.gov.ru/namespace/Petition/2022/1"
+        },
+        {
+          "path": "extracted/10000000367/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "6bde7a6fafbb01ea09f490f0e991285a840d1415718205581c6401fe72f489c5",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/10000000367/schema-02.xsd",
+          "kind": "schema",
+          "sha256": "47fffdfa8f224bbd4e0af6096b915be29051b02d79bf179665e4fb0c1a5cb94f",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ]
+    },
+    "10000000396": {
+      "agency": "ФССП России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "transport",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          },
+          {
+            "id": "request",
+            "outputName": "piev_epgu.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000396",
+      "title": "Информация об исполнительных производствах для снятия ограничений на выезд",
+      "description": "Информация об исполнительных производствах для снятия ограничений на выезд",
+      "region": "",
+      "targetCode": "-10000000396",
+      "eServiceCode": "10000000396",
+      "serviceTargetCode": "-10000000396",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000396__Specifikaciya_API_EPGU_Prilozhenie_10000000396_servis_snyatiya_ogranichenij_na_vyezd_v1",
+        "published": "2024-07-18",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000396_servis_snyatiya_ogranichenij_na_vyezd_v1.docx",
+        "sha256": "be6a5c9a5fe9b1852b66274a07e4527acb37062f64d5725d5211856e6f3a33c0",
+        "localFile": "source/10000000396__Specifikaciya_API_EPGU_Prilozhenie_10000000396_servis_snyatiya_ogranichenij_na_vyezd_v1.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000396/example-01.xml",
+          "kind": "example",
+          "sha256": "8171a4cec9906c127feb0684220f4b308143211c1b6812bf7d5571770aad742a",
+          "wellFormed": true,
+          "rootName": "EPGURequest",
+          "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1"
+        },
+        {
+          "path": "extracted/10000000396/example-02.xml",
+          "kind": "example",
+          "sha256": "103bea115d90d076a7e812907dc93cc07007839a543d18dc51551b151b4aba0e",
+          "wellFormed": true,
+          "rootName": "IRequest",
+          "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1"
+        },
+        {
+          "path": "extracted/10000000396/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "4ac6b7d43333bfad66f34566834666a3572c55a56edbae0679997f42dc541840",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ]
+    },
+    "10000000109": {
+      "agency": "Социальный фонд России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          },
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000109",
+      "title": "Приём заявлений о доставке пенсий и иных социальных выплат",
+      "description": "Приём заявлений о доставке пенсий и иных социальных выплат",
+      "region": "",
+      "targetCode": "-10000000109",
+      "eServiceCode": "10000000109",
+      "serviceTargetCode": "-10000000109",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000109__Specifikaciya_API_EPGU_Prilozhenie_10000000109_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.1",
+        "published": "2024-11-15",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000109_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.1.docx",
+        "sha256": "d1d8d03ee99ab53011fb4b42e3f3fd2d5ffc124c0fca2a1e747a62448d1e5670",
+        "localFile": "source/10000000109__Specifikaciya_API_EPGU_Prilozhenie_10000000109_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.1.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000109/example-01.xml",
+          "kind": "example",
+          "sha256": "c5790f7b45e7c16598cab1924aa0d05682887079112cb958f11580781c873b6d",
+          "wellFormed": true,
+          "rootName": "Request",
+          "namespace": "urn://cmv.pfr.ru/zdp/1.0.1"
+        },
+        {
+          "path": "extracted/10000000109/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "9f5300ee493a64afe7cbcb2340d1855d37db54ca662b1681337e374842efbafb",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/10000000109/schema-02.xsd",
+          "kind": "schema",
+          "sha256": "dbe6c64a5978d6cf3d4ba10d2684be47edfa8a7b772393eba03efc7908216e27",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/10000000109/example-02.xml",
+          "kind": "example",
+          "sha256": "839d08c7707f6f5d1797c4d29448c3765a38a1c10250ad4574df1c8bfbb0369d",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/10000000109/example-03.xml",
+          "kind": "example",
+          "sha256": "ad0bf11597088657eb99d2a77cd0a7c9b8cbbf59ae24a072fbd0069fd5864c03",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        }
+      ]
+    },
+    "10000000110": {
+      "agency": "Социальный фонд России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          },
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000110",
+      "title": "Назначение страховых и накопительных пенсий (600110_1)",
+      "description": "Назначение страховых и накопительных пенсий (600110_1)",
+      "region": "",
+      "targetCode": "-10000000110",
+      "eServiceCode": "10000000110",
+      "serviceTargetCode": "-10000000110",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000110__Specifikaciya_API_EPGU_Prilozhenie_10000000110_Naznachenie_pensii_v1.1",
+        "published": "2025-05-29",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000110_Naznachenie_pensii_v1.1.docx",
+        "sha256": "a216736cf135a4c769fdc24ae8baf8741129d13f9a777509482b4d1d9f7bda5b",
+        "localFile": "source/10000000110__Specifikaciya_API_EPGU_Prilozhenie_10000000110_Naznachenie_pensii_v1.1.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000110/example-01.xml",
+          "kind": "example",
+          "sha256": "56cd94f0fd2e0c3d1d015baf74ce2fab151f851bb986b071187bb1d43f9f2c71",
+          "wellFormed": true,
+          "rootName": "Request",
+          "namespace": "urn://cmv.pfr.ru/znp/1.0.1"
+        },
+        {
+          "path": "extracted/10000000110/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "fa8e62862530c1d13a0a58cc5fff3aef76ac43ad04800ddb2a3b30ebf5f0972b",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/10000000110/example-02.xml",
+          "kind": "example",
+          "sha256": "023664be5a8495bb12e93c6b9b20128ebcd587dcec94ea39972609559825d70b",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/10000000110/example-03.xml",
+          "kind": "example",
+          "sha256": "7dcad83248e65547ca089f9be768e6a1aed5849c5dc456b0b63424918ae4481e",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        }
+      ]
+    },
+    "60013502": {
+      "agency": "Социальный фонд России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          },
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60013502",
+      "title": "Приём заявлений о доставке пенсии и иных социальных выплат",
+      "description": "Приём заявлений о доставке пенсии и иных социальных выплат",
+      "region": "",
+      "targetCode": "-60013502",
+      "eServiceCode": "60013502",
+      "serviceTargetCode": "-60013502",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60013502__Specifikaciya_API_EPGU_Prilozhenie_60013502_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.2",
+        "published": "2025-01-17",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60013502_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.2.docx",
+        "sha256": "9af863d512415a7ef6d248025268e633311af63bfdff223767cb7a72275097e5",
+        "localFile": "source/60013502__Specifikaciya_API_EPGU_Prilozhenie_60013502_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.2.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60013502/example-01.xml",
+          "kind": "example",
+          "sha256": "a00113b49cb3155f2a07677aa5234b8d3eea5dbf86b24b7fcfe4e46ab8c2f4c5",
+          "wellFormed": true,
+          "rootName": "Request",
+          "namespace": "urn://iis.ecp.ru/zdp/1.0.0"
+        },
+        {
+          "path": "extracted/60013502/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "979b0339f3b1efa00f559cdcd0cac92d4096a8d74853ab51d25fbd29888dbf6b",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013502/schema-02.xsd",
+          "kind": "schema",
+          "sha256": "5b980c2cf67f9c1932ce8242c0cfb437c924314ad69b407d636c9c5e7dc21b64",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013502/schema-03.xsd",
+          "kind": "schema",
+          "sha256": "2657414dd786d3d7f5d0fddead4c16934f5cc4401aa3c0577f4b7750d31cbeb9",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013502/schema-04.xsd",
+          "kind": "schema",
+          "sha256": "f5a907f841c7d224b5c689d962030afcdf6df49e6a430d1550ec3c31d4053b14",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013502/schema-05.xsd",
+          "kind": "schema",
+          "sha256": "12ad4cd5ddd351b96831d28d332cb1b5f06f95063c0c4bf32b92d18a8533ecdf",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60013502/schema-06.xsd",
+          "kind": "schema",
+          "sha256": "d4b850c8fbd249c7209090d86070cfa70035fdc2c650087e70f311b3c74a118a",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60013502/schema-07.xsd",
+          "kind": "schema",
+          "sha256": "94e3e9df92934bb9761c3990fa1212437df790df2db1437b121ea7485a1df792",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013502/example-02.xml",
+          "kind": "example",
+          "sha256": "c4ede90d950bf2d7416b2ecf7ec74ed887ea94e397f49d76ef95107cffdb456e",
+          "wellFormed": false,
+          "rootName": "ЭДСФР",
+          "namespace": ""
+        }
+      ]
+    },
+    "60013730": {
+      "agency": "Социальный фонд России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          },
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60013730",
+      "title": "Корректировка сведений индивидуального лицевого счёта",
+      "description": "Корректировка сведений индивидуального лицевого счёта",
+      "region": "",
+      "targetCode": "-60013730",
+      "eServiceCode": "60013730",
+      "serviceTargetCode": "-60013730",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60013730__Specifikaciya_API_EPGU_Prilozhenie_613730_Priem_ot_zastrakhovannykh_lic_zayavlenij_o_korrektirovke_svedenij_ILS_v1.3",
+        "published": "2024-12-20",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_613730_Priem_ot_zastrakhovannykh_lic_zayavlenij_o_korrektirovke_svedenij_ILS_v1.3.docx",
+        "sha256": "d1d168fb766f7bcef6b6587a5dfa501d090d53b8b314ce24613bdb049c557b9b",
+        "localFile": "source/60013730__Specifikaciya_API_EPGU_Prilozhenie_613730_Priem_ot_zastrakhovannykh_lic_zayavlenij_o_korrektirovke_svedenij_ILS_v1.3.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60013730/example-01.xml",
+          "kind": "example",
+          "sha256": "2ae792613030e978061c6ac2107e83806527f4afa01edc608dcbc3cc56798641",
+          "wellFormed": true,
+          "rootName": "Request",
+          "namespace": "urn://iis.ecp.ru/zkuls/1.0.0"
+        },
+        {
+          "path": "extracted/60013730/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "1b27563189e637282daecd7c13d7a1319b1a3f6c2f6ae739d014901988aa5485",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013730/schema-02.xsd",
+          "kind": "schema",
+          "sha256": "e59fe0f90a48ba84f4f9c8a59c481fb1d1d59116b3b4460dd90fe49bea907814",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013730/schema-03.xsd",
+          "kind": "schema",
+          "sha256": "0e0beaaac06157b67d6c8e0df1e0e062d3989c80c3d9c9a132b74b9ec5da11db",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60013730/schema-04.xsd",
+          "kind": "schema",
+          "sha256": "12ad4cd5ddd351b96831d28d332cb1b5f06f95063c0c4bf32b92d18a8533ecdf",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60013730/schema-05.xsd",
+          "kind": "schema",
+          "sha256": "d4b850c8fbd249c7209090d86070cfa70035fdc2c650087e70f311b3c74a118a",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60013730/example-02.xml",
+          "kind": "example",
+          "sha256": "9e2e5cb13d2d2b6a8afa4615ab688ef743bb62547581bc66a1270138a7601ec8",
+          "wellFormed": false,
+          "rootName": "ЭДСФР",
+          "namespace": ""
+        }
+      ]
+    },
+    "60019724": {
+      "agency": "Социальный фонд России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [
+        "ЗНП",
+        "СНПАР"
+      ],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          },
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60019724",
+      "title": "Назначение страховых и накопительных пенсий",
+      "description": "Назначение страховых и накопительных пенсий",
+      "region": "",
+      "targetCode": "-60019724",
+      "eServiceCode": "60019724",
+      "serviceTargetCode": "-60019724",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60019724__Specifikaciya_API_EPGU_Prilozhenie_60019724_Naznachenie_pensii_v1.3",
+        "published": "2024-09-19",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60019724_Naznachenie_pensii_v1.3.docx",
+        "sha256": "7da9dd67eb5f4b403a227eb8c57f8d2eccb0e9385e1820b4e18513e4db9de3a1",
+        "localFile": "source/60019724__Specifikaciya_API_EPGU_Prilozhenie_60019724_Naznachenie_pensii_v1.3.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60019724/example-01.xml",
+          "kind": "example",
+          "sha256": "0a7dced0998d3274b2e9071a03b382e9da6e0c9281986a69e96dcb5a7c0d649d",
+          "wellFormed": false,
+          "rootName": "ns0:Request",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "d7f7eece8b3f3205bfb2bfead814d94c575b5510e514d531afdb4588b92c86ba",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/schema-02.xsd",
+          "kind": "schema",
+          "sha256": "5b980c2cf67f9c1932ce8242c0cfb437c924314ad69b407d636c9c5e7dc21b64",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/schema-03.xsd",
+          "kind": "schema",
+          "sha256": "2657414dd786d3d7f5d0fddead4c16934f5cc4401aa3c0577f4b7750d31cbeb9",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/schema-04.xsd",
+          "kind": "schema",
+          "sha256": "f5a907f841c7d224b5c689d962030afcdf6df49e6a430d1550ec3c31d4053b14",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/schema-05.xsd",
+          "kind": "schema",
+          "sha256": "12ad4cd5ddd351b96831d28d332cb1b5f06f95063c0c4bf32b92d18a8533ecdf",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60019724/schema-06.xsd",
+          "kind": "schema",
+          "sha256": "d4b850c8fbd249c7209090d86070cfa70035fdc2c650087e70f311b3c74a118a",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60019724/schema-07.xsd",
+          "kind": "schema",
+          "sha256": "94e3e9df92934bb9761c3990fa1212437df790df2db1437b121ea7485a1df792",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/example-02.xml",
+          "kind": "example",
+          "sha256": "a67c4a870921072ab4e38a809e77d55f3be727fe7266efb685b733982b9d889a",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/example-03.xml",
+          "kind": "example",
+          "sha256": "e3c13c5f03a985310fb6e076776829b7f44a4038a37163beaf89867fa8672291",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60019724/example-04.xml",
+          "kind": "example",
+          "sha256": "85cb7ae8b221b4c07b6660d91c2c26b31fcb107a91d59dae7a5a59c87a4df65e",
+          "wellFormed": false,
+          "rootName": "ЭДПФР",
+          "namespace": ""
+        }
+      ]
+    },
+    "10000000585": {
+      "agency": "МВД России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [
+        "заключение договора",
+        "расторжение договора",
+        "выплата ВКС"
+      ],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "attach.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000585",
+      "title": "Уведомления о трудовых договорах с иностранными гражданами",
+      "description": "Уведомления о трудовых договорах с иностранными гражданами",
+      "region": "",
+      "targetCode": "-10000000585",
+      "eServiceCode": "10000000585",
+      "serviceTargetCode": "-10000000585",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000585__Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.3",
+        "published": "2024-08-15",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.3.docx",
+        "sha256": "bf343e2ac5091144d490f49c8ef3310443c7be98dd7cb742e1003a391f93b37f",
+        "localFile": "source/10000000585__Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.3.docx"
+      },
+      "officialAssets": []
+    },
+    "60057731": {
+      "agency": "МВД России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60057731",
+      "title": "Поиск иностранного гражданина в реестре контролируемых лиц",
+      "description": "Поиск иностранного гражданина в реестре контролируемых лиц",
+      "region": "",
+      "targetCode": "-60057731",
+      "eServiceCode": "60057731",
+      "serviceTargetCode": "-60057731",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60057731__Specification_API_EPGU_Search_for_foreigner_in_RKL_V_1.3",
+        "published": "2025-03-06",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specification_API_EPGU_Search_for_foreigner_in_RKL_V_1.3.docx",
+        "sha256": "e1ce3a7341d127f8d4983212f86b7a2df3d7f8fb95df629d91372a97ea0ed5fe",
+        "localFile": "source/60057731__Specification_API_EPGU_Search_for_foreigner_in_RKL_V_1.3.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60057731/example-01.xml",
+          "kind": "example",
+          "sha256": "5c5baf3c3b21075feaa7ec04db191d9465b97bbb5b6d9cc5a5d8ab48612279bc",
+          "wellFormed": true,
+          "rootName": "Request",
+          "namespace": "urn://epgu.gosuslugi.ru/CheckForeignerCitizenData/1.0.1"
+        },
+        {
+          "path": "extracted/60057731/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "1b348bf16556c6d66c70092fa6a2d2f956b1442f7922ee322cffacfe9a742cfa",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60057731/example-02.xml",
+          "kind": "example",
+          "sha256": "06582c0bac59cb406104ef5706a5d175e8178c1f9f52c7138902a057bc24ccb0",
+          "wellFormed": true,
+          "rootName": "Response",
+          "namespace": ""
+        }
+      ]
+    },
+    "60025907": {
+      "agency": "Минцифры / Госключ",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [],
+      "submission": {
+        "mode": "adaptive",
+        "endpoints": [
+          "/api/gusmev/push",
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business",
+            "generator": "goskey"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60025907",
+      "title": "Подписание документов УКЭП юридическими лицами",
+      "description": "Подписание документов УКЭП юридическими лицами",
+      "region": "",
+      "targetCode": "-60025907",
+      "eServiceCode": "60025907",
+      "serviceTargetCode": "-60025907",
+      "status": "verified",
+      "available": true,
+      "unavailableReason": "",
+      "spec": {
+        "version": "60025907__Specifikaciya_API_EPGU_Prilozhenie_60025907",
+        "published": "2025-08-28",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60025907.docx",
+        "sha256": "383ecf11f75bcee0221c57990b0a4be6943e0e56d1e76effebfa815f44dc3343",
+        "localFile": "source/60025907__Specifikaciya_API_EPGU_Prilozhenie_60025907.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60025907/example-01.xml",
+          "kind": "example",
+          "sha256": "07b8e1928e3e3218664ab27e5361fe4ca6525dd4bb336a9bbfa9a79ebe009078",
+          "wellFormed": true,
+          "rootName": "SignRequest",
+          "namespace": "urn://mpkey.gosuslugi.ru/sign_document_ukep_legalperson/1.0.0"
+        },
+        {
+          "path": "extracted/60025907/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "3b3fa3ca3e0cecb384dbb0169f421e62ea953a66080208d7f00fb1d1e13cd4ef",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "legal-entity",
+          "label": "УКЭП юридического лица или ИП",
+          "state": "verified",
+          "namespace": "urn://mpkey.gosuslugi.ru/sign_document_ukep_legalperson/1.0.0",
+          "reason": "Проверено по опубликованной XSD; обязательность Description взята из XSD."
+        }
+      ]
+    },
+    "60048912": {
+      "agency": "Роскомнадзор",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60048912",
+      "title": "Обмен сведениями с реестром организаторов распространения информации",
+      "description": "Обмен сведениями с реестром организаторов распространения информации",
+      "region": "",
+      "targetCode": "-60048912",
+      "eServiceCode": "60048912",
+      "serviceTargetCode": "-60048912",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60048912__Specifikaciya_TOT_03_12_2025",
+        "published": "2025-12-03",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_TOT_03_12_2025.docx",
+        "sha256": "e23ccb1d58247317d10e9274f0f2584afdb43f7cf688476ee8c47924a305bb16",
+        "localFile": "source/60048912__Specifikaciya_TOT_03_12_2025.docx"
+      },
+      "officialAssets": []
+    },
+    "60078836": {
+      "agency": "МВД России",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "attach.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60078836",
+      "title": "Уведомления медицинских организаций о регистрации граждан",
+      "description": "Уведомления медицинских организаций о регистрации граждан",
+      "region": "",
+      "targetCode": "-60078836",
+      "eServiceCode": "60078836",
+      "serviceTargetCode": "-60078836",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60078836__Specifikaciya_API_EPGU_Servisy_uvedomleniya_ot_medicinskih_organizatsiy_o_registracii_grazhdan_v1.0",
+        "published": "2026-04-20",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Servisy_uvedomleniya_ot_medicinskih_organizatsiy_o_registracii_grazhdan_v1.0.docx",
+        "sha256": "6f2b81c90f79e1f1d3ebcbf3adaaa58130b00a3de1aaa3c6c2e8421b142ff0b5",
+        "localFile": "source/60078836__Specifikaciya_API_EPGU_Servisy_uvedomleniya_ot_medicinskih_organizatsiy_o_registracii_grazhdan_v1.0.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60078836/example-01.xml",
+          "kind": "example",
+          "sha256": "1390492ede6dfd6a3ea9a5a7874f268dcf91d4844baaba0fca6cc1783e11b8b8",
+          "wellFormed": false,
+          "rootName": "rsr:Request",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60078836/example-02.xml",
+          "kind": "example",
+          "sha256": "3108e612c22db325ad49c322faf77c66c7ec5b6aa3ef56958c7933298c972703",
+          "wellFormed": false,
+          "rootName": "rsr:Request",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60078836/example-03.xml",
+          "kind": "example",
+          "sha256": "b18b89eef4b31b4ceb3fab2273be8f2a7bef23d4c77a5fbed215a1b7e7f01413",
+          "wellFormed": false,
+          "rootName": "rsr:Request",
+          "namespace": ""
+        }
+      ]
+    },
+    "10000000804": {
+      "agency": "МВД России / Госавтоинспекция",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [
+        "новое ТС",
+        "бывшее в эксплуатации ТС"
+      ],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          },
+          {
+            "id": "request",
+            "outputName": "attach.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [
+        "/api/gusmev/equeue/slots",
+        "/api/gusmev/equeue/slot/{slotId}/book"
+      ],
+      "serviceCode": "10000000804",
+      "title": "Регистрация транспортных средств",
+      "description": "Регистрация транспортных средств",
+      "region": "",
+      "targetCode": "-10000000804",
+      "eServiceCode": "10000000804",
+      "serviceTargetCode": "-10000000804",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000804__Spetsifikatsiya_API_EPGU_Prilozhenie_10000000804_RegistratsiyaTS_v1",
+        "published": "2026-03-17",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Spetsifikatsiya_API_EPGU_Prilozhenie_10000000804_RegistratsiyaTS_v1.docx",
+        "sha256": "8bddfcde235c9854b337deee8c340c947ce108f1657952873d926faacfefd9fb",
+        "localFile": "source/10000000804__Spetsifikatsiya_API_EPGU_Prilozhenie_10000000804_RegistratsiyaTS_v1.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/10000000804/example-01.xml",
+          "kind": "example",
+          "sha256": "7aa41d63cf5e4a87cd865a20afe10e1166113b992c9739929d258ebecb35e9ec",
+          "wellFormed": true,
+          "rootName": "FormData",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-02.xml",
+          "kind": "example",
+          "sha256": "7e837ceb834ad0cd9da663b7eb4189583ae8aa8664bba0566b06c305c7a70822",
+          "wellFormed": true,
+          "rootName": "FormData",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-03.xml",
+          "kind": "example",
+          "sha256": "314b39c9174c515aa215a9c5685961d108ad5bd3d9f88108e3c2f41eeef1b2e6",
+          "wellFormed": true,
+          "rootName": "Service_10000004558",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service/2.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-04.xml",
+          "kind": "example",
+          "sha256": "04f6862ec6354d2e9f485b6707c0999f7c166c1a672a8997b6b23fb92279af17",
+          "wellFormed": true,
+          "rootName": "FormData",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-05.xml",
+          "kind": "example",
+          "sha256": "9a04c5d83192b174365dfdef03b7d262e91eac95a171784d46924774038daad7",
+          "wellFormed": true,
+          "rootName": "Service_10000004558",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-06.xml",
+          "kind": "example",
+          "sha256": "44297fd90ec01c56a4acc61f65022b23b4630a6232e31aa73447a05c4e59d6a0",
+          "wellFormed": true,
+          "rootName": "Service_10000004558",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-07.xml",
+          "kind": "example",
+          "sha256": "28e0f1dc916cde3068bcc2b08b293c964f99bf369e26456857509672e081046b",
+          "wellFormed": true,
+          "rootName": "Service_10000004558",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service/2.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-08.xml",
+          "kind": "example",
+          "sha256": "f8893f359da7638bdba01d006e33dbf30022208c1f6bae29af5fa7e7e0679a5a",
+          "wellFormed": true,
+          "rootName": "FormData",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-09.xml",
+          "kind": "example",
+          "sha256": "1b077d600913b60761ab1f934b6449e513259cc8fec3d7d09f9cb166f75c5024",
+          "wellFormed": true,
+          "rootName": "Service_10000004558",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-10.xml",
+          "kind": "example",
+          "sha256": "832f0bd0aeb9073a3fd58f29f98b3296f4b7d3c43536dfd6db6ba349721bf08a",
+          "wellFormed": true,
+          "rootName": "FormData",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/example-11.xml",
+          "kind": "example",
+          "sha256": "cd9ffb615bf71a5b74d058026df97c92a545ddcfca965d7c32a6b5fd73cda950",
+          "wellFormed": true,
+          "rootName": "Service_10000004558",
+          "namespace": "urn://services-gibdd-ru/gosuslugi-service-new/1.0.0"
+        },
+        {
+          "path": "extracted/10000000804/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "eb4fbb7f64f425f570a7d3243193251001fee4a031a7b99f6b13e38728ea7504",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/10000000804/schema-02.xsd",
+          "kind": "schema",
+          "sha256": "697e20f68f45876b2e2fc595f2731fa83c40bfc91e2d092bf53cded8dd340dbf",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ]
+    },
+    "60011906": {
+      "agency": "Генеральная прокуратура РФ",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60011906",
+      "title": "Подача обращений в органы прокуратуры",
+      "description": "Подача обращений в органы прокуратуры",
+      "region": "",
+      "targetCode": "-60011906",
+      "eServiceCode": "60011906",
+      "serviceTargetCode": "-60011906",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60011906__Specification_API_EPGU_Submission_of_appeals_to_the_prosecutors",
+        "published": "2026-03-03",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specification_API_EPGU_Submission_of_appeals_to_the_prosecutors.docx",
+        "sha256": "857212626b5f83a712bbbb7997df243d3754e24ac022d981253a66d43c6e047a",
+        "localFile": "source/60011906__Specification_API_EPGU_Submission_of_appeals_to_the_prosecutors.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60011906/example-01.xml",
+          "kind": "example",
+          "sha256": "6b04adf12051297b217d66dcdd50d2b3309a461ff9b2fc32dddcfc5b1812407e",
+          "wellFormed": true,
+          "rootName": "order",
+          "namespace": "urn://x-artefact-genproc-gov-ru/petition/1.1.1"
+        },
+        {
+          "path": "extracted/60011906/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "8218061942631dcd6d40d7221bf38438346ac4ee95ac3acac31d6130cae02cbf",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        },
+        {
+          "path": "extracted/60011906/example-02.xml",
+          "kind": "example",
+          "sha256": "ac21dd6d7256c70e03ff707f8ad745b24522908392d82eb4a13f3a3697347bbd",
+          "wellFormed": true,
+          "rootName": "orderResponse",
+          "namespace": "urn://x-artefact-genproc-gov-ru/petition/1.1.1"
+        }
+      ]
+    },
+    "60080315": {
+      "agency": "Социальный фонд России",
+      "protocol": "gusmev-order",
+      "signature": "none",
+      "variants": [],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "business"
+          },
+          {
+            "id": "transport",
+            "outputName": "trans_{guid}.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "none",
+            "role": "transport"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60080315",
+      "title": "Ежегодная семейная выплата",
+      "description": "Ежегодная семейная выплата",
+      "region": "",
+      "targetCode": "-60080315",
+      "eServiceCode": "60080315",
+      "serviceTargetCode": "-60080315",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60080315__Specifikaciya_API_EPGU_Prilozhenie_680315_Family_v1.0__editing_the_directory_SFR_CO_01",
+        "published": "2026-06-04",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_680315_Family_v1.0_%20editing_the_directory_SFR_CO_01.docx",
+        "sha256": "30ae214a9808b3a5fe455bb12523664a485aa50800815b79737983730965f6ed",
+        "localFile": "source/60080315__Specifikaciya_API_EPGU_Prilozhenie_680315_Family_v1.0__editing_the_directory_SFR_CO_01.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60080315/example-01.xml",
+          "kind": "example",
+          "sha256": "dca4f6f0e459e09f4279e531a1773313ba376292e74aaa7e05a0f06cca5b6507",
+          "wellFormed": true,
+          "rootName": "Request",
+          "namespace": "urn://iis.ecp.ru/zevs/1.0.0"
+        },
+        {
+          "path": "extracted/60080315/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "90f9698a5de32d9f0a1a5bd73d6f47fe9af5a2b6be8a8f691fbe8bffbb381caa",
+          "wellFormed": false,
+          "rootName": "xs:schema",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60080315/example-02.xml",
+          "kind": "example",
+          "sha256": "f5a820c680758bb91340c98c8e087976e088f9ed07f99cb76338f56241b1aef1",
+          "wellFormed": false,
+          "rootName": "n1:ЭДСФР",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60080315/example-03.xml",
+          "kind": "example",
+          "sha256": "150dd4869c00ff0240cb6d580f8dc515f11aae25c0a85431743d35db10262145",
+          "wellFormed": false,
+          "rootName": "n1:ЭДСФР",
+          "namespace": ""
+        },
+        {
+          "path": "extracted/60080315/example-04.xml",
+          "kind": "example",
+          "sha256": "890761d8586e3297c30860e1adbfba7e4861daa7a7dc834a6a5072e1a3f652cf",
+          "wellFormed": false,
+          "rootName": "n1:ЭДСФР",
+          "namespace": ""
+        }
+      ]
+    },
+    "10000000588": {
+      "agency": "МВД России",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [
+        "постановка иностранного гражданина",
+        "снятие иностранного гражданина",
+        "регистрационный учёт гражданина РФ"
+      ],
+      "submission": {
+        "mode": "chunked",
+        "endpoints": [
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "10000000588",
+      "title": "Миграционный и регистрационный учёт для гостиниц",
+      "description": "Миграционный и регистрационный учёт для гостиниц",
+      "region": "",
+      "targetCode": "-10000000588",
+      "eServiceCode": "10000000588",
+      "serviceTargetCode": "-10000000588",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "10000000588__Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v3.0_600588",
+        "published": "2026-06-22",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v3.0_600588.docx",
+        "sha256": "f0c45c87eb241b7814917855470d5963961a1753d3e199afceaff4801a06edb6",
+        "localFile": "source/10000000588__Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v3.0_600588.docx"
+      },
+      "officialAssets": []
+    },
+    "60079416": {
+      "agency": "Минцифры / Госключ",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [],
+      "submission": {
+        "mode": "adaptive",
+        "endpoints": [
+          "/api/gusmev/push",
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business",
+            "generator": "goskey"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60079416",
+      "title": "Расшифрование документов в Госключе",
+      "description": "Расшифрование документов в Госключе",
+      "region": "",
+      "targetCode": "-60079416",
+      "eServiceCode": "60079416",
+      "serviceTargetCode": "-60079416",
+      "status": "reference",
+      "available": false,
+      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "spec": {
+        "version": "60079416__Specifikaciya_API_EPGU_Prilozhenie_60079416_",
+        "published": "2025-11-01",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60079416_.docx",
+        "sha256": "91348129c8cd19557d40600c8c6c647fe0458a564d8869978c9746a2d85aa826",
+        "localFile": "source/60079416__Specifikaciya_API_EPGU_Prilozhenie_60079416_.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60079416/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "84310f7f2a753790f4f1427ba9c00e3ae1ad1f698a4d355fcdc062495714bd0f",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "decipher",
+          "label": "Расшифрование документов",
+          "state": "reference",
+          "namespace": "urn://mpkey.gosuslugi.ru/deciphering_document/1.0.0",
+          "reason": "Официальные источники противоречат друг другу: FileName/Description и лимит 50/20 документов."
+        }
+      ]
+    },
+    "60080470": {
+      "agency": "Минцифры / Госключ",
+      "protocol": "gusmev-order",
+      "signature": "detached-cades",
+      "variants": [],
+      "submission": {
+        "mode": "adaptive",
+        "endpoints": [
+          "/api/gusmev/push",
+          "/api/gusmev/order",
+          "/api/gusmev/push/chunked"
+        ],
+        "archiveNameTemplate": "{orderId}-archive.zip",
+        "chunkSize": 5000000,
+        "documents": [
+          {
+            "id": "request",
+            "outputName": "req.xml",
+            "required": true,
+            "mediaType": "application/xml",
+            "signature": "detached-cades",
+            "role": "business",
+            "generator": "goskey"
+          }
+        ],
+        "allowAdditionalFiles": true
+      },
+      "additionalEndpoints": [],
+      "serviceCode": "60080470",
+      "title": "Подписание УКЭП с сертификатом Федерального казначейства",
+      "description": "Подписание УКЭП с сертификатом Федерального казначейства",
+      "region": "",
+      "targetCode": "-60080470",
+      "eServiceCode": "60080470",
+      "serviceTargetCode": "-60080470",
+      "status": "verified",
+      "available": true,
+      "unavailableReason": "",
+      "spec": {
+        "version": "60080470__Specifikaciya_API_EPGU_Prilozhenie_ukep_roskazna",
+        "published": "2026-02-25",
+        "source": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_ukep_roskazna.docx",
+        "sha256": "a153bc7f383d5ed1774b405829626686f2704634c03ba2cd2153d57bf2e95a02",
+        "localFile": "source/60080470__Specifikaciya_API_EPGU_Prilozhenie_ukep_roskazna.docx"
+      },
+      "officialAssets": [
+        {
+          "path": "extracted/60080470/example-01.xml",
+          "kind": "example",
+          "sha256": "16efcb11950b253e7f5901fc2fd87a298879f381818b3be7ebb5d7804ee99795",
+          "wellFormed": true,
+          "rootName": "SignRequest",
+          "namespace": "urn://mpkey.gosuslugi.ru/sign_document_ukep_roskazna/1.0.0"
+        },
+        {
+          "path": "extracted/60080470/schema-01.xsd",
+          "kind": "schema",
+          "sha256": "af4831fac4ad63e47da96c020833ba730022903d1bbd4dd4c39029860ee8715a",
+          "wellFormed": true,
+          "rootName": "schema",
+          "namespace": "http://www.w3.org/2001/XMLSchema"
+        }
+      ],
+      "capabilities": [
+        {
+          "id": "treasury",
+          "label": "УКЭП с сертификатом Федерального казначейства",
+          "state": "verified",
+          "namespace": "urn://mpkey.gosuslugi.ru/sign_document_ukep_roskazna/1.0.0",
+          "reason": "Проверено по опубликованной XSD."
+        }
+      ]
+    }
+  }
+}

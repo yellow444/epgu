@@ -1,49 +1,35 @@
-"""Пример: авторизация ГРАЖДАНИНА через ЕСИА (OAuth2 Authorization Code).
+"""Интерактивный пример безопасного OAuth2 Authorization Code потока ЕСИА."""
 
-Гражданин переходит по ссылке, подтверждает доступ в ЕСИА, после чего ваша
-информационная система получает ``code`` на redirect_uri и обменивает его на
-маркер доступа. Дальше с этим маркером можно работать как с любым другим.
+import os
 
-Запуск:
-    python -m examples.citizen_auth
-"""
-
-from epgu import EpguClient, TEST
+from epgu import TEST, EpguClient
 from epgu.auth import AasClient
 from epgu.signature import CryptoProSigner
 
-CLIENT_ID = "MNEMONIC_OF_YOUR_IS"  # мнемоника ИС в ЕСИА
-REDIRECT_URI = "https://your-app.example/esia/callback"
-
 
 def main() -> None:
-    signer = CryptoProSigner(pin="1234567890")
-    aas = AasClient(
-        CLIENT_ID,
+    signer = CryptoProSigner(
+        thumbprint=os.environ["EPGU_CERT_THUMBPRINT"],
+        pin=os.environ.get("EPGU_KEY_PIN"),
+    )
+    with AasClient(
+        os.environ["ESIA_CLIENT_ID"],
         signer,
         env=TEST,
-        redirect_uri=REDIRECT_URI,
+        redirect_uri=os.environ["ESIA_REDIRECT_URI"],
         scope="openid fullname",
-    )
+    ) as aas:
+        authorization_url, expected_state = aas.authorization_url()
+        print("Откройте ссылку в браузере и подтвердите доступ:")
+        print(authorization_url)
 
-    # Шаг 1. Сформировать ссылку и отправить гражданина в ЕСИА.
-    url, state = aas.authorization_url()
-    print("Откройте ссылку в браузере и подтвердите доступ:")
-    print(url)
-    print("Сохраните state для проверки:", state)
+        callback_url = input("Вставьте полный callback URL: ").strip()
+        token = aas.exchange_callback(callback_url, expected_state=expected_state)
 
-    # Шаг 2. После возврата на redirect_uri вы получите ?code=...&state=...
-    code = input("Вставьте полученный code: ").strip()
-
-    # Шаг 3. Обменять код на маркер доступа.
-    token = aas.exchange_code(code, state=state)
-    print("access_token получен, истекает через:", token.expires_in, "сек")
-
-    # Шаг 4. Использовать маркер.
-    with EpguClient(token.access_token, env=TEST) as epgu:
-        # например, запросить статусы заявлений гражданина
-        statuses = epgu.updated_after("2024-01-01T00:00:00.000+0300")
-        print("Заявлений обновлено:", len(statuses))
+    print("Access token получен; срок жизни, сек:", token.expires_in)
+    with EpguClient(token.access_token, env=TEST) as client:
+        page = client.updated_after("2026-01-01T00:00:00.000+0300", page_num=0)
+        print("Найдено заявлений:", page.total_count)
 
 
 if __name__ == "__main__":

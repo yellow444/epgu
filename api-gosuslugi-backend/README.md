@@ -1,200 +1,115 @@
-# README.md
+# Backend API Госуслуг
 
-## Описание проекта
+FastAPI-шлюз к ЕСИА и API ЕПГУ/ГУСМЭВ. Базовый контракт сверён со [спецификацией API ЕПГУ v1.14 от 29.01.2026](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_14.docx), каталог услуг — с [партнёрским порталом](https://partners.gosuslugi.ru/catalog/api_for_gu) на 12.08.2026.
 
-Backend проекта: FastAPI-сервис, реализующий **Спецификацию API ЕПГУ v1.13** (правки v1.12.1 - ГОСТ TLS / СМЭВ4). Управление сертификатами через КриптоПро CSP, подпись CAdES-BES, проксирование вызовов к ЕПГУ, валидация XML по XSD.
-
-> Дата актуализации против [Портала API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu): **2026-05-12**.
+> Реестр содержит 21 профиль. Отправка разрешена только для трёх проверенных сценариев Госключа (`10000000374` только УНЭП, `60025907`, `60080470`); остальные 18 профилей предназначены для просмотра в UI и отвечают ошибкой до появления проверенного контракта. Для ФССП `60010153` схема и транспорт каталогизированы, но XML остаётся демонстрационным: до включения нужны типизированная форма, fail-closed проверка placeholder/полей и приёмка в авторизованном контуре.
 
 ## Структура
 
 | Файл | Назначение |
 |---|---|
-| `app.py` | Точка входа FastAPI, бизнес-эндпоинты (order/push/dictionary/files...) |
-| `config.py` | `DEFAULT_SERVICES` (каталог услуг) и `ENVIRONMENTS` (тест/прод host'ы) |
-| `routers.py` | Диагностические роутеры `/version`, `/environments`, `/services/{code}` |
-| `xml/piev_epgu.xsd` | XSD-схема для валидации `piev_epgu.xml` |
-| `test_app.py` | Unit-тесты (`pytest`) |
+| `app.py` | REST API, проверка метаданных, XML-преобразования, ZIP и отправка в ЕПГУ |
+| `config.py` | строгая загрузка и валидация профилей, среды v1.14, безопасный deep merge `SERVICES` |
+| `service_profiles.json` | версионируемый реестр 21 услуги с источниками, SHA-256, транспортом и документами |
+| `routers.py` | `/version`, `/environments`, описание услуги |
+| `xml/` | рабочие локальные шаблоны и XSD; типизированные XML Госключа строятся общей библиотекой `epgu-api` |
+| `test_*.py` | unit- и контрактные тесты, включая chunking и запрет справочных профилей |
 
-## Требования
+Реестр генерируется из `docs/api_for_gu/catalog.json` и `docs/api_for_gu/extracted/inventory.json` командой `python scripts/build_service_profiles.py` из корня репозитория. Ручная подмена чужого XML другой услуге не допускается. Для `10000000374` разрешена только проверенная capability УНЭП; УКЭП физического лица остаётся справочной. `60079416` заблокирован из-за противоречий официальных материалов по полям и лимиту документов.
 
-- Python 3.10+
-- FastAPI
-- PyCades (КриптоПро CSP 5.0+)
-- httpx (async)
-- lxml
-- python-dotenv
-- uvicorn
+## Среды
 
-## Установка
+| Имя | ЕСИА | API ЕПГУ |
+|---|---|---|
+| `test` | `https://esia-portal1.test.gosuslugi.ru` | `https://svcdev-gostapi.test.gosuslugi.ru` |
+| `prod` | `https://esia.gosuslugi.ru` | `https://www.gosuslugi.ru` |
+| `test-beta` | тестовая ЕСИА | `https://svcdev-beta.test.gosuslugi.ru` — совместимость со старыми приложениями |
 
-1. Клонируйте репозиторий:
-   ```bash
-   git clone <repository-url>
-   ```
+По умолчанию используется формальный тестовый ГОСТ-шлюз. `region` не хранится в профиле как константа: клиент обязан передавать фактический код ОКАТО пользователя при каждом вызове.
 
-2. Установите зависимости:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Запуск
 
-3. Настройте `.env` файл:
-   ```plaintext
-   production=<production_flag>
-   apikey=<your_api_key>
-   KeyPin=<key_pin>
-   TSAAddress=<tsa_address>
-   esia_host=<esia_host_url>
-   svcdev_host=<svcdev_host_url>
-   ```
+Python 3.10+:
 
-4. Запустите сервер:
-   ```bash
-   uvicorn app:app --host 0.0.0.0 --port 5000
-   ```
-
-## Описание API
-
-### Получение сертификатов
-**URL:** `/get_certificates`
-
-**Метод:** `POST`
-
-Возвращает список доступных сертификатов.
-
-### Установить текущий сертификат
-**URL:** `/set_current_certificate`
-
-**Метод:** `POST`
-
-**Параметры:**
-- `cert_id` (str): Идентификатор сертификата.
-
-### Получить текущий сертификат
-**URL:** `/get_current_certificate`
-
-**Метод:** `POST`
-
-Возвращает текущий установленный сертификат.
-
-### Проверка статуса API
-**URL:** `/status`
-
-**Метод:** `GET`
-
-Возвращает версию модуля PyCades.
-
-### Генерация токена доступа
-**URL:** `/accessTkn_esia`
-
-**Метод:** `POST`
-
-**Тело запроса:**
-```json
-{
-  "api_key": "<ваш_api_key>"
-}
+```bash
+python -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt
+.venv/Scripts/python -m uvicorn app:app --host 0.0.0.0 --port 55000
 ```
 
-### Создание заказа
-**URL:** `/order`
+На Linux/macOS используйте `.venv/bin/python`. Из корня репозитория:
 
-**Метод:** `POST`
-
-**Тело запроса:**
-```json
-{
-  "region": "<регион>",
-  "serviceCode": "<код_сервиса>",
-  "targetCode": "<цель_сервиса>"
-}
+```bash
+cp .env.example .env.local
+docker compose --env-file .env.local up -d --build api
 ```
 
-### Получение деталей заказа
-**URL:** `/order/{orderId}`
+Не записывайте реальные `apikey`, `KeyPin`, сертификаты или ключевые контейнеры в Git. Значения host-ов, CORS и `SERVICES` могут задаваться окружением; существующий профиль в `SERVICES` объединяется с базовым глубоко и затем целиком валидируется.
 
-**Метод:** `POST`
+## CryptoPro и публичный Docker-образ
 
-### Отмена заказа
-**URL:** `/order/{orderId}/cancel`
+`Dockerfile` намеренно собирает чистое Python-ядро без проприетарных пакетов КриптоПро. Такой контейнер запускается, публикует реестр и может выполнять локальную подготовку, однако:
 
-**Метод:** `POST`
+- `/status`, `/hc` и получение маркера доступа, которому нужна ГОСТ-подпись API-ключа, вернут `503` без `pycades`/CSP;
+- реальная подпись требует отдельно лицензированного runtime или производного приватного образа с CryptoPro CSP, `pycades`, сертификатом и закрытым ключом;
+- профили с `detached-cades` требуют отдельный файл `<имя>.sig` для каждого подписываемого документа; backend проверяет комплектность архива, но не подменяет требования конкретной услуги.
 
-### Получение обновленных данных
-**URL:** `/getUpdatedAfter`
+Проприетарные дистрибутивы и личные ключи не должны попадать в публичный образ, wheel, sdist или Git.
 
-**Метод:** `GET`
+## Основные endpoint-ы
 
-**Параметры:**
-- `pageNum`: Номер страницы
-- `pageSize`: Количество элементов на странице
-- `updatedAfter`: Дата и время последнего обновления в формате ISO8601
+| Endpoint | Назначение |
+|---|---|
+| `GET /services`, `GET /services/{code}` | полный профиль, статус готовности и официальные материалы |
+| `GET /xml?service=...` | локальные шаблоны доступного профиля; сгенерированные Госключ-запросы формирует типизированный контракт |
+| `GET /xsd?service=...&simple_type_name=...` | enum выбранной локальной XSD |
+| `POST /accessTkn_esia` | ГОСТ-подпись API-ключа и получение маркера ЕСИА |
+| `POST /order` | резервирование `orderId` для сервиса с соответствующим режимом |
+| `POST /push` | прямой push для режима `push`/допустимой ветви `adaptive` |
+| `POST /push/chunked` | сборка ZIP и автоматическая отправка всех частей |
+| `POST /order/{orderId}`, `POST /order/{orderId}/cancel` | детали и отмена заявления |
+| `GET /getUpdatedAfter`, `GET /getOrdersStatus` | выборки статусов |
+| `POST /dictionary/{code}` | справочник с `treeFiltering` и пагинацией |
+| `POST /download_file/{objectId}/{objectType}` | загрузка связанного файла |
+| `GET /goskey/capabilities` | проверенные и справочные возможности четырёх кодов Госключа |
+| `POST /goskey/preview` | типизированная генерация XML без отправки |
+| `POST /goskey/submit` | генерация, detached CAdES и adaptive-отправка проверенного сценария |
+| `GET /version`, `GET /environments` | безопасная диагностика конфигурации |
 
-### Скачивание файла
-**URL:** `/download_file/{objectId}/{objectType}`
+Swagger доступен по `/docs`.
 
-**Метод:** `POST`
+## Формирование архива
 
-**Параметры:**
-- `mnemonic`: Имя файла
-- `eserviceCode`: Код сервиса
+Профиль услуги определяет обязательные документы, конечные имена, трансформации, схему и подпись. Backend ограничивает пути каталогом `XML_ROOT`, запрещает дубли и небезопасные имена, применяет подстановки из одного `submissionContext`, проверяет XML и только затем создаёт ZIP.
 
-### Отправка файла
-**URL:** `/push`
+Для `chunked` клиент передаёт исходные файлы один раз. Backend:
 
-**Метод:** `POST`
+1. создаёт ZIP и делит его по `chunkSize` профиля (сейчас 5 000 000 байт);
+2. оставляет единственную часть как `.zip`, а несколько частей называет `.z001`, `.z002`, …;
+3. передаёт `chunk=0..n-1`, `chunks=n`, `meta` и `orderId` на каждой части;
+4. ожидает `206` для промежуточных частей и `200` для последней, контролируя общий лимит пяти минут.
 
-**Параметры:**
-- `meta`: JSON строка с мета-данными
-- `files_upload`: Список загружаемых файлов
+Legacy-поля `chunk=0`, `chunks=1` принимаются только для совместимости: заранее разбитые клиентом части запрещены.
 
-### Отправка файла по частям
-**URL:** `/push/chunked`
+## Проверка
 
-**Метод:** `POST`
-
-**Параметры:**
-- `meta`: JSON строка с мета-данными
-- `orderId`: Идентификатор заказа
-- `chunks`: Общее количество частей
-- `chunk`: Текущая часть
-- `files_upload`: Список загружаемых файлов
-
-### Проверка XML
-
-**Методы:**
-- `validate_xml_content`: Проверяет содержимое XML.
-- `validate_xml`: Проверяет XML файл на соответствие XSD схеме.
-
-## Файлы проекта
-
-- `app.py`: Основной файл приложения.
-- `.env`: Настройки окружения.
-- `requirements.txt`: Зависимости проекта.
-
-## Пример .env файла
-
-```plaintext
-production=True
-apikey=YOUR_API_KEY
-KeyPin=1234567890
-TSAAddress=http://www.cryptopro.ru/tsp/tsp.srf
-esia_host=https://esia-portal1.test.gosuslugi.ru
-svcdev_host=https://svcdev-beta.test.gosuslugi.ru
+```bash
+python -m pip install -r requirements-test.txt
+python -m pytest -q
 ```
 
-## Документация
+Полный прогон после подключения endpoint-ов Госключа в чистом Docker-окружении: **44 passed, 5 skipped**; пять пропусков зависят от отсутствующего лицензированного CSP/`pycades`. Общая библиотека `epgu-api` проверяется отдельно полным suite; актуальный результат формирует CI, а зафиксированный срез и coverage приведены в аудите. Проверка реестра и документации выполняется из корня репозитория:
 
-Документы, связанные с проектом:
+```bash
+python scripts/sync_api_for_gu_docs.py --check
+python scripts/extract_api_for_gu_assets.py --check
+python scripts/audit_repository.py --check
+```
 
-- `Instrukciya_po_podklucheniyu_API_EPGU.pdf`
-- `Instruktsiya_po_sozdaniyu_zaprosov_dlya_vypuska_tls_sertifikata.pdf`
-- `metodicheskierekomendatsiipoispolzovaniyuesiav348.docx`
-- `Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx`
-- `reglamentinformatsionnogovzaimodeistviyauchastnikovsoperatorom.docx`
-- `Rukovodstvo_polzovatelya_dlya_organizacii-potrebitelya_po_formirovaniyu_API-Key_i_polucheniyu_markera_dostupa._Versiya_3.3_ot_31.01.2023_g.docx`
-- `Specifikaciya_API_EPGU_v1_13.docx`
+## Документация и лицензия
 
-## Лицензия
+- [`../docs/SERVICES.md`](../docs/SERVICES.md) — матрица всех 21 профилей;
+- [`../docs/api_for_gu/README.md`](../docs/api_for_gu/README.md) — происхождение официального снимка;
+- [`../docs/AUDIT_2026-08-12.md`](../docs/AUDIT_2026-08-12.md) — результаты и блокеры публикации.
 
-Этот проект распространяется под лицензией MIT.
+Проект распространяется по AGPL-3.0-or-later — см. [`../LICENSE`](../LICENSE).

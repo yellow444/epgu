@@ -21,7 +21,7 @@
 | Среда | ESIA | EPGU |
 |---|---|---|
 | test | `https://esia-portal1.test.gosuslugi.ru` | `https://svcdev-beta.test.gosuslugi.ru` |
-| prod | `https://esia.gosuslugi.ru` | `https://lk.gosuslugi.ru` (ГОСТ TLS) |
+| prod | `https://esia.gosuslugi.ru` | `https://www.gosuslugi.ru` (ГОСТ TLS) |
 
 ### Каталог услуг по умолчанию
 - `60010153` - Наличие ИП (ФССП) - спец. v8
@@ -32,7 +32,7 @@
 ## 2026-05-12+ - расширения после сверки
 
 - `.env.example` - задокументирован полный набор переменных, включая `ALLOWED_ORIGINS` для боевого CORS.
-- `.gitignore` - добавлен; исключены каталоги IDE, личные сертификаты, кэши Python и сборка фронта.
+- `.gitignore` - добавлен; исключены `.claude/`, `.vscode/`, личные сертификаты, кэши Python и сборка фронта.
 - `docs/CHANGELOG.md` - этот журнал.
 - Контекст из ЕСКС (info.gosuslugi.ru): подключение к API ЕПГУ возможно через прямой ГОСТ TLS, через СМЭВ4 (ПОДД) или через СВОКС. См. `docs/deployment.md#production-чеклист`.
 

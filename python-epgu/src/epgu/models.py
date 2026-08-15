@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Типизированные модели данных API ЕПГУ (gusmev).
 
 Модели намеренно «толерантны»: ответы ЕПГУ часто содержат больше полей, чем
@@ -51,7 +53,7 @@ class OrderFile:
 
     @property
     def object_type(self) -> str:
-        """Последний сегмент ``link`` — используется при скачивании файла."""
+        """Последний сегмент ``link`` - используется при скачивании файла."""
         return self.link.rstrip("/").split("/")[-1] if self.link else ""
 
     @classmethod
@@ -77,7 +79,7 @@ class Order:
     def from_response(cls, data: Dict[str, Any]) -> "Order":
         """Разбирает ответ ЕПГУ.
 
-        ЕПГУ возвращает поле ``order`` строкой с вложенным JSON — это учитывается.
+        ЕПГУ возвращает поле ``order`` строкой с вложенным JSON - это учитывается.
         """
         order_obj = data
         nested = data.get("order")

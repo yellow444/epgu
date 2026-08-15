@@ -5,11 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "epgu-api"
 version = "0.1.0"
-description = "Python-клиент API Госуслуг (ЕПГУ/ЕСИА): подача заявлений, статусы, файлы — для граждан и организаций"
+description = "Python-клиент API Госуслуг (ЕПГУ/ЕСИА): подача заявлений, статусы, файлы - для граждан и организаций"
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "MIT" }
-authors = [{ name = "Maksim Sitnikov" }]
+license = { text = "AGPL-3.0-or-later" }
+authors = [{ name = "yellow444", email = "yellow444@gmail.com" }]
 keywords = [
     "epgu",
     "gosuslugi",
@@ -24,7 +24,7 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Natural Language :: Russian",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -41,7 +41,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# КриптоПро CSP + pycades — нужны только для GOST-подписи (CryptoProSigner).
+# КриптоПро CSP + pycades - нужны только для GOST-подписи (CryptoProSigner).
 # Сам pycades устанавливается из дистрибутива КриптоПро, не из PyPI, поэтому
 # в этот extra включён только опциональный вспомогательный пакет валидации.
 cryptopro = []
@@ -58,9 +58,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/knightmc/epgu"
-Repository = "https://github.com/knightmc/epgu"
-Issues = "https://github.com/knightmc/epgu/issues"
+Homepage = "https://github.com/yellow444/epgu"
+Repository = "https://github.com/yellow444/epgu"
+Issues = "https://github.com/yellow444/epgu/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/epgu"]
@@ -70,6 +70,8 @@ include = [
     "src/epgu",
     "README.md",
     "LICENSE",
+    "NOTICE",
+    "COMMERCIAL-LICENSE.md",
     "CHANGELOG.md",
 ]
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Клиент API ЕПГУ (gusmev): заявления, статусы, файлы, справочники."""
 
 from __future__ import annotations
@@ -19,7 +21,7 @@ class EpguClient:
     """Высокоуровневый клиент для работы с заявлениями ЕПГУ.
 
     Args:
-        token: источник маркера доступа — либо строка (готовый маркер), либо
+        token: источник маркера доступа - либо строка (готовый маркер), либо
             провайдер (:class:`~epgu.auth.OrgTokenProvider` и т.п.),
             который при необходимости сам обновит маркер.
         env: контур (:data:`epgu.const.TEST` / :data:`epgu.const.PROD`).

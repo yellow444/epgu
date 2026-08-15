@@ -1,154 +1,164 @@
 # epgu-api
 
-Python-клиент API Госуслуг (**ЕПГУ / ЕСИА**) для подачи заявлений, отслеживания
-статусов и работы с файлами. Подходит как **организациям** (банки, госорганы,
-любые информационные системы), так и сценариям от имени **граждан**.
+Python-клиент API Госуслуг (ЕПГУ и ЕСИА) для подачи заявлений, отслеживания их
+статусов и работы с файлами. Подходит и организациям (банки, госорганы, любые
+информационные системы), и сценариям от имени граждан.
 
-Библиотека вдохновлена [ofstudio/go-api-epgu](https://github.com/ofstudio/go-api-epgu)
-(Go), но переосмыслена под Python и расширена: помимо потока «организация → API-Key»
+Библиотека написана по мотивам go-api-epgu (ofstudio/go-api-epgu, язык Go), но
+переработана под Python и расширена: кроме потока "организация по API-Key"
 поддержан гражданский OAuth2-поток ЕСИА, а подпись и аутентификация вынесены за
-интерфейсы.
+отдельные интерфейсы.
 
-> ⚠️ Неофициальная библиотека. Для работы нужен доступ к API ЕПГУ (зарегистрированная
-> информационная система, сертификат КЭП, API-Key). Подробности — в документации
-> техпортала ЕСИА/ЕПГУ.
+Это неофициальная библиотека. Для работы нужен доступ к API ЕПГУ:
+зарегистрированная информационная система, сертификат КЭП, API-Key. Подробности
+смотрите в документации техпортала ЕСИА и ЕПГУ.
 
 ## Возможности
 
-- 🔑 **Два сценария авторизации**
-  - `OrgTokenProvider` — маркер `ext-app` по API-Key + ГОСТ-подписи (организации/ИС);
-  - `AasClient` — OAuth2 Authorization Code ЕСИА (от имени гражданина).
-- ✍️ **Подпись за интерфейсом** — `CryptoProSigner` (КриптоПро CSP + pycades) или
-  `CallableSigner` (любой внешний механизм). КриптоПро не является обязательной
-  зависимостью пакета.
-- 📨 **Полный жизненный цикл заявления** — `create_order`, `push` / `push_chunked`,
-  `order_info`, `cancel_order`, `orders_status`, `updated_after`, `dictionary`,
-  `download_file`.
-- 📦 **Сборка комплекта документов** — `OrderArchive` собирает ZIP и автоматически
-  кладёт отсоединённые подписи `*.sig`.
-- 🧩 **Сценарий «под ключ»** — `submit_application(...)`.
-- 🌐 **Тестовый и боевой контуры** — преднастроенные `TEST` и `PROD`.
-- 🧪 Типизировано (dataclasses), покрыто тестами, без обязательных тяжёлых зависимостей
-  (только `httpx`).
+Два сценария авторизации:
+
+- OrgTokenProvider: маркер ext-app по API-Key и ГОСТ-подписи (организации и ИС).
+- AasClient: OAuth2 Authorization Code ЕСИА (от имени гражданина).
+
+Подпись за интерфейсом:
+
+- CryptoProSigner на базе КриптоПро CSP и pycades.
+- CallableSigner для любого внешнего механизма подписи.
+- КриптоПро не является обязательной зависимостью пакета.
+
+Полный жизненный цикл заявления: create_order, push и push_chunked, order_info,
+cancel_order, orders_status, updated_after, dictionary, download_file.
+
+Сборка комплекта документов: OrderArchive собирает ZIP и кладёт рядом
+отсоединённые подписи в файлах с расширением .sig.
+
+Сценарий "под ключ": функция submit_application.
+
+Готовые адреса тестового и боевого контуров (TEST и PROD).
+
+Типизированные модели на dataclasses, тесты, минимум обязательных зависимостей
+(только httpx).
 
 ## Установка
 
-```bash
-pip install epgu-api
-```
+    pip install epgu-api
 
-Опциональные возможности:
+Дополнительно, если нужна проверка XML по XSD:
 
-```bash
-pip install "epgu-api[xml]"   # валидация XML по XSD (lxml)
-```
+    pip install "epgu-api[xml]"
 
-`pycades` (КриптоПро) ставится **из дистрибутива КриптоПро**, не из PyPI. Без него
-библиотека работает — используйте `CallableSigner` или заранее полученный маркер.
+Модуль pycades ставится из дистрибутива КриптоПро, а не из PyPI. Без него
+библиотека работает: используйте CallableSigner или заранее полученный маркер.
 
-## Быстрый старт — организация
+## Быстрый старт для организации
 
-```python
-from epgu import EpguClient, OrderArchive, OrderMeta, TEST
-from epgu.auth import OrgTokenProvider
-from epgu.services import submit_application
-from epgu.signature import CryptoProSigner
+    from epgu import EpguClient, OrderArchive, OrderMeta, TEST
+    from epgu.auth import OrgTokenProvider
+    from epgu.services import submit_application
+    from epgu.signature import CryptoProSigner
 
-signer = CryptoProSigner(pin="1234567890")
-auth = OrgTokenProvider(api_key="ВАШ_API_KEY", signer=signer, env=TEST)
+    signer = CryptoProSigner(pin="1234567890")
+    auth = OrgTokenProvider(api_key="ВАШ_API_KEY", signer=signer, env=TEST)
 
-meta = OrderMeta(region="45000000000",
-                 service_code="10001449665",
-                 target_code="-10001449665")
+    meta = OrderMeta(region="45000000000",
+                     service_code="10001449665",
+                     target_code="-10001449665")
 
-archive = OrderArchive(signer=signer)
-archive.add_file("req.xml", b"<req>...</req>")
-archive.add_signed_file("piev_epgu.xml", b"<piev>...</piev>")
+    archive = OrderArchive(signer=signer)
+    archive.add_file("req.xml", b"<req>...</req>")
+    archive.add_signed_file("piev_epgu.xml", b"<piev>...</piev>")
 
-with EpguClient(auth, env=TEST) as epgu:
-    result = submit_application(epgu, meta, archive, wait=True)
-    print(result.order_id, result.order and result.order.status_code)
-```
+    with EpguClient(auth, env=TEST) as epgu:
+        result = submit_application(epgu, meta, archive, wait=True)
+        print(result.order_id, result.order and result.order.status_code)
 
-## Быстрый старт — гражданин (OAuth2 ЕСИА)
+## Быстрый старт для гражданина (OAuth2 ЕСИА)
 
-```python
-from epgu import EpguClient, TEST
-from epgu.auth import AasClient
-from epgu.signature import CryptoProSigner
+    from epgu import EpguClient, TEST
+    from epgu.auth import AasClient
+    from epgu.signature import CryptoProSigner
 
-aas = AasClient("MNEMONIC_ИС", CryptoProSigner(pin="..."), env=TEST,
-                redirect_uri="https://app.example/callback", scope="openid fullname")
+    aas = AasClient("MNEMONIC_ИС", CryptoProSigner(pin="..."), env=TEST,
+                    redirect_uri="https://app.example/callback",
+                    scope="openid fullname")
 
-url, state = aas.authorization_url()      # отправить гражданина по ссылке
-# ... после возврата на redirect_uri получаем ?code=...
-token = aas.exchange_code(code, state=state)
+    url, state = aas.authorization_url()      # отправить гражданина по ссылке
+    # после возврата на redirect_uri получаем параметр code
+    token = aas.exchange_code(code, state=state)
 
-with EpguClient(token.access_token, env=TEST) as epgu:
-    statuses = epgu.updated_after("2024-01-01T00:00:00.000+0300")
-```
+    with EpguClient(token.access_token, env=TEST) as epgu:
+        statuses = epgu.updated_after("2024-01-01T00:00:00.000+0300")
 
-> Для гражданского потока всё равно нужна зарегистрированная ИС с КЭП: ЕСИА требует
-> подписанные запросы авторизации. «Простой гражданин» работает через приложение/ИС,
-> действующую от его имени с его согласия.
+Для гражданского потока всё равно нужна зарегистрированная ИС с КЭП: ЕСИА требует
+подписанные запросы авторизации. Гражданин работает через приложение или ИС,
+которая действует от его имени с его согласия.
 
 ## Свой механизм подписи
 
-Если КриптоПро используется через отдельный сервис, контейнер или CLI:
+Если КриптоПро используется через отдельный сервис, контейнер или утилиту
+командной строки:
 
-```python
-from epgu.signature import CallableSigner
+    from epgu.signature import CallableSigner
 
-def sign(data: bytes) -> bytes:        # вернуть DER-байты отсоединённой CMS-подписи
-    return my_external_signer(data)
+    def sign(data: bytes) -> bytes:
+        # вернуть DER-байты отсоединённой CMS-подписи
+        return my_external_signer(data)
 
-signer = CallableSigner(sign)
-```
+    signer = CallableSigner(sign)
 
-## Архитектура
+## Структура пакета
 
-```
-epgu/
-├── client.py            # EpguClient — методы gusmev/nsi
-├── models.py            # OrderMeta, Order, OrderFile, OrderStatus
-├── archive.py           # OrderArchive — ZIP + подписи
-├── const.py             # TEST / PROD / TSA, User-Agent
-├── errors.py            # иерархия исключений
-├── auth/                # OrgTokenProvider, AasClient, Token, TokenProvider
-├── signature/           # Signer, CryptoProSigner, CallableSigner
-└── services/            # submit_application — сценарий «под ключ»
-```
+- client.py: EpguClient, методы gusmev и nsi.
+- models.py: OrderMeta, Order, OrderFile, OrderStatus.
+- archive.py: OrderArchive, сборка ZIP и подписей.
+- const.py: TEST, PROD, TSA, User-Agent.
+- errors.py: иерархия исключений.
+- auth: OrgTokenProvider, AasClient, Token, TokenProvider.
+- signature: Signer, CryptoProSigner, CallableSigner.
+- services: submit_application, сценарий "под ключ".
 
 ## Контуры
 
-| Контур | ЕСИА | ЕПГУ |
-| --- | --- | --- |
-| `TEST` | esia-portal1.test.gosuslugi.ru | svcdev-beta.test.gosuslugi.ru |
-| `PROD` | esia.gosuslugi.ru | api.gosuslugi.ru |
+Тестовый контур TEST:
 
-Можно задать свой: `Env(esia="https://...", epgu="https://...")`.
+- ЕСИА: esia-portal1.test.gosuslugi.ru
+- ЕПГУ: svcdev-beta.test.gosuslugi.ru
+
+Боевой контур PROD:
+
+- ЕСИА: esia.gosuslugi.ru
+- ЕПГУ: api.gosuslugi.ru
+
+Можно задать свой контур: Env(esia="https://...", epgu="https://...").
 
 ## Разработка
 
-```bash
-pip install -e ".[dev]"
-pytest
-ruff check .
-```
+    pip install -e ".[dev]"
+    pytest
+    ruff check .
 
 ## Публикация в PyPI
 
-```bash
-python -m build                 # соберёт dist/*.whl и dist/*.tar.gz
-twine check dist/*
-twine upload dist/*             # боевой PyPI
-# или тестовый:
-twine upload --repository testpypi dist/*
-```
+    python -m build
+    twine check dist/*
+    twine upload dist/*
 
-Перед публикацией поднимите версию в `pyproject.toml` и `src/epgu/__init__.py`
-(`__version__`) и обновите `CHANGELOG.md`.
+Для публикации в тестовый PyPI:
+
+    twine upload --repository testpypi dist/*
+
+Перед публикацией поднимите версию в pyproject.toml и в src/epgu/__init__.py
+(переменная __version__) и обновите CHANGELOG.md.
 
 ## Лицензия
 
-[MIT](LICENSE) © Maksim Sitnikov
+Двойное лицензирование (dual licensing):
+
+- **Open source:** GNU Affero General Public License v3.0 или более поздняя
+  (AGPL-3.0-or-later), файл LICENSE. Если вы предоставляете доступ к программе
+  по сети, AGPL обязывает раскрыть исходный код вашей версии (раздел 13).
+- **Коммерческая лицензия:** для проприетарного использования без требований
+  copyleft, см. COMMERCIAL-LICENSE.md. Контакт: yellow444 <yellow444@gmail.com>.
+
+Библиотека написана по мотивам go-api-epgu (ofstudio/go-api-epgu, MIT) -
+независимая реализация на Python, см. файл NOTICE.

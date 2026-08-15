@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Типовой сценарий подачи заявления «под ключ»."""
 
 from __future__ import annotations
@@ -38,7 +40,7 @@ def submit_application(
         meta: параметры услуги (регион/код услуги/код цели).
         archive: собранный комплект документов.
         chunked: использовать ``push/chunked`` (рекомендуется) вместо ``push``.
-        push_meta: тело ``meta`` для загрузки; если ``None`` — берётся из ``meta``.
+        push_meta: тело ``meta`` для загрузки; если ``None`` - берётся из ``meta``.
         wait: дождаться ли изменения статуса заявления.
         poll_interval: пауза между опросами статуса, сек.
         timeout: максимальное время ожидания статуса, сек.

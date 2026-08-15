@@ -47,6 +47,17 @@ const { TextArea } = Input;
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
 const STEP_KEY = 'wizard.step';
+const PAGE_SIZE = 10;
+
+// Как раскрашивать статус запроса. Красным только то, что ждёт нас.
+const THREAD_STATUS_COLOR = {
+  action: 'error',
+  done: 'success',
+  progress: 'processing',
+  new: 'default',
+  file: 'warning',
+  comment: 'default',
+};
 
 const OK = 'ok';
 const WARN = 'warn';
@@ -187,6 +198,12 @@ export default function SetupWizard() {
   const [dotenv, setDotenv] = useState('');
   const [discovery, setDiscovery] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [messagesTotal, setMessagesTotal] = useState(0);
+  const [messagesOffset, setMessagesOffset] = useState(0);
+  const [showLetters, setShowLetters] = useState(false);
+  const [threads, setThreads] = useState([]);
+  const [threadsAt, setThreadsAt] = useState('');
+  const [ticketFilter, setTicketFilter] = useState('');
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
   // Реквизиты организации: одни и те же во всех письмах Оператору.
@@ -586,13 +603,29 @@ export default function SetupWizard() {
     });
   };
 
-  const loadMessages = async () => {
-    await run('messages', async () => {
+  const loadThreads = async () => {
+    await run('threads', async () => {
       try {
-        const res = await api.get('/mail/messages', { params: { limit: 30 } });
-        setMessages(res.data.messages || []);
+        const res = await api.get('/mail/threads', { params: { scan: 200 } });
+        setThreads(res.data.threads || []);
+        setThreadsAt(res.data.checked_at || '');
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Прочитать ящик не удалось.') });
+      }
+    });
+  };
+
+  const loadMessages = async (offset = 0, ticket = ticketFilter) => {
+    await run('messages', async () => {
+      try {
+        const res = await api.get('/mail/messages', {
+          params: { limit: PAGE_SIZE, offset, ticket: ticket || '' },
+        });
+        setMessages(res.data.messages || []);
+        setMessagesTotal(res.data.total || 0);
+        setMessagesOffset(res.data.offset || 0);
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Прочитать письма не удалось.') });
       }
     });
   };
@@ -1182,25 +1215,146 @@ export default function SetupWizard() {
       </div>
 
       <div>
-        <Title level={5}>Ответы</Title>
-        <Space style={{ marginBottom: 12 }}>
-          <Button icon={<ReloadOutlined />} onClick={loadMessages} loading={busy === 'messages'}>
+        <Title level={5}>Запросы в поддержку</Title>
+        <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+          Поддержка ведёт переписку тикетами: номер SCR стоит в теме каждого
+          письма, статус написан там же. Письма сцепляются по номеру, поэтому
+          состояние видно списком, без открытия.
+        </Paragraph>
+        <Space style={{ marginBottom: 12 }} wrap>
+          <Button icon={<ReloadOutlined />} onClick={loadThreads} loading={busy === 'threads'}>
             Проверить почту
           </Button>
+          {threadsAt ? (
+            <Text type="secondary">Проверено {formatTime(threadsAt)}</Text>
+          ) : null}
+        </Space>
+        <Table
+          rowKey="ticket"
+          size="small"
+          dataSource={threads}
+          pagination={{ pageSize: PAGE_SIZE, hideOnSinglePage: true, size: 'small' }}
+          locale={{ emptyText: 'Запросов пока нет. Нажмите "Проверить почту".' }}
+          rowClassName={(record) => (record.needs_action ? 'ant-table-row-selected' : '')}
+          columns={[
+            {
+              title: 'Запрос',
+              dataIndex: 'ticket',
+              width: 130,
+              render: (value) => <Text code>SCR#{value}</Text>,
+            },
+            { title: 'Тема', dataIndex: 'topic', ellipsis: true },
+            {
+              title: 'Статус',
+              dataIndex: 'status',
+              width: 190,
+              render: (value, record) => (
+                <Tag color={THREAD_STATUS_COLOR[record.status_kind] || 'default'}>{value}</Tag>
+              ),
+            },
+            {
+              title: 'Последнее движение',
+              width: 230,
+              render: (_, record) => (
+                <Space direction="vertical" size={0}>
+                  <Text>{record.last_event}</Text>
+                  <Text type="secondary">{formatTime(record.last_at)}</Text>
+                </Space>
+              ),
+            },
+            {
+              title: 'Писем',
+              dataIndex: 'messages',
+              width: 90,
+              render: (value, record) => (
+                <Space size={4}>
+                  <Text>{value}</Text>
+                  {record.has_files ? <Tag color="warning">файл</Tag> : null}
+                </Space>
+              ),
+            },
+            {
+              title: '',
+              width: 130,
+              render: (_, record) => (
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setTicketFilter(record.ticket);
+                    setShowLetters(true);
+                    loadMessages(0, record.ticket);
+                  }}
+                >
+                  Письма
+                </Button>
+              ),
+            },
+          ]}
+        />
+      </div>
+
+      <div>
+        <Space style={{ marginBottom: 12 }} wrap>
+          <Title level={5} style={{ margin: 0 }}>
+            Письма
+          </Title>
+          <Button
+            icon={showLetters ? <MinusCircleOutlined /> : <MailOutlined />}
+            onClick={() => {
+              const next = !showLetters;
+              setShowLetters(next);
+              if (next && !messages.length) loadMessages(0, ticketFilter);
+            }}
+          >
+            {showLetters ? 'Скрыть письма' : 'Показать письма'}
+          </Button>
+          {ticketFilter ? (
+            <Tag
+              closable
+              onClose={() => {
+                setTicketFilter('');
+                loadMessages(0, '');
+              }}
+            >
+              только SCR#{ticketFilter}
+            </Tag>
+          ) : null}
           <Text type="secondary">
-            Показываются письма с адресов ведомств: {(mailConfig && mailConfig.watched ? mailConfig.watched : []).join(', ')}
+            Адреса ведомств: {(mailConfig && mailConfig.watched ? mailConfig.watched : []).join(', ')}
           </Text>
         </Space>
+        {!showLetters ? null : (
         <Table
           rowKey="uid"
           size="small"
           dataSource={messages}
-          pagination={{ pageSize: 10, hideOnSinglePage: true }}
-          locale={{ emptyText: 'Ответов пока нет' }}
+          loading={busy === 'messages'}
+          pagination={{
+            current: Math.floor(messagesOffset / PAGE_SIZE) + 1,
+            pageSize: PAGE_SIZE,
+            total: messagesTotal,
+            showSizeChanger: false,
+            size: 'small',
+            // Страницы приходят с сервера: в ящике поддержки писем много, и
+            // тянуть их все ради десятка на экране незачем.
+            onChange: (page) => loadMessages((page - 1) * PAGE_SIZE, ticketFilter),
+          }}
+          locale={{ emptyText: 'Писем нет' }}
           columns={[
+            {
+              title: 'Запрос',
+              dataIndex: 'ticket',
+              width: 120,
+              render: (value) => (value ? <Text code>SCR#{value}</Text> : ''),
+            },
             { title: 'От', dataIndex: 'from', ellipsis: true },
             { title: 'Тема', dataIndex: 'subject', ellipsis: true },
-            { title: 'Получено', dataIndex: 'received_at', width: 190 },
+            {
+              title: 'Получено',
+              dataIndex: 'received_at',
+              width: 190,
+              render: (value) => formatTime(value),
+            },
             {
               title: 'Вложения',
               width: 110,
@@ -1255,6 +1409,7 @@ export default function SetupWizard() {
             ),
           }}
         />
+        )}
       </div>
     </Space>
   );

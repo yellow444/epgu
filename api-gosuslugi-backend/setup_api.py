@@ -260,20 +260,48 @@ def setup_router() -> APIRouter:
             raise HTTPException(status_code=502, detail=str(err)) from err
         return JSONResponse(content=result)
 
-    @router.get("/mail/messages")
-    async def mail_messages_route(
-        limit: int = Query(30, ge=1, le=100),
-        only_watched: bool = Query(True),
-    ):
-        """Ответы из ящика. По умолчанию только от ведомственных адресов."""
+    @router.get("/mail/threads")
+    async def mail_threads_route(scan: int = Query(200, ge=10, le=1000)):
+        """Запросы в поддержку: номер, тема, статус и последнее движение.
+
+        Читаются только заголовки, поэтому список статусов виден без открытия
+        писем и без выкачивания их тел.
+        """
         config = mailbox.load_config()
         try:
-            messages = mailbox.fetch_messages(
-                config, limit=limit, only_watched=only_watched
+            headers = mailbox.fetch_headers(config, scan=scan)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        threads = mailbox.build_threads(headers)
+        return JSONResponse(
+            content={
+                "threads": threads,
+                "scanned": len(headers),
+                "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            }
+        )
+
+    @router.get("/mail/messages")
+    async def mail_messages_route(
+        limit: int = Query(10, ge=1, le=100),
+        offset: int = Query(0, ge=0),
+        only_watched: bool = Query(True),
+        ticket: str = Query("", max_length=20),
+    ):
+        """Страница писем. По умолчанию только от ведомственных адресов."""
+        config = mailbox.load_config()
+        try:
+            page = mailbox.fetch_messages(
+                config,
+                limit=limit,
+                offset=offset,
+                only_watched=only_watched,
+                ticket=ticket,
             )
         except mailbox.MailError as err:
             raise HTTPException(status_code=502, detail=str(err)) from err
-        return JSONResponse(content={"messages": messages, "watched": list(mailbox.WATCHED_DOMAINS)})
+        page["watched"] = list(mailbox.WATCHED_DOMAINS)
+        return JSONResponse(content=page)
 
     @router.post("/mail/messages/{uid}/attachments/{index}/save")
     async def mail_save_attachment_route(uid: str, index: int):

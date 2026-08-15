@@ -136,6 +136,55 @@ def load_config() -> MailConfig:
     )
 
 
+# Поддержка ЕПГУ ведёт переписку тикетами: номер SCR#NNNNNNN стоит в теме
+# каждого письма, а сам статус написан там же словами. Это единственное, чем
+# письма связываются в один запрос, поэтому разбираем тему.
+TICKET = re.compile(r"SCR#(\d+)", re.IGNORECASE)
+
+# Порядок важен: первое совпадение выигрывает, поэтому более частные формулировки
+# стоят выше общих.
+STATUS_RULES = (
+    (re.compile(r"требуется дополнительная информация", re.I), "Нужен ответ от нас", "action"),
+    (re.compile(r"добавлен файл", re.I), "Добавлен файл", "file"),
+    (re.compile(r"добавлен комментарий", re.I), "Добавлен комментарий", "comment"),
+    (re.compile(r"закрыт", re.I), "Закрыт", "done"),
+    (re.compile(r"выполнен", re.I), "Выполнен", "done"),
+    (re.compile(r"статус работ.*[«\"]([^»\"]+)[»\"]", re.I), None, "progress"),
+    (re.compile(r"присвоен номер", re.I), "Принят в работу", "progress"),
+    (re.compile(r"зарегистрирован", re.I), "Зарегистрирован", "new"),
+)
+
+# События, которые не меняют статус запроса, а только сообщают о движении.
+EVENT_KINDS = {"comment", "file"}
+
+
+def parse_ticket(subject: str) -> str:
+    match = TICKET.search(subject or "")
+    return match.group(1) if match else ""
+
+
+def parse_status(subject: str) -> Tuple[str, str]:
+    """Статус и его вид по теме письма."""
+    for pattern, label, kind in STATUS_RULES:
+        match = pattern.search(subject or "")
+        if not match:
+            continue
+        if label is None:
+            # Статус написан в кавычках внутри темы, берём его как есть.
+            return match.group(1).strip(), kind
+        return label, kind
+    return "", ""
+
+
+def parse_topic(subject: str) -> str:
+    """Тема запроса без служебной обвязки про номер и статус."""
+    text = subject or ""
+    for marker in ("Тема запроса:", "Тема :", "Тема:"):
+        if marker in text:
+            return text.split(marker, 1)[1].strip()
+    return TICKET.sub("", text).strip(" .:")
+
+
 def _decode(value: Optional[str]) -> str:
     if not value:
         return ""
@@ -327,33 +376,161 @@ def _message_summary(uid: str, message: email.message.Message) -> Dict[str, Any]
     }
 
 
-def fetch_messages(config: MailConfig, *, limit: int = 30, only_watched: bool = True) -> List[Dict[str, Any]]:
-    """Последние письма ящика, свежие сверху."""
+def fetch_headers(config: MailConfig, *, scan: int = 200) -> List[Dict[str, Any]]:
+    """Только заголовки последних писем.
+
+    Для списка запросов тела не нужны, а тянуть их по IMAP дорого: на трёх
+    десятках писем это уже секунды. Здесь запрашиваются четыре поля заголовка.
+    """
     client = _imap_connect(config)
     try:
         client.select("INBOX", readonly=True)
         status, data = client.search(None, "ALL")
         if status != "OK":
             raise MailError("IMAP не отдал список писем")
-        uids = data[0].split()
-        summaries: List[Dict[str, Any]] = []
-        for uid in reversed(uids):
-            if len(summaries) >= limit:
-                break
-            status, payload = client.fetch(uid, "(RFC822)")
-            if status != "OK" or not payload or not isinstance(payload[0], tuple):
+        uids = data[0].split()[-scan:]
+        if not uids:
+            return []
+        request = b",".join(uids)
+        status, payload = client.fetch(
+            request, "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])"
+        )
+        if status != "OK":
+            raise MailError("IMAP не отдал заголовки писем")
+        headers: List[Dict[str, Any]] = []
+        index = 0
+        for item in payload:
+            if not isinstance(item, tuple):
                 continue
-            message = email.message_from_bytes(payload[0][1])
-            summary = _message_summary(uid.decode("ascii", "replace"), message)
-            if only_watched and not summary["watched"]:
-                continue
-            summaries.append(summary)
-        return summaries
+            raw_uid = item[0].split()[0].decode("ascii", "replace")
+            message = email.message_from_bytes(item[1])
+            sender = _decode(message.get("From"))
+            subject = _decode(message.get("Subject"))
+            date_raw = message.get("Date")
+            try:
+                received = parsedate_to_datetime(date_raw).isoformat() if date_raw else ""
+            except (TypeError, ValueError):
+                received = date_raw or ""
+            headers.append(
+                {
+                    "uid": raw_uid,
+                    "seq": index,
+                    "from": sender,
+                    "subject": subject,
+                    "received_at": received,
+                    "watched": _is_watched(sender),
+                }
+            )
+            index += 1
+        return headers
     finally:
         try:
             client.logout()
         except Exception:
             pass
+
+
+def build_threads(headers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Сгруппировать письма в запросы по номеру SCR и вывести статус.
+
+    Статусом запроса считается последнее письмо, которое действительно меняет
+    состояние. Комментарии и файлы статус не меняют, они показываются как
+    последнее движение: иначе запрос с приложенным сертификатом выглядел бы
+    вечно висящим в "добавлен файл".
+    """
+    threads: Dict[str, Dict[str, Any]] = {}
+    for header in headers:
+        ticket = parse_ticket(header["subject"])
+        if not ticket:
+            continue
+        status, kind = parse_status(header["subject"])
+        thread = threads.setdefault(
+            ticket,
+            {
+                "ticket": ticket,
+                "topic": parse_topic(header["subject"]),
+                "status": "",
+                "status_kind": "",
+                "status_at": "",
+                "last_event": "",
+                "last_at": "",
+                "messages": 0,
+                "has_files": False,
+                "needs_action": False,
+                "uids": [],
+            },
+        )
+        thread["messages"] += 1
+        thread["uids"].append(header["uid"])
+        if not thread["topic"]:
+            thread["topic"] = parse_topic(header["subject"])
+        received = header.get("received_at") or ""
+        if received >= thread["last_at"]:
+            thread["last_at"] = received
+            thread["last_event"] = status or header["subject"]
+        if kind == "file":
+            thread["has_files"] = True
+        if kind and kind not in EVENT_KINDS and received >= thread["status_at"]:
+            thread["status"] = status
+            thread["status_kind"] = kind
+            thread["status_at"] = received
+    ordered = sorted(threads.values(), key=lambda item: item["last_at"], reverse=True)
+    for thread in ordered:
+        if not thread["status"]:
+            thread["status"] = "Без статуса"
+            thread["status_kind"] = "new"
+        # Ответа ждут только сейчас: запрос, который когда-то просил
+        # уточнение, а потом закрылся, подсвечивать нельзя.
+        thread["needs_action"] = thread["status_kind"] == "action"
+    return ordered
+
+
+def fetch_messages(
+    config: MailConfig,
+    *,
+    limit: int = 30,
+    offset: int = 0,
+    only_watched: bool = True,
+    ticket: str = "",
+) -> Dict[str, Any]:
+    """Страница писем, свежие сверху.
+
+    Отбор идёт по заголовкам, а тела тянутся только для отобранной страницы:
+    в ящике поддержки писем быстро становится много, и грузить всё ради
+    десятка на экране незачем.
+    """
+    headers = fetch_headers(config, scan=500)
+    selected = [item for item in reversed(headers) if not only_watched or item["watched"]]
+    if ticket:
+        selected = [item for item in selected if parse_ticket(item["subject"]) == ticket]
+    total = len(selected)
+    page = selected[offset : offset + limit]
+
+    summaries: List[Dict[str, Any]] = []
+    if page:
+        client = _imap_connect(config)
+        try:
+            client.select("INBOX", readonly=True)
+            for item in page:
+                status, payload = client.fetch(item["uid"].encode("ascii"), "(RFC822)")
+                if status != "OK" or not payload or not isinstance(payload[0], tuple):
+                    continue
+                message = email.message_from_bytes(payload[0][1])
+                summary = _message_summary(item["uid"], message)
+                summary["ticket"] = parse_ticket(summary["subject"])
+                summary["status"], summary["status_kind"] = parse_status(summary["subject"])
+                summaries.append(summary)
+        finally:
+            try:
+                client.logout()
+            except Exception:
+                pass
+    return {
+        "messages": summaries,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+    }
 
 
 def save_attachment(config: MailConfig, *, uid: str, index: int) -> Dict[str, Any]:

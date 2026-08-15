@@ -39,6 +39,8 @@ services:
       - MAIL_INBOX_DIR=/var/lib/epgu-mail
       - CERT_INBOX_DIR=/var/lib/epgu-mail
       - SECRET_PROVIDER=${SECRET_PROVIDER:-env}
+      # Настройки, сохранённые из интерфейса. Живут на томе и важнее окружения.
+      - SETTINGS_FILE=/var/lib/epgu-mail/settings.env
     ports:
       # Backend хранит токен/сертификат в памяти процесса и рассчитан на одного
       # оператора. По умолчанию он доступен только с локальной машины.

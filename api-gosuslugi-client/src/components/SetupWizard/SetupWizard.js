@@ -11,6 +11,7 @@ import {
   Select,
   Space,
   Steps,
+  Switch,
   Table,
   Tag,
   Tooltip,
@@ -28,6 +29,7 @@ import {
   MinusCircleOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SaveOutlined,
   SendOutlined,
   UsbOutlined,
 } from '@ant-design/icons';
@@ -113,6 +115,17 @@ export default function SetupWizard() {
   // Шаг 4: почта
   const [mailConfig, setMailConfig] = useState(null);
   const [mailCheck, setMailCheck] = useState(null);
+  const [mailForm, setMailForm] = useState({
+    imap_host: '',
+    imap_port: '993',
+    smtp_host: '',
+    smtp_port: '465',
+    user: '',
+    sender: '',
+    use_ssl: true,
+    password: '',
+  });
+  const [dotenv, setDotenv] = useState('');
   const [messages, setMessages] = useState([]);
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
@@ -181,7 +194,23 @@ export default function SetupWizard() {
       run('mail', async () => {
         try {
           const res = await api.get('/mail/config');
-          setMailConfig(res.data && res.data.imap ? res.data : null);
+          const config = res.data && res.data.imap ? res.data : null;
+          setMailConfig(config);
+          if (config) {
+            // Форма показывает то, что действует сейчас, включая значения из
+            // окружения. Пароль не приходит с сервера и остаётся пустым.
+            setMailForm((previous) => ({
+              ...previous,
+              imap_host: config.imap.host || '',
+              imap_port: String(config.imap.port || 993),
+              smtp_host: config.smtp.host || '',
+              smtp_port: String(config.smtp.port || 465),
+              user: config.user || '',
+              sender: config.sender === config.user ? '' : config.sender || '',
+              use_ssl: Boolean(config.use_ssl),
+              password: '',
+            }));
+          }
         } catch (error) {
           setMailConfig(null);
         }
@@ -265,6 +294,23 @@ export default function SetupWizard() {
           state: FAIL,
           detail: errorText(error, 'Сетевая ошибка при запросе маркера.'),
         });
+      }
+    });
+  };
+
+  const saveMailSettings = async () => {
+    await run('mailsave', async () => {
+      try {
+        const res = await api.post('/mail/settings', mailForm);
+        setMailConfig(res.data.config);
+        setDotenv(res.data.dotenv || '');
+        setMailForm((previous) => ({ ...previous, password: '' }));
+        setNotice({
+          type: 'success',
+          text: 'Настройки сохранены и действуют сразу, перезапуск не нужен.',
+        });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Сохранить настройки не удалось.') });
       }
     });
   };
@@ -589,14 +635,109 @@ export default function SetupWizard() {
         ) : (
           <Empty description="Настройки почты недоступны" />
         )}
+        <Title level={5} style={{ marginTop: 20 }}>
+          Настроить отсюда
+        </Title>
+        <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+          Сохранённое здесь действует сразу и переживает перезапуск: значения
+          ложатся в файл на томе и считаются важнее переменных окружения, с
+          которыми стартовал контейнер. Пароль нужен от приложения почтового
+          сервиса, а не основной пароль аккаунта.
+        </Paragraph>
+        <Space direction="vertical" size={8} style={{ width: '100%', maxWidth: 760 }}>
+          <Space.Compact style={{ width: '100%' }}>
+            <Input
+              addonBefore="IMAP"
+              placeholder="imap.example.ru"
+              value={mailForm.imap_host}
+              onChange={(event) => setMailForm({ ...mailForm, imap_host: event.target.value })}
+            />
+            <Input
+              style={{ maxWidth: 120 }}
+              addonBefore="порт"
+              value={mailForm.imap_port}
+              onChange={(event) => setMailForm({ ...mailForm, imap_port: event.target.value })}
+            />
+          </Space.Compact>
+          <Space.Compact style={{ width: '100%' }}>
+            <Input
+              addonBefore="SMTP"
+              placeholder="smtp.example.ru"
+              value={mailForm.smtp_host}
+              onChange={(event) => setMailForm({ ...mailForm, smtp_host: event.target.value })}
+            />
+            <Input
+              style={{ maxWidth: 120 }}
+              addonBefore="порт"
+              value={mailForm.smtp_port}
+              onChange={(event) => setMailForm({ ...mailForm, smtp_port: event.target.value })}
+            />
+          </Space.Compact>
+          <Input
+            addonBefore="Логин"
+            placeholder="smev@домен организации"
+            value={mailForm.user}
+            onChange={(event) => setMailForm({ ...mailForm, user: event.target.value })}
+          />
+          <Input
+            addonBefore="Адрес в поле От"
+            placeholder="пусто - совпадает с логином"
+            value={mailForm.sender}
+            onChange={(event) => setMailForm({ ...mailForm, sender: event.target.value })}
+          />
+          <Input.Password
+            addonBefore="Пароль"
+            placeholder="пусто - оставить сохранённый"
+            autoComplete="new-password"
+            value={mailForm.password}
+            onChange={(event) => setMailForm({ ...mailForm, password: event.target.value })}
+          />
+          <Space>
+            <Text type="secondary">Шифрование SSL</Text>
+            <Switch
+              size="small"
+              checked={mailForm.use_ssl}
+              onChange={(value) => setMailForm({ ...mailForm, use_ssl: value })}
+            />
+          </Space>
+        </Space>
         <Space style={{ marginTop: 12 }}>
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={saveMailSettings}
+            loading={busy === 'mailsave'}
+          >
+            Сохранить
+          </Button>
           <Button icon={<ReloadOutlined />} onClick={loadMail} loading={busy === 'mail'}>
             Обновить
           </Button>
-          <Button type="primary" onClick={checkMail} loading={busy === 'mailcheck'}>
+          <Button onClick={checkMail} loading={busy === 'mailcheck'}>
             Проверить связь
           </Button>
         </Space>
+        {dotenv ? (
+          <div style={{ marginTop: 16 }}>
+            <Space style={{ marginBottom: 8 }}>
+              <Text type="secondary">
+                То же самое для .env, если нужно перенести на другую машину
+              </Text>
+              <CopyButton value={dotenv} title="Скопировать для .env" />
+            </Space>
+            <pre
+              style={{
+                background: '#f8f9fa',
+                padding: 12,
+                borderRadius: 6,
+                margin: 0,
+                overflow: 'auto',
+              }}
+            >
+              {dotenv}
+            </pre>
+          </div>
+        ) : null}
         {mailConfig && !mailConfig.configured ? (
           <Alert
             style={{ marginTop: 12 }}

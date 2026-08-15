@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 import certsources
 import mailbox
 import secret_store
+import settings_store
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,21 @@ class ImportRequest(BaseModel):
     link_container: str = ""
 
 
+class MailSettingsRequest(BaseModel):
+    """Что оператор сохраняет из интерфейса. Пустая строка стирает значение."""
+
+    imap_host: str = Field(default="", max_length=255)
+    imap_port: str = Field(default="", max_length=5)
+    smtp_host: str = Field(default="", max_length=255)
+    smtp_port: str = Field(default="", max_length=5)
+    user: str = Field(default="", max_length=320)
+    sender: str = Field(default="", max_length=320)
+    use_ssl: bool = True
+    # Пустой пароль не стирает сохранённый: иначе любое сохранение формы,
+    # где поле пароля не заполняли, обнуляло бы его.
+    password: Optional[str] = Field(default=None, max_length=512)
+
+
 def setup_router() -> APIRouter:
     router = APIRouter(tags=["setup"])
 
@@ -46,6 +62,47 @@ def setup_router() -> APIRouter:
     async def mail_config_route():
         """Настройки ящика без пароля: что задано и куда падают вложения."""
         return JSONResponse(content=mailbox.load_config().describe())
+
+    @router.post("/mail/settings")
+    async def mail_settings_route(settings: MailSettingsRequest):
+        """Сохранить настройки ящика из интерфейса.
+
+        Значения ложатся в файл на томе и действуют сразу, перезапускать
+        контейнер не нужно. Они важнее переменных окружения, с которыми
+        контейнер стартовал.
+        """
+        values = {
+            "MAIL_IMAP_HOST": settings.imap_host.strip(),
+            "MAIL_IMAP_PORT": settings.imap_port.strip(),
+            "MAIL_SMTP_HOST": settings.smtp_host.strip(),
+            "MAIL_SMTP_PORT": settings.smtp_port.strip(),
+            "MAIL_USER": settings.user.strip(),
+            "MAIL_FROM": settings.sender.strip(),
+            "MAIL_USE_SSL": "1" if settings.use_ssl else "0",
+        }
+        if settings.password is not None and settings.password != "":
+            values["MAIL_PASSWORD"] = settings.password
+        for name in ("MAIL_IMAP_PORT", "MAIL_SMTP_PORT"):
+            if values[name] and not values[name].isdigit():
+                raise HTTPException(status_code=400, detail="Порт должен быть числом")
+        try:
+            saved = settings_store.save(values)
+        except ValueError as err:
+            raise HTTPException(status_code=400, detail=str(err)) from err
+        except OSError as err:
+            logger.warning("Не удалось записать настройки: %s", type(err).__name__)
+            raise HTTPException(
+                status_code=500, detail="Не удалось записать файл настроек"
+            ) from err
+        return JSONResponse(
+            content={
+                "saved": saved,
+                "config": mailbox.load_config().describe(),
+                # Чтобы перенести настройки на другую машину или закрепить их
+                # в .env, который переживёт удаление тома.
+                "dotenv": settings_store.dotenv_fragment(),
+            }
+        )
 
     @router.post("/mail/check")
     async def mail_check_route():

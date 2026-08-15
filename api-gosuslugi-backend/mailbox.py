@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import secret_store
+import settings_store
 
 logger = logging.getLogger(__name__)
 
@@ -80,15 +81,26 @@ class MailConfig:
         }
 
 
+def _port(name: str, default: int) -> int:
+    raw = settings_store.get(name, str(default)).strip()
+    try:
+        return int(raw)
+    except ValueError:
+        logger.info("Некорректный порт в %s, беру значение по умолчанию", name)
+        return default
+
+
 def load_config() -> MailConfig:
+    """Настройки ящика: сохранённое из интерфейса важнее окружения."""
     return MailConfig(
-        imap_host=os.getenv("MAIL_IMAP_HOST", "").strip(),
-        imap_port=int(os.getenv("MAIL_IMAP_PORT", "993")),
-        smtp_host=os.getenv("MAIL_SMTP_HOST", "").strip(),
-        smtp_port=int(os.getenv("MAIL_SMTP_PORT", "465")),
-        user=os.getenv("MAIL_USER", "").strip(),
-        sender=os.getenv("MAIL_FROM", "").strip(),
-        use_ssl=os.getenv("MAIL_USE_SSL", "1").strip().lower() not in {"0", "false", "no"},
+        imap_host=settings_store.get("MAIL_IMAP_HOST", "").strip(),
+        imap_port=_port("MAIL_IMAP_PORT", 993),
+        smtp_host=settings_store.get("MAIL_SMTP_HOST", "").strip(),
+        smtp_port=_port("MAIL_SMTP_PORT", 465),
+        user=settings_store.get("MAIL_USER", "").strip(),
+        sender=settings_store.get("MAIL_FROM", "").strip(),
+        use_ssl=settings_store.get("MAIL_USE_SSL", "1").strip().lower()
+        not in {"0", "false", "no"},
         inbox_dir=Path(os.getenv("MAIL_INBOX_DIR", "/var/lib/epgu-mail")),
     )
 

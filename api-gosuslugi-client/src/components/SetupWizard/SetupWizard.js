@@ -1,0 +1,855 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Button,
+  Card,
+  Descriptions,
+  Empty,
+  Input,
+  Modal,
+  Result,
+  Select,
+  Space,
+  Steps,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  CopyOutlined,
+  DownloadOutlined,
+  ExclamationCircleOutlined,
+  FolderOpenOutlined,
+  KeyOutlined,
+  MailOutlined,
+  MinusCircleOutlined,
+  ReloadOutlined,
+  SafetyCertificateOutlined,
+  SendOutlined,
+  UsbOutlined,
+} from '@ant-design/icons';
+import axios from 'axios';
+import { LETTERS, SENDER_HINT } from '../SetupGuide/letters';
+
+const { Title, Text, Paragraph } = Typography;
+const { TextArea } = Input;
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '/api';
+const STEP_KEY = 'wizard.step';
+
+const OK = 'ok';
+const WARN = 'warn';
+const FAIL = 'fail';
+const IDLE = 'idle';
+
+const STATUS_VIEW = {
+  [OK]: { color: 'success', icon: <CheckCircleOutlined />, label: 'готово' },
+  [WARN]: { color: 'warning', icon: <ExclamationCircleOutlined />, label: 'внимание' },
+  [FAIL]: { color: 'error', icon: <CloseCircleOutlined />, label: 'ошибка' },
+  [IDLE]: { color: 'default', icon: <MinusCircleOutlined />, label: 'не проверено' },
+};
+
+function StatusTag({ state }) {
+  const view = STATUS_VIEW[state] || STATUS_VIEW[IDLE];
+  return (
+    <Tag color={view.color} icon={view.icon}>
+      {view.label}
+    </Tag>
+  );
+}
+
+function CopyButton({ value, title = 'Скопировать' }) {
+  const [done, setDone] = useState(false);
+  return (
+    <Tooltip title={done ? 'Скопировано' : title}>
+      <Button
+        size="small"
+        icon={<CopyOutlined />}
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            setDone(true);
+            setTimeout(() => setDone(false), 1500);
+          } catch (error) {
+            setDone(false);
+          }
+        }}
+      />
+    </Tooltip>
+  );
+}
+
+function errorText(error, fallback) {
+  if (error.response) {
+    const detail = error.response.data && error.response.data.detail;
+    if (typeof detail === 'string') return detail;
+    return `Backend ответил ${error.response.status}.`;
+  }
+  return fallback;
+}
+
+export default function SetupWizard() {
+  const api = useMemo(
+    () => axios.create({ baseURL: BACKEND_URL, timeout: 60000 }),
+    []
+  );
+  const [step, setStep] = useState(() => Number(localStorage.getItem(STEP_KEY) || 0));
+  const [busy, setBusy] = useState('');
+  const [notice, setNotice] = useState(null);
+
+  // Шаг 1: контур
+  const [version, setVersion] = useState(null);
+  // Шаг 2: сертификаты
+  const [certificates, setCertificates] = useState([]);
+  const [currentCert, setCurrentCert] = useState(null);
+  const [sources, setSources] = useState(null);
+  const [linkContainer, setLinkContainer] = useState('');
+  // Шаг 3: API-Key
+  const [apiKey, setApiKey] = useState('');
+  const [tokenState, setTokenState] = useState({ state: IDLE, detail: '' });
+  // Шаг 4: почта
+  const [mailConfig, setMailConfig] = useState(null);
+  const [mailCheck, setMailCheck] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [letterId, setLetterId] = useState('testCert');
+  const [letter, setLetter] = useState(LETTERS.testCert);
+  // Шаг 5: итог
+  const [health, setHealth] = useState({ hc: IDLE, status: IDLE, detail: '' });
+
+  useEffect(() => {
+    localStorage.setItem(STEP_KEY, String(step));
+  }, [step]);
+
+  const run = useCallback(
+    async (name, action) => {
+      setBusy(name);
+      setNotice(null);
+      try {
+        return await action();
+      } finally {
+        setBusy('');
+      }
+    },
+    []
+  );
+
+  const loadEnvironment = useCallback(
+    () =>
+      run('env', async () => {
+        try {
+          const res = await api.get('/version');
+          // Отвечать может и старый backend, и заглушка: без hosts шаг не
+          // отрисовать, поэтому считаем такой ответ отсутствием данных.
+          setVersion(res.data && res.data.hosts ? res.data : null);
+        } catch (error) {
+          setNotice({ type: 'error', text: errorText(error, 'Backend не отвечает.') });
+        }
+      }),
+    [api, run]
+  );
+
+  const loadCertificates = useCallback(
+    () =>
+      run('certs', async () => {
+        try {
+          const list = await api.post('/get_certificates');
+          setCertificates(list.data || []);
+        } catch (error) {
+          setCertificates([]);
+        }
+        try {
+          const current = await api.post('/get_current_certificate');
+          setCurrentCert(current.data);
+        } catch (error) {
+          setCurrentCert(null);
+        }
+        try {
+          const res = await api.get('/certsources');
+          setSources(res.data && res.data.folder ? res.data : null);
+        } catch (error) {
+          setSources(null);
+        }
+      }),
+    [api, run]
+  );
+
+  const loadMail = useCallback(
+    () =>
+      run('mail', async () => {
+        try {
+          const res = await api.get('/mail/config');
+          setMailConfig(res.data && res.data.imap ? res.data : null);
+        } catch (error) {
+          setMailConfig(null);
+        }
+      }),
+    [api, run]
+  );
+
+  useEffect(() => {
+    loadEnvironment();
+    loadCertificates();
+    loadMail();
+  }, [loadEnvironment, loadCertificates, loadMail]);
+
+  // ---------- Состояния шагов ----------
+
+  const envState = version ? OK : IDLE;
+  const certState = currentCert && currentCert.certId ? OK : certificates.length ? WARN : FAIL;
+  const mailState = (() => {
+    if (!mailConfig) return IDLE;
+    if (!mailConfig.configured) return WARN;
+    if (!mailCheck) return IDLE;
+    return mailCheck.imap.ok && mailCheck.smtp.ok ? OK : FAIL;
+  })();
+  const finalState = health.hc === OK && certState === OK && tokenState.state === OK ? OK : IDLE;
+
+  const steps = [
+    { key: 'env', title: 'Контур', icon: <ReloadOutlined />, state: envState },
+    { key: 'cert', title: 'Сертификат', icon: <SafetyCertificateOutlined />, state: certState },
+    { key: 'apikey', title: 'API-Key', icon: <KeyOutlined />, state: tokenState.state },
+    { key: 'mail', title: 'Почта', icon: <MailOutlined />, state: mailState },
+    { key: 'check', title: 'Проверка', icon: <CheckCircleOutlined />, state: finalState },
+  ];
+
+  // ---------- Действия ----------
+
+  const selectCertificate = async (certId) => {
+    await run('select', async () => {
+      try {
+        await api.post('/set_current_certificate', null, { params: { cert_id: certId } });
+        await loadCertificates();
+        setNotice({ type: 'success', text: 'Сертификат выбран текущим.' });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Выбрать сертификат не удалось.') });
+      }
+    });
+  };
+
+  const importCertificate = async (path) => {
+    await run('import', async () => {
+      try {
+        const res = await api.post('/certsources/import', {
+          path,
+          store: 'uMy',
+          link_container: linkContainer,
+        });
+        setNotice({
+          type: 'success',
+          text: `Установлен ${res.data.file}. Чтобы бэкенд увидел его в списке, перезапустите контейнер api.`,
+        });
+        await loadCertificates();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Установить сертификат не удалось.') });
+      }
+    });
+  };
+
+  const checkApiKey = async () => {
+    await run('apikey', async () => {
+      if (!apiKey.trim()) {
+        setTokenState({ state: FAIL, detail: 'Введите API-Key: это GUID из личного кабинета ИЭП.' });
+        return;
+      }
+      try {
+        const res = await api.post('/accessTkn_esia', { api_key: apiKey.trim() });
+        setTokenState({
+          state: OK,
+          detail: `Маркер получен, действует до ${new Date(res.data.exp * 1000).toLocaleString('ru-RU')}.`,
+        });
+      } catch (error) {
+        setTokenState({
+          state: FAIL,
+          detail: errorText(error, 'Сетевая ошибка при запросе маркера.'),
+        });
+      }
+    });
+  };
+
+  const checkMail = async () => {
+    await run('mailcheck', async () => {
+      try {
+        const res = await api.post('/mail/check');
+        setMailCheck(res.data);
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Проверить почту не удалось.') });
+      }
+    });
+  };
+
+  const loadMessages = async () => {
+    await run('messages', async () => {
+      try {
+        const res = await api.get('/mail/messages', { params: { limit: 30 } });
+        setMessages(res.data.messages || []);
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Прочитать ящик не удалось.') });
+      }
+    });
+  };
+
+  const sendLetter = () => {
+    Modal.confirm({
+      title: 'Отправить письмо?',
+      icon: <SendOutlined />,
+      content: (
+        <Space direction="vertical" size={4}>
+          <Text>Кому: {letter.to}</Text>
+          <Text>Тема: {letter.subject}</Text>
+          <Text type="secondary">
+            Письмо уйдёт с ящика, указанного в настройках. Проверьте, что все
+            плейсхолдеры в угловых скобках заменены.
+          </Text>
+        </Space>
+      ),
+      okText: 'Отправить',
+      cancelText: 'Отмена',
+      onOk: async () => {
+        try {
+          await api.post('/mail/send', {
+            to: letter.to,
+            subject: letter.subject,
+            body: letter.body,
+            cc: letter.cc || '',
+          });
+          setNotice({ type: 'success', text: `Письмо отправлено на ${letter.to}.` });
+        } catch (error) {
+          setNotice({ type: 'error', text: errorText(error, 'Отправить письмо не удалось.') });
+          throw error;
+        }
+      },
+    });
+  };
+
+  const saveAttachment = async (uid, index) => {
+    await run('attachment', async () => {
+      try {
+        const res = await api.post(`/mail/messages/${uid}/attachments/${index}/save`);
+        setNotice({
+          type: 'success',
+          text: `Сохранено: ${res.data.name}. Файл появился в папке сертификатов.`,
+        });
+        await loadCertificates();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Сохранить вложение не удалось.') });
+      }
+    });
+  };
+
+  const runFinalCheck = async () => {
+    await run('final', async () => {
+      const result = { hc: FAIL, status: FAIL, detail: '' };
+      try {
+        await api.get('/hc');
+        result.hc = OK;
+      } catch (error) {
+        result.detail = errorText(error, 'Backend не отвечает.');
+      }
+      try {
+        const res = await api.get('/status');
+        result.status = OK;
+        result.detail = `PyCades ${res.data.Version}`;
+      } catch (error) {
+        result.status = FAIL;
+        if (!result.detail) {
+          result.detail = 'КриптоПро в этом образе недоступен, подпись работать не будет.';
+        }
+      }
+      setHealth(result);
+    });
+  };
+
+  // ---------- Отрисовка шагов ----------
+
+  const renderEnvironment = () => (
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Paragraph type="secondary" style={{ margin: 0 }}>
+        Контур определяется парой хостов ЕСИА и ЕПГУ из окружения. Ключ и хосты
+        должны быть от одного контура, иначе ЕСИА ответит отказом.
+      </Paragraph>
+      {version ? (
+        <Descriptions size="small" bordered column={1}>
+          <Descriptions.Item label="Контур">{version.environment}</Descriptions.Item>
+          <Descriptions.Item label="ЕСИА">{version.hosts.esia_host}</Descriptions.Item>
+          <Descriptions.Item label="ЕПГУ">{version.hosts.svcdev_host}</Descriptions.Item>
+          <Descriptions.Item label="Спецификация">{version.spec_version}</Descriptions.Item>
+          <Descriptions.Item label="Услуг в каталоге">{version.services_count}</Descriptions.Item>
+        </Descriptions>
+      ) : (
+        <Empty description="Backend не ответил. Поднимите стенд: docker compose up -d." />
+      )}
+      <Button icon={<ReloadOutlined />} onClick={loadEnvironment} loading={busy === 'env'}>
+        Проверить заново
+      </Button>
+    </Space>
+  );
+
+  const renderCertificates = () => {
+    const folder = sources && sources.folder;
+    const readers = sources && sources.readers;
+    return (
+      <Space direction="vertical" size={20} style={{ width: '100%' }}>
+        <div>
+          <Title level={5}>Сертификаты в хранилище</Title>
+          {certificates.length ? (
+            <Table
+              rowKey="id"
+              size="small"
+              pagination={false}
+              dataSource={certificates}
+              columns={[
+                { title: 'Владелец', dataIndex: 'common_name' },
+                { title: 'Организация', dataIndex: 'organization' },
+                { title: 'Действует до', dataIndex: 'valid_to', width: 180 },
+                {
+                  title: '',
+                  width: 150,
+                  render: (_, record) =>
+                    record.selected ? (
+                      <Tag color="success">текущий</Tag>
+                    ) : (
+                      <Button size="small" onClick={() => selectCertificate(record.id)}>
+                        Сделать текущим
+                      </Button>
+                    ),
+                },
+              ]}
+            />
+          ) : (
+            <Alert
+              type="warning"
+              showIcon
+              message="Сертификатов нет"
+              description="Положите файл в папку ниже или заберите его из письма УЦ на шаге Почта."
+            />
+          )}
+        </div>
+
+        <div>
+          <Title level={5}>
+            <FolderOpenOutlined /> Папка с сертификатами
+          </Title>
+          {folder ? (
+            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              <Space>
+                <Text code>{folder.folder}</Text>
+                <CopyButton value={folder.folder} />
+                <Button size="small" icon={<ReloadOutlined />} onClick={loadCertificates}>
+                  Обновить
+                </Button>
+              </Space>
+              {folder.containers && folder.containers.length ? (
+                <Select
+                  style={{ minWidth: 320 }}
+                  allowClear
+                  placeholder="Связать с ключевым контейнером, если он уже есть"
+                  value={linkContainer || undefined}
+                  onChange={(value) => setLinkContainer(value || '')}
+                  options={(readers && readers.containers ? readers.containers : []).map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                />
+              ) : null}
+              <Table
+                rowKey="path"
+                size="small"
+                pagination={false}
+                dataSource={folder.files || []}
+                locale={{ emptyText: 'В папке пока пусто' }}
+                columns={[
+                  { title: 'Файл', dataIndex: 'name' },
+                  { title: 'Владелец', dataIndex: 'subject', ellipsis: true },
+                  { title: 'Действует до', dataIndex: 'valid_to', width: 170 },
+                  {
+                    title: '',
+                    width: 130,
+                    render: (_, record) =>
+                      record.kind === 'certificate' ? (
+                        <Button
+                          size="small"
+                          type="primary"
+                          loading={busy === 'import'}
+                          onClick={() => importCertificate(record.path)}
+                        >
+                          Установить
+                        </Button>
+                      ) : (
+                        <Tag>архив, распакуйте</Tag>
+                      ),
+                  },
+                ]}
+              />
+            </Space>
+          ) : (
+            <Empty description="Список источников недоступен" />
+          )}
+        </div>
+
+        <div>
+          <Title level={5}>
+            <UsbOutlined /> USB-токен
+          </Title>
+          {readers && readers.token_visible ? (
+            <Alert
+              type="success"
+              showIcon
+              message="Токен виден контейнеру"
+              description={`Ридеры: ${readers.readers.join(', ')}`}
+            />
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              message="Токен контейнеру не виден, это ожидаемо"
+              description="Docker Desktop на Windows не пробрасывает USB. Ниже команды для хоста: они достают с токена открытую часть сертификата, закрытый ключ при этом остаётся на токене."
+            />
+          )}
+          <Space direction="vertical" size={12} style={{ width: '100%', marginTop: 12 }}>
+            {(sources && sources.usb_guide ? sources.usb_guide : []).map((item) => (
+              <Card key={item.id} size="small" title={item.title}>
+                <Paragraph type="secondary" style={{ marginBottom: item.commands.length ? 12 : 0 }}>
+                  {item.text}
+                </Paragraph>
+                {item.commands.map((command) => (
+                  <Space key={command} style={{ width: '100%', marginBottom: 8 }}>
+                    <Text code copyable={false} style={{ wordBreak: 'break-all' }}>
+                      {command}
+                    </Text>
+                    <CopyButton value={command} title="Скопировать команду" />
+                  </Space>
+                ))}
+              </Card>
+            ))}
+          </Space>
+        </div>
+      </Space>
+    );
+  };
+
+  const renderApiKey = () => (
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Paragraph type="secondary" style={{ margin: 0 }}>
+        API-Key это GUID организации-потребителя из личного кабинета ИЭП.
+        Проверка подписывает его выбранным сертификатом и просит маркер у ЕСИА,
+        то есть проверяет сразу и ключ, и подпись.
+      </Paragraph>
+      <Space.Compact style={{ width: '100%', maxWidth: 640 }}>
+        <Input
+          value={apiKey}
+          onChange={(event) => setApiKey(event.target.value)}
+          placeholder="00000000-0000-0000-0000-000000000000"
+          aria-label="API-Key организации"
+        />
+        <Button type="primary" onClick={checkApiKey} loading={busy === 'apikey'}>
+          Проверить
+        </Button>
+      </Space.Compact>
+      {tokenState.detail ? (
+        <Alert
+          type={tokenState.state === OK ? 'success' : 'error'}
+          showIcon
+          message={tokenState.detail}
+        />
+      ) : null}
+      {certState !== OK ? (
+        <Alert
+          type="warning"
+          showIcon
+          message="Сначала выберите сертификат"
+          description="Без выбранного сертификата подписывать ключ нечем, ЕСИА вернёт отказ."
+        />
+      ) : null}
+    </Space>
+  );
+
+  const renderMail = () => (
+    <Space direction="vertical" size={20} style={{ width: '100%' }}>
+      <div>
+        <Title level={5}>Ящик</Title>
+        {mailConfig ? (
+          <Descriptions size="small" bordered column={1}>
+            <Descriptions.Item label="IMAP">
+              {mailConfig.imap.host ? `${mailConfig.imap.host}:${mailConfig.imap.port}` : 'не задан'}
+            </Descriptions.Item>
+            <Descriptions.Item label="SMTP">
+              {mailConfig.smtp.host ? `${mailConfig.smtp.host}:${mailConfig.smtp.port}` : 'не задан'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Логин">{mailConfig.user || 'не задан'}</Descriptions.Item>
+            <Descriptions.Item label="Пароль">
+              {mailConfig.password.configured
+                ? `задан, ${mailConfig.password.length} символов, источник: ${mailConfig.password.source}`
+                : 'не задан'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Вложения падают в">{mailConfig.inbox_dir}</Descriptions.Item>
+          </Descriptions>
+        ) : (
+          <Empty description="Настройки почты недоступны" />
+        )}
+        <Space style={{ marginTop: 12 }}>
+          <Button icon={<ReloadOutlined />} onClick={loadMail} loading={busy === 'mail'}>
+            Обновить
+          </Button>
+          <Button type="primary" onClick={checkMail} loading={busy === 'mailcheck'}>
+            Проверить связь
+          </Button>
+        </Space>
+        {mailConfig && !mailConfig.configured ? (
+          <Alert
+            style={{ marginTop: 12 }}
+            type="info"
+            showIcon
+            message="Почта не настроена"
+            description="Заполните MAIL_IMAP_HOST, MAIL_SMTP_HOST, MAIL_USER и MAIL_PASSWORD в .env и перезапустите контейнер api. Пароль нужен от приложения, а не основной пароль аккаунта."
+          />
+        ) : null}
+        {mailCheck ? (
+          <Space direction="vertical" size={8} style={{ marginTop: 12, width: '100%' }}>
+            <Space>
+              <StatusTag state={mailCheck.imap.ok ? OK : FAIL} />
+              <Text>IMAP: {mailCheck.imap.detail}</Text>
+            </Space>
+            <Space>
+              <StatusTag state={mailCheck.smtp.ok ? OK : FAIL} />
+              <Text>SMTP: {mailCheck.smtp.detail}</Text>
+            </Space>
+          </Space>
+        ) : null}
+      </div>
+
+      <div>
+        <Title level={5}>Письмо в поддержку</Title>
+        <Paragraph type="secondary">
+          Отправляется с вашего ящика. Регламент ждёт адрес формата {SENDER_HINT}.
+          Плейсхолдеры в угловых скобках заменяются перед отправкой.
+        </Paragraph>
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Select
+            style={{ minWidth: 360 }}
+            value={letterId}
+            onChange={(value) => {
+              setLetterId(value);
+              setLetter(LETTERS[value]);
+            }}
+            options={Object.values(LETTERS).map((item) => ({ value: item.id, label: item.name }))}
+          />
+          <Input
+            addonBefore="Кому"
+            value={letter.to}
+            onChange={(event) => setLetter({ ...letter, to: event.target.value })}
+          />
+          <Input
+            addonBefore="Тема"
+            value={letter.subject}
+            onChange={(event) => setLetter({ ...letter, subject: event.target.value })}
+          />
+          <TextArea
+            rows={12}
+            value={letter.body}
+            onChange={(event) => setLetter({ ...letter, body: event.target.value })}
+          />
+          <Space>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={sendLetter}
+              disabled={!mailConfig || !mailConfig.configured}
+            >
+              Отправить
+            </Button>
+            <CopyButton value={letter.body} title="Скопировать текст" />
+          </Space>
+        </Space>
+      </div>
+
+      <div>
+        <Title level={5}>Ответы</Title>
+        <Space style={{ marginBottom: 12 }}>
+          <Button icon={<ReloadOutlined />} onClick={loadMessages} loading={busy === 'messages'}>
+            Проверить почту
+          </Button>
+          <Text type="secondary">
+            Показываются письма с адресов ведомств: {(mailConfig && mailConfig.watched ? mailConfig.watched : []).join(', ')}
+          </Text>
+        </Space>
+        <Table
+          rowKey="uid"
+          size="small"
+          dataSource={messages}
+          pagination={{ pageSize: 10, hideOnSinglePage: true }}
+          locale={{ emptyText: 'Ответов пока нет' }}
+          columns={[
+            { title: 'От', dataIndex: 'from', ellipsis: true },
+            { title: 'Тема', dataIndex: 'subject', ellipsis: true },
+            { title: 'Получено', dataIndex: 'received_at', width: 190 },
+            {
+              title: 'Вложения',
+              width: 110,
+              render: (_, record) => record.attachments.length || '',
+            },
+          ]}
+          expandable={{
+            expandedRowRender: (record) => (
+              <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                {record.attachments.length ? (
+                  <Table
+                    rowKey="index"
+                    size="small"
+                    pagination={false}
+                    dataSource={record.attachments}
+                    columns={[
+                      { title: 'Файл', dataIndex: 'name' },
+                      { title: 'Тип', dataIndex: 'content_type', width: 200 },
+                      {
+                        title: '',
+                        width: 150,
+                        render: (_, item) => (
+                          <Button
+                            size="small"
+                            icon={<DownloadOutlined />}
+                            disabled={item.too_large}
+                            loading={busy === 'attachment'}
+                            onClick={() => saveAttachment(record.uid, item.index)}
+                          >
+                            Сохранить
+                          </Button>
+                        ),
+                      },
+                    ]}
+                  />
+                ) : (
+                  <Text type="secondary">Вложений нет</Text>
+                )}
+                <pre
+                  style={{
+                    background: '#f8f9fa',
+                    padding: 12,
+                    borderRadius: 6,
+                    maxHeight: 280,
+                    overflow: 'auto',
+                    margin: 0,
+                  }}
+                >
+                  {record.body}
+                </pre>
+              </Space>
+            ),
+          }}
+        />
+      </div>
+    </Space>
+  );
+
+  const renderFinal = () => (
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Button type="primary" onClick={runFinalCheck} loading={busy === 'final'}>
+        Проверить всё
+      </Button>
+      <Descriptions size="small" bordered column={1}>
+        <Descriptions.Item label="Backend">
+          <Space>
+            <StatusTag state={health.hc} />
+            <Text>{health.hc === OK ? 'отвечает' : 'не проверено'}</Text>
+          </Space>
+        </Descriptions.Item>
+        <Descriptions.Item label="КриптоПро">
+          <Space>
+            <StatusTag state={health.status} />
+            <Text>{health.detail || 'не проверено'}</Text>
+          </Space>
+        </Descriptions.Item>
+        <Descriptions.Item label="Сертификат">
+          <Space>
+            <StatusTag state={certState} />
+            <Text>
+              {currentCert && currentCert.certId
+                ? `выбран ${(currentCert.subject || {}).CN || currentCert.certId}`
+                : 'не выбран'}
+            </Text>
+          </Space>
+        </Descriptions.Item>
+        <Descriptions.Item label="Маркер ЕСИА">
+          <Space>
+            <StatusTag state={tokenState.state} />
+            <Text>{tokenState.detail || 'не проверялся'}</Text>
+          </Space>
+        </Descriptions.Item>
+        <Descriptions.Item label="Почта">
+          <Space>
+            <StatusTag state={mailState} />
+            <Text>
+              {mailConfig && mailConfig.configured ? 'настроена' : 'не настроена'}
+            </Text>
+          </Space>
+        </Descriptions.Item>
+      </Descriptions>
+      {finalState === OK ? (
+        <Result
+          status="success"
+          title="Стенд готов к работе"
+          subTitle="Контур определён, сертификат выбран, маркер получен."
+        />
+      ) : null}
+    </Space>
+  );
+
+  const content = [
+    renderEnvironment,
+    renderCertificates,
+    renderApiKey,
+    renderMail,
+    renderFinal,
+  ][step];
+
+  return (
+    <Card
+      title={
+        <Space>
+          <span>Мастер настройки</span>
+          <StatusTag state={steps[step].state} />
+        </Space>
+      }
+      extra={
+        <Space>
+          <Button disabled={step === 0} onClick={() => setStep(step - 1)}>
+            Назад
+          </Button>
+          <Button
+            type="primary"
+            disabled={step === steps.length - 1}
+            onClick={() => setStep(step + 1)}
+          >
+            Дальше
+          </Button>
+        </Space>
+      }
+      style={{ marginBottom: 24 }}
+    >
+      <Steps
+        current={step}
+        onChange={setStep}
+        style={{ marginBottom: 24 }}
+        items={steps.map((item) => ({
+          title: item.title,
+          icon: item.icon,
+          status:
+            item.state === FAIL ? 'error' : item.state === OK ? 'finish' : 'wait',
+        }))}
+      />
+      {notice ? (
+        <Alert
+          style={{ marginBottom: 16 }}
+          type={notice.type}
+          showIcon
+          closable
+          message={notice.text}
+          onClose={() => setNotice(null)}
+        />
+      ) : null}
+      {content()}
+    </Card>
+  );
+}

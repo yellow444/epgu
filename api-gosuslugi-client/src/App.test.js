@@ -85,6 +85,21 @@ describe('App Component Basic Rendering Tests', () => {
     expect(await screen.findByLabelText('Наверх')).toBeInTheDocument();
   });
 
+  test('shows the setup wizard above the guide and survives an empty backend', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Настройка'));
+
+    expect(await screen.findByText('Мастер настройки')).toBeInTheDocument();
+    // Шаги мастера: от контура до итоговой проверки.
+    expect(screen.getByText('Контур')).toBeInTheDocument();
+    expect(screen.getByText('Почта')).toBeInTheDocument();
+    // Первый шаг сам спрашивает у backend, где мы находимся.
+    await waitFor(() => expect(axios.get).toHaveBeenCalledWith('/version'));
+    // Заглушка вместо ответа не должна ронять вкладку: шаг говорит об этом
+    // явно, а не падает на разборе пустого ответа.
+    expect(screen.getByText(/Backend не ответил/)).toBeInTheDocument();
+  });
+
   test('switches to Inbound tab and shows the registration addresses', async () => {
     render(<App />);
     fireEvent.click(screen.getByText('Входящие'));

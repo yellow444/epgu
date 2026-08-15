@@ -59,6 +59,7 @@ import GoskeyForm, {
   isGoskeyServiceProfile,
 } from './components/GoskeyForm/GoskeyForm';
 import SetupGuide from './components/SetupGuide/SetupGuide';
+import SetupWizard from './components/SetupWizard/SetupWizard';
 import InboundLog from './components/InboundLog/InboundLog';
 import {
   applyServiceTransforms,
@@ -1488,7 +1489,12 @@ function App() {
             </div>
           )}
 
-          {currentTab === 'setup' && <SetupGuide />}
+          {currentTab === 'setup' && (
+            <>
+              <SetupWizard />
+              <SetupGuide />
+            </>
+          )}
           {currentTab === 'inbound' && <InboundLog />}
 
           {/* Таб для XML редактора */}

@@ -174,25 +174,26 @@ Error SetProvParam(PP_USE_HARDWARE_RNG):
 ## Тестовый ключ и сертификат внутри контейнера
 
 Нужны, только чтобы проверить подпись, пока нет настоящего сертификата
-организации. Биологический ДСЧ соглашается работать, если дать процессу
-псевдотерминал и подавать в него символы с паузами, как при наборе с клавиатуры,
-а после набора энтропии отправлять переводы строки на запрос пароля контейнера.
+организации. Всё делает один скрипт
+[`docker/make-test-key.sh`](../../api-gosuslugi-backend/docker/make-test-key.sh):
 
-```sh
-# feed.sh: 1200 символов с паузой 0.02 с, затем переводы строки
-# genbio.sh: csptest -keyset -newkeyset -cont '\\.\HDIMAGE\biokey' -provtype 80 -protected=none
-/tmp/feed.sh | script -qec /tmp/genbio.sh /dev/null
+```bash
+docker compose cp api-gosuslugi-backend/docker/make-test-key.sh api:/tmp/make-test-key.sh
+docker compose exec -u root api sh /tmp/make-test-key.sh
+docker compose restart api
 ```
 
-Дальше самоподписанный сертификат и его установка:
+Занимает около минуты. Имя контейнера ключа переопределяется переменной
+`TEST_KEY_CONTAINER`, по умолчанию `biokey`.
 
-```sh
-csptest -keyset -fmakecert /tmp/self.cer -cont '\\.\HDIMAGE\biokey' -provtype 80 -keytype signature
-certmgr -inst -file /tmp/self.cer -cont '\\.\HDIMAGE\biokey' -store uMy -at_signature -to-container
-certmgr -install -store mroot -file /tmp/self.cer      # от root, иначе подпись упрётся в недоверенную цепочку
-```
+Что внутри. Генерацию ключа КриптоПро разрешает только со строгого ДСЧ,
+аппаратного в контейнере нет, остаётся биологический: он читает нажатия клавиш
+из терминала. Скрипт даёт процессу псевдотерминал и подаёт в него символы с
+паузами, как при наборе руками, а после набора энтропии отправляет переводы
+строки на запрос пароля контейнера. Дальше делается самоподписанный сертификат,
+кладётся в хранилище контейнера и в доверенные корни.
 
-Три подводных камня, на которых это ломается:
+Три подводных камня, ради которых скрипт и написан:
 
 - `certmgr` по умолчанию ищет ключ обмена и падает с `0x8009000d GetUserKey
   error`. Нужен флаг `-at_signature`.

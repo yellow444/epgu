@@ -1,14 +1,15 @@
 [build-system]
-requires = ["hatchling>=1.21"]
+requires = ["hatchling>=1.27,<2"]
 build-backend = "hatchling.build"
 
 [project]
 name = "epgu-api"
-version = "0.1.0"
+version = "0.2.0"
 description = "Python-клиент API Госуслуг (ЕПГУ/ЕСИА): подача заявлений, статусы, файлы - для граждан и организаций"
 readme = "README.md"
-requires-python = ">=3.8"
-license = { text = "AGPL-3.0-or-later" }
+requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE", "NOTICE", "COMMERCIAL-LICENSE.md"]
 authors = [{ name = "yellow444", email = "yellow444@gmail.com" }]
 keywords = [
     "epgu",
@@ -24,20 +25,19 @@ keywords = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Natural Language :: Russian",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Internet :: WWW/HTTP",
 ]
 dependencies = [
-    "httpx>=0.23",
+    "httpx>=0.28.1,<1.0",
 ]
 
 [project.optional-dependencies]
@@ -46,26 +46,36 @@ dependencies = [
 # в этот extra включён только опциональный вспомогательный пакет валидации.
 cryptopro = []
 # Валидация XML по XSD-схемам ЕПГУ.
-xml = ["lxml>=4.6"]
+xml = ["lxml>=6.1,<7"]
+# Минимальный набор для запуска тестов downstream-пакетами.
+test = [
+    "pytest>=9.0.3,<10",
+    "pytest-cov>=4.1,<8",
+]
 # Всё для разработки и тестов.
 dev = [
-    "pytest>=7",
-    "pytest-httpx>=0.21; python_version >= '3.8'",
-    "lxml>=4.6",
-    "build>=1.0",
-    "twine>=4.0",
-    "ruff>=0.1",
+    "pytest>=9.0.3,<10",
+    "pytest-cov>=4.1,<8",
+    "lxml>=6.1,<7",
+    "build>=1.2,<2",
+    "twine>=7,<8",
+    "ruff>=0.8,<1",
+    "mypy>=1.8,<2",
+    "pip-audit>=2.7,<3",
 ]
 
 [project.urls]
 Homepage = "https://github.com/yellow444/epgu"
 Repository = "https://github.com/yellow444/epgu"
 Issues = "https://github.com/yellow444/epgu/issues"
+Documentation = "https://github.com/yellow444/epgu/tree/main/python-epgu"
+Changelog = "https://github.com/yellow444/epgu/blob/main/python-epgu/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/epgu"]
 
 [tool.hatch.build.targets.sdist]
+exclude = ["/tests"]
 include = [
     "src/epgu",
     "README.md",
@@ -73,12 +83,35 @@ include = [
     "NOTICE",
     "COMMERCIAL-LICENSE.md",
     "CHANGELOG.md",
+    "examples",
+    "pyproject.toml",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --strict-config --strict-markers"
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.coverage.run]
+branch = true
+source = ["epgu"]
+omit = ["src/epgu/signature/cryptopro.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90

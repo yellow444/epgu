@@ -6,8 +6,7 @@
     "@ant-design/icons": "^6.1.0",
     "ace-builds": "^1.37.4",
     "antd": "^6.3.1",
-    "axios": "^0.27.2",
-    "cra-template": "1.2.0",
+    "axios": "^1.19.0",
     "dayjs": "^1.11.19",
     "idb": "^6.1.2",
     "jwt-decode": "^4.0.0",
@@ -17,22 +16,23 @@
     "react-ace": "^13.0.0",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.5",
-    "react-scripts": "^5.0.1",
     "xml-formatter": "^3.6.3"
   },
   "jest": {
     "moduleNameMapper": {
       "ace-builds/webpack-resolver": "<rootDir>/src/__mocks__/ace-builds/webpack-resolver.js",
-      "file-loader\\?esModule=false!.*": "<rootDir>/src/__mocks__/fileMock.js"
+      "file-loader\\?esModule=false!.*": "<rootDir>/src/__mocks__/fileMock.js",
+      "^@rc-component/picker/locale/(.*)$": "<rootDir>/node_modules/@rc-component/picker/lib/locale/$1.js",
+      "^@rc-component/picker/generate/(.*)$": "<rootDir>/node_modules/@rc-component/picker/lib/generate/$1.js"
     }
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --experimental-vm-modules",
+    "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "eslintConfig": {
     "extends": [
@@ -66,8 +66,10 @@
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-react": "^7.37.3",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "fake-indexeddb": "^6.2.5",
     "prettier": "^3.4.2",
     "raw-loader": "^4.0.2",
+    "react-scripts": "^5.0.1",
     "web-vitals": "^4.2.4"
   }
 }

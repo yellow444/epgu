@@ -4,6 +4,20 @@ server {
     root /usr/share/nginx/html;
     index index.html index.htm;
     expires off;
+    server_tokens off;
+
+    # The production bundle talks to the backend through the same-origin /api
+    # proxy. Ant Design/Ace currently require inline styles; scripts remain
+    # restricted to files served by this nginx instance.
+    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    # Frontend передаёт исходный комплект backend-у целиком; backend уже затем
+    # применяет лимит 50 MB к каждому upstream chunk. Ограничение здесь защищает
+    # локальный single-operator стенд от неограниченных тел.
+    client_max_body_size 64m;
     # Обработка запросов к статическим файлам (фронтенд)
     location / {
         try_files $uri $uri/ /index.html;
@@ -12,7 +26,8 @@ server {
     # Проксирование запросов к API на backend
     location /api/ {
         # Здесь переменная BACKEND_API должна быть подставлена, например, через entrypoint
-        proxy_pass ${BACKEND_API};
+        # Завершающий slash снимает внешний префикс /api/ перед FastAPI.
+        proxy_pass ${BACKEND_API}/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -25,5 +40,7 @@ server {
         # Убираем ограничения для больших тел запросов
         proxy_buffering off;
         proxy_request_buffering off;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
     }
 }

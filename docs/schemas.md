@@ -1,46 +1,56 @@
 # Схемы данных
 
-> Актуализировано: **2026-05-12** (см. [CHANGELOG.md](./CHANGELOG.md)). Источник истины по XML/XSD — спецификации отдельных услуг на [портале партнёров](https://partners.gosuslugi.ru/catalog/api_for_gu), полный каталог — [SERVICES.md](./SERVICES.md).
+> Актуализировано: **2026-08-12**. Источник истины по XML/XSD — спецификации отдельных услуг на [портале партнёров](https://partners.gosuslugi.ru/catalog/api_for_gu); локальный снимок и SHA-256 находятся в [api_for_gu](./api_for_gu/README.md), полный каталог — в [SERVICES.md](./SERVICES.md).
 
 ## XML / XSD
 
-Файлы в `api-gosuslugi-backend/xml/`:
+Файлы в `api-gosuslugi-backend/xml/` относятся к каталогизированному, но заблокированному профилю `60010153` и не служат универсальной схемой для всех услуг. XSD и транспорт известны, однако XML содержит демонстрационные данные и не является готовым пользовательским вводом:
 
 | Файл | Назначение |
 |---|---|
-| `req.xml` | Эталонный запрос (meta-обёртка) |
-| `piev_epgu.xml` | Тело заявления, вложение в zip |
+| `req.xml` | Демонстрационная meta-обёртка запроса |
+| `piev_epgu.xml` | Демонстрационное тело заявления, вложение в zip |
 | `piev_epgu.xsd` | XSD-схема для валидации `piev_epgu.xml` |
 
-Валидация:
+Backend выбирает `schemaFile` из `submission.documents[]`, безопасно разрешает путь внутри `XML_ROOT` и кеширует скомпилированную схему:
 
 ```python
-schema_root = etree.parse(XSD_FILE)
-schema = etree.XMLSchema(schema_root)
-schema.assertValid(etree.fromstring(xml_content))
+parser = etree.XMLParser(resolve_entities=False, no_network=True, huge_tree=False)
+schema = _load_schema(document_profile["schemaFile"])
+schema.assertValid(etree.fromstring(xml_content, parser=parser))
 ```
 
-Перечисления из XSD доступны через `GET /xsd?simple_type_name=<name>` — удобно для построения выпадающих списков в UI.
+Перечисления доступны через `GET /xsd?service=<code>&simple_type_name=<name>`. Endpoint принимает только исполняемый профиль с локальной XSD; отсутствие схемы возвращает `404`, reference-only профиль — `409`.
 
 ## Справочник услуг (env `SERVICES`)
 
-JSON-объект, где ключ — код услуги, значение — параметры:
+`service_profiles.json` — сгенерированный versioned-реестр. `SERVICES` может быть только строгим deep-overlay; добавляемая услуга обязана содержать полный профиль. Ниже — иллюстративный фрагмент встроенного профиля, а не готовый полный override:
 
 ```json
 {
-  "10000000367": {
-    "description": "Подача заявлений/ходатайств/объяснений",
-    "req_file": "req.xml",
-    "piev_epgu_file": "piev_epgu.xml",
-    "region": "45000000000",
-    "targetCode": "-10000000367",
-    "eServiceCode": "10000000367",
-    "serviceTargetCode": "-10000000367"
+  "60010153": {
+    "serviceCode": "60010153",
+    "title": "Предоставление информации о наличии исполнительного производства онлайн",
+    "status": "reference",
+    "available": false,
+    "unavailableReason": "Нужны типизированная форма, fail-closed проверка placeholder/полей и приёмка в авторизованном контуре.",
+    "protocol": "gusmev-order",
+    "targetCode": "-60010153",
+    "submission": {
+      "mode": "chunked",
+      "archiveNameTemplate": "{orderId}-archive.zip",
+      "chunkSize": 5000000,
+      "documents": [
+        {"id": "transport", "outputName": "req.xml", "validation": "well-formed"},
+        {"id": "request", "outputName": "piev_epgu.xml", "schemaFile": "piev_epgu.xsd", "validation": "xsd"}
+      ]
+    },
+    "spec": {"source": "https://gu-st.ru/...docx", "sha256": "..."}
   }
 }
 ```
 
-Возвращается клиенту через `GET /services`.
+Возвращается клиенту через `GET /services`. Такой профиль можно включить только после замены демонстрационного XML типизированной формой, fail-closed валидации всех placeholder/полей и проверки в авторизованном контуре.
 
 ## Pydantic-модели (backend)
 
@@ -54,9 +64,13 @@ JSON-объект, где ключ — код услуги, значение —
 
 | Поле | Тип | Default | Описание |
 |---|---|---|---|
-| region | str | `45000000000` | ОКТМО |
-| serviceCode | str | `60010153` | Код услуги |
-| targetCode | str | `-60010153` | Код цели |
+| region | str | обязательное | Runtime ОКАТО пользователя |
+| serviceCode | str | обязательное | Код зарегистрированной услуги |
+| targetCode | str | обязательное | Должен совпасть с профилем услуги |
+
+### `GoskeyRequest`
+
+Typed DTO содержит `serviceCode`, runtime `region`, вариант/тип получателя и его идентификаторы, `signExpiration`, описание, реквизиты организации, optional backlink/orderId. Допустимые варианты публикует `GET /goskey/capabilities`; `reference` варианты не генерируются. `POST /goskey/submit` передаёт DTO строкой в multipart-поле `request`, а документы — повторяемым полем `documents`.
 
 ## Внутренние структуры
 
@@ -88,7 +102,7 @@ JSON-объект, где ключ — код услуги, значение —
 
 ## «Таблицы» (условная БД)
 
-БД отсутствует; сущности живут в памяти процесса. Если делать таблицы (например, при переходе на PostgreSQL) — логичная схема:
+БД отсутствует; сущности живут в памяти процесса. Если делать таблицы (например, при переходе на PostgreSQL) - логичная схема:
 
 ```mermaid
 erDiagram
@@ -118,9 +132,10 @@ erDiagram
     }
     SERVICE {
         string code PK
-        string description
-        string req_file
-        string piev_epgu_file
+        string title
+        string status
+        string submission_mode
+        json profile
     }
     ORDER {
         string order_id PK

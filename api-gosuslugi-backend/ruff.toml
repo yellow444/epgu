@@ -1,0 +1,10 @@
+target-version = "py310"
+line-length = 100
+
+[lint]
+select = ["E", "F", "I", "B"]
+ignore = [
+    "B008",  # FastAPI dependency markers intentionally live in defaults.
+    "B904",  # Existing endpoint translation keeps the public HTTP error surface.
+    "E501",  # Formatter-friendly long URLs/messages are checked in review.
+]

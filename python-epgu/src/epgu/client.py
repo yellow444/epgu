@@ -12,9 +12,9 @@ from urllib.parse import quote, unquote, urlparse
 
 import httpx
 
+from . import geps
 from .auth.base import StaticToken, TokenProvider
 from .const import USER_AGENT, Env
-from . import geps
 from .errors import ApiError, ConfigError, HttpError
 from .models import DictionaryResult, Order, OrderMeta, OrdersPage
 

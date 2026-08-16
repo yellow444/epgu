@@ -5,6 +5,8 @@ uvicorn==0.52.1
 python-dotenv==1.2.2
 python-multipart==0.0.32
 lxml==6.1.1
+# SRV и MX для автоопределения почтовых серверов: в стандартной библиотеке их нет.
+dnspython==2.7.0
 httpx==0.28.1
 pydantic==2.13.4
 -e ../python-epgu[xml]

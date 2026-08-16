@@ -116,7 +116,7 @@ https://info.gosuslugi.ru/articles/Обмен_в_СМЭВ4_c_использов�
 Чтобы не возиться с ручной сборкой URL, в этом репозитории есть готовая ручка:
 
 ```bash
-curl -s -X POST "http://localhost:5000/api/accessTkn_esia"   -H "Content-Type: application/json"   -d '{"api_key":"string"}'
+curl -s -X POST "http://localhost:55000/api/accessTkn_esia"   -H "Content-Type: application/json"   -d '{"api_key":"string"}'
 ```
 
 Как это работает:

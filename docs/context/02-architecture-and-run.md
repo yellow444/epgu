@@ -1,4 +1,4 @@
-# 02 — Архитектура и запуск
+# 02 - Архитектура и запуск
 
 ## Compose-сервисы
 
@@ -42,7 +42,7 @@ Debug-порт не публикуется. Внутренние Docker DNS/по
 flowchart LR
     browser["Browser :50080"] -->|"/ static/UI"| nginx["Nginx :80"]
     browser -->|"/api/version"| nginx
-    nginx -->|"strip /api → /version"| api["FastAPI api:5000"]
+    nginx -->|"strip /api -> /version"| api["FastAPI api:5000"]
     api --> esia["ESIA"]
     api --> epgu["EPGU"]
 ```
@@ -54,7 +54,7 @@ BACKEND_URL=/api
 BACKEND_API=http://api:5000
 ```
 
-`BACKEND_API=http://api:5000/api` неверен: backend routes объявлены как `/version`, `/services`, `/order` и т. п.; `/api` — внешний frontend-префикс.
+`BACKEND_API=http://api:5000/api` неверен: backend routes объявлены как `/version`, `/services`, `/order` и т. п.; `/api` - внешний frontend-префикс.
 
 Nginx задаёт `client_max_body_size 64m`, отключает proxy buffering и использует `proxy_read_timeout`/`proxy_send_timeout` 300 секунд. Backend ограничивает каждый исходный файл и их сумму 50 000 000 байт, формирует ZIP в памяти и только затем нарезает upstream chunks до 50 МБ.
 

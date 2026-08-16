@@ -11,7 +11,7 @@
 
 > Для реальной работы нужны зарегистрированная информационная система,
 > разрешённая услуга, API-Key и сертификат КЭП. XML, XSD, состав архива и способ
-> отправки определяются приложением к спецификации конкретной услуги — пакет не
+> отправки определяются приложением к спецификации конкретной услуги - пакет не
 > подменяет эти документы универсальным шаблоном.
 
 ## Возможности
@@ -29,7 +29,7 @@
 - `epgu.services.goskey`: типизированные профили четырёх услуг Госключа,
   безопасная генерация `req.xml`, обязательные `.sig` для каждого файла и
   адаптивный выбор `push`/`order + push_chunked`.
-- Python 3.10–3.14, единственная обязательная зависимость — `httpx`.
+- Python 3.10-3.14, единственная обязательная зависимость - `httpx`.
 
 ## Установка
 
@@ -120,7 +120,7 @@ request = IndividualSignRequest(
     ),
 )
 
-# client — настроенный EpguClient, signer — реализация detached CAdES-подписи.
+# client - настроенный EpguClient, signer - реализация detached CAdES-подписи.
 result = submit_goskey(
     client,
     region="36",
@@ -166,7 +166,7 @@ aas = AasClient(
 authorization_url, state = aas.authorization_url()
 # Сохраните state в серверной сессии, затем перенаправьте пользователя.
 
-# В обработчике callback_url — полный URL текущего запроса, а expected_state
+# В обработчике callback_url - полный URL текущего запроса, а expected_state
 # загружен из серверной сессии, не из query-параметра.
 token = aas.exchange_callback(callback_url, expected_state=expected_state)
 ```
@@ -196,7 +196,7 @@ if attachment is not None:
     )
 ```
 
-HTTP-ошибки доступны как `HttpError`, прикладные JSON-ошибки с `code` — как
+HTTP-ошибки доступны как `HttpError`, прикладные JSON-ошибки с `code` - как
 `ApiError`. Ошибка НСИ в HTTP 200 также преобразуется в `ApiError`.
 
 ## Контуры
@@ -223,7 +223,7 @@ python -m twine check dist/*
 python -m pip_audit --local --skip-editable
 ```
 
-CI выполняет lint, тесты на Python 3.10–3.14, coverage gate, сборку wheel/sdist,
+CI выполняет lint, тесты на Python 3.10-3.14, coverage gate, сборку wheel/sdist,
 `twine check`, проверку установки wheel и аудит зависимостей. Перед выпуском
 обновите версию одновременно в `pyproject.toml` и `epgu.__version__`, а также
 `CHANGELOG.md`. Публикацию выполняйте через PyPI Trusted Publishing; токен PyPI
@@ -238,6 +238,6 @@ publish-job с `id-token: write`; GitHub Actions закреплены полны
 
 ## Лицензия
 
-По умолчанию действует AGPL-3.0-or-later, полный текст — в `LICENSE`.
+По умолчанию действует AGPL-3.0-or-later, полный текст - в `LICENSE`.
 Альтернативные коммерческие условия описаны в `COMMERCIAL-LICENSE.md`.
 Атрибуция вдохновившего Go-проекта приведена в `NOTICE`.

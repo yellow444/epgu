@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 
 import certsources
 import maildiscovery
+import mail_state
 import mailbox
 import secret_store
 import settings_store
@@ -56,6 +57,12 @@ class ProfileRequest(BaseModel):
     contact_email: str = Field(default="", max_length=320)
 
 
+class ReadRequest(BaseModel):
+    """Какие запросы отметить. Пустой список - все сразу."""
+
+    tickets: List[str] = Field(default_factory=list)
+
+
 class ResetRequest(BaseModel):
     """Что стирать при общем сбросе. Настройки стираются всегда."""
 
@@ -82,6 +89,35 @@ class MailSettingsRequest(BaseModel):
     # Пустой пароль не стирает сохранённый: иначе любое сохранение формы,
     # где поле пароля не заполняли, обнуляло бы его.
     password: Optional[str] = Field(default=None, max_length=512)
+
+
+# Кэш последнего разбора ящика. Открытие страницы дёргает список запросов
+# автоматически, и без кэша каждый заход шёл бы в IMAP по полминуты.
+_THREADS_CACHE: Dict[str, Any] = {"at": None, "threads": [], "scanned": 0}
+THREADS_TTL_SECONDS = 60
+
+
+def _threads_cached(config, scan: int, refresh: bool):
+    now = datetime.now(timezone.utc)
+    cached_at = _THREADS_CACHE["at"]
+    fresh = (
+        cached_at is not None
+        and (now - cached_at).total_seconds() < THREADS_TTL_SECONDS
+    )
+    if fresh and not refresh:
+        return (
+            [dict(item) for item in _THREADS_CACHE["threads"]],
+            cached_at.isoformat(timespec="seconds"),
+            _THREADS_CACHE["scanned"],
+        )
+    headers = mailbox.fetch_headers(config, scan=scan)
+    threads = mailbox.build_threads(headers)
+    _THREADS_CACHE.update({"at": now, "threads": threads, "scanned": len(headers)})
+    return (
+        [dict(item) for item in threads],
+        now.isoformat(timespec="seconds"),
+        len(headers),
+    )
 
 
 def setup_router() -> APIRouter:
@@ -188,6 +224,7 @@ def setup_router() -> APIRouter:
         cleared: Dict[str, Any] = {}
 
         settings_result = settings_store.clear()
+        mail_state.clear()
         secret_store.clear_runtime_secrets()
         cleared["settings"] = settings_result["removed"]
 
@@ -261,25 +298,79 @@ def setup_router() -> APIRouter:
         return JSONResponse(content=result)
 
     @router.get("/mail/threads")
-    async def mail_threads_route(scan: int = Query(200, ge=10, le=1000)):
+    async def mail_threads_route(
+        scan: int = Query(200, ge=10, le=1000),
+        limit: int = Query(10, ge=1, le=100),
+        offset: int = Query(0, ge=0),
+        state: str = Query("attention", pattern="^(attention|active|unread|all)$"),
+        refresh: bool = Query(False),
+    ):
         """Запросы в поддержку: номер, тема, статус и последнее движение.
 
         Читаются только заголовки, поэтому список статусов виден без открытия
-        писем и без выкачивания их тел.
+        писем и без выкачивания их тел. Результат кэшируется на несколько
+        десятков секунд, чтобы открытие страницы не ходило в IMAP каждый раз.
         """
         config = mailbox.load_config()
+        if not config.configured:
+            raise HTTPException(status_code=400, detail="Почта не настроена")
         try:
-            headers = mailbox.fetch_headers(config, scan=scan)
+            threads, checked_at, scanned = _threads_cached(config, scan, refresh)
         except mailbox.MailError as err:
             raise HTTPException(status_code=502, detail=str(err)) from err
-        threads = mailbox.build_threads(headers)
+
+        threads = mail_state.annotate(threads)
+        counts = {
+            "all": len(threads),
+            "active": sum(1 for item in threads if item["active"]),
+            "unread": sum(1 for item in threads if item["unread"]),
+        }
+        if state == "active":
+            selected = [item for item in threads if item["active"]]
+        elif state == "unread":
+            selected = [item for item in threads if item["unread"]]
+        elif state == "attention":
+            # То, на что стоит смотреть: ещё в работе или есть непрочитанное
+            # движение. Закрытые и просмотренные не мешаются.
+            selected = [item for item in threads if item["active"] or item["unread"]]
+        else:
+            selected = threads
+        counts["attention"] = sum(1 for item in threads if item["active"] or item["unread"])
+
         return JSONResponse(
             content={
-                "threads": threads,
-                "scanned": len(headers),
-                "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                "threads": selected[offset : offset + limit],
+                "total": len(selected),
+                "offset": offset,
+                "limit": limit,
+                "counts": counts,
+                "scanned": scanned,
+                "checked_at": checked_at,
             }
         )
+
+    @router.post("/mail/threads/read")
+    async def mail_threads_read_route(request: ReadRequest):
+        """Отметить прочитанным. Свой учёт, флаги IMAP не трогаем."""
+        config = mailbox.load_config()
+        try:
+            threads, _, _ = _threads_cached(config, 200, False)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        if request.tickets:
+            wanted = set(request.tickets)
+            chosen = [item for item in threads if item["ticket"] in wanted]
+        else:
+            chosen = threads
+        changed = mail_state.mark_many(chosen)
+        return JSONResponse(content={"marked": changed})
+
+    @router.post("/mail/threads/unread")
+    async def mail_threads_unread_route(request: ReadRequest):
+        """Снять отметку прочитанного, чтобы вернуть запрос в поле зрения."""
+        for ticket in request.tickets:
+            mail_state.forget(ticket)
+        return JSONResponse(content={"cleared": len(request.tickets)})
 
     @router.get("/mail/messages")
     async def mail_messages_route(

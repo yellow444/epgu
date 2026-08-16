@@ -68,7 +68,7 @@ describe('App Component Basic Rendering Tests', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Настройка'));
     expect(screen.getByText('Настройка работы')).toBeInTheDocument();
-    expect(screen.getByText('Ключевой контейнер и Docker')).toBeInTheDocument();
+    expect(screen.getByText('2. Подключить подпись')).toBeInTheDocument();
   });
 
   test('shows a back to top control only after the page is scrolled', async () => {
@@ -99,6 +99,77 @@ describe('App Component Basic Rendering Tests', () => {
     // явно, а не падает на разборе пустого ответа.
     expect(screen.getByText(/Backend не ответил/)).toBeInTheDocument();
   });
+
+  test('loads support requests by itself and marks them read on our side', async () => {
+    const thread = {
+      ticket: '6451421',
+      topic: 'Доступ к тестовой среде',
+      status: 'Принят в работу',
+      status_kind: 'progress',
+      last_event: 'Добавлен комментарий',
+      last_at: '2026-08-15T10:10:00',
+      messages: 3,
+      has_files: false,
+      unread: true,
+      active: true,
+    };
+    const threadsPage = {
+      threads: [thread],
+      total: 1,
+      offset: 0,
+      limit: 10,
+      counts: { all: 8, active: 1, unread: 8, attention: 8 },
+      scanned: 41,
+      checked_at: '2026-08-16T11:37:37+00:00',
+    };
+    axios.get.mockImplementation((url) => {
+      if (url === '/mail/config') {
+        return Promise.resolve({
+          data: {
+            configured: true,
+            user: 'box@example.org',
+            sender: 'box@example.org',
+            use_ssl: true,
+            imap: { host: 'mail.example.org', port: 993 },
+            smtp: { host: 'mail.example.org', port: 465 },
+            inbox_dir: '/certs/public',
+            password: { configured: true, length: 16, source: 'сохранено из интерфейса' },
+            watched: ['gosuslugi.ru'],
+          },
+        });
+      }
+      if (url === '/mail/threads') {
+        return Promise.resolve({ data: threadsPage });
+      }
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Настройка'));
+
+    // Список подтягивается сам при открытии вкладки, кнопку жать не нужно,
+    // и по умолчанию показывается то, что ждёт внимания.
+    await waitFor(() =>
+      expect(axios.get).toHaveBeenCalledWith('/mail/threads', {
+        params: { scan: 200, limit: 10, offset: 0, state: 'attention', refresh: false },
+      })
+    );
+    // Список живёт на шаге "Почта", туда и переходим.
+    fireEvent.click(await screen.findByText('Почта'));
+    expect(await screen.findByText('SCR#6451421')).toBeInTheDocument();
+    expect(screen.getByText('Требуют внимания 8')).toBeInTheDocument();
+    expect(screen.getByText('Все 8')).toBeInTheDocument();
+
+    // Прочитанное ведём у себя: жмём отметку и просим backend её запомнить.
+    // Ищем по тексту, а не по роли: вкладка большая, и разбор ролей по всему
+    // дереву занимает десятки секунд.
+    fireEvent.click(screen.getByText('Прочитано'));
+    await waitFor(() =>
+      expect(axios.post).toHaveBeenCalledWith('/mail/threads/read', {
+        tickets: ['6451421'],
+      })
+    );
+  }, 20000);
 
   test('switches to Inbound tab and shows the registration addresses', async () => {
     render(<App />);
@@ -263,6 +334,8 @@ describe('App Component Basic Rendering Tests', () => {
     expect(screen.getByLabelText('API key')).toHaveValue('');
   });
 
+  // Тест проходит два круга удаления и ждёт всплывающие сообщения antd,
+  // поэтому пяти секунд по умолчанию ему не хватает.
   test('warns when local purge succeeds but server session clearing fails', async () => {
     sessionStorage.setItem('token', 'session-token');
     axios.post.mockImplementation((url) =>
@@ -289,7 +362,7 @@ describe('App Component Basic Rendering Tests', () => {
     expect(
       await screen.findByText(/Локальные данные удалены, но server-side/)
     ).toBeInTheDocument();
-  });
+  }, 20000);
 
   test('uses the official no-body contract for details, download lookup, and cancel', async () => {
     const service = {

@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Badge,
   Button,
   Card,
   Checkbox,
@@ -11,6 +12,7 @@ import {
   Modal,
   Result,
   Row,
+  Segmented,
   Select,
   Space,
   Steps,
@@ -203,6 +205,10 @@ export default function SetupWizard() {
   const [showLetters, setShowLetters] = useState(false);
   const [threads, setThreads] = useState([]);
   const [threadsAt, setThreadsAt] = useState('');
+  const [threadsTotal, setThreadsTotal] = useState(0);
+  const [threadsOffset, setThreadsOffset] = useState(0);
+  const [threadCounts, setThreadCounts] = useState({});
+  const [threadState, setThreadState] = useState('attention');
   const [ticketFilter, setTicketFilter] = useState('');
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
@@ -320,6 +326,8 @@ export default function SetupWizard() {
     loadMail();
     loadProfile();
   }, [loadEnvironment, loadCertificates, loadMail, loadProfile]);
+
+  const autoLoadedRef = useRef(false);
 
   // ---------- Состояния шагов ----------
 
@@ -603,14 +611,53 @@ export default function SetupWizard() {
     });
   };
 
-  const loadThreads = async () => {
-    await run('threads', async () => {
+  const loadThreads = useCallback(
+    async (options = {}) => {
+      const offset = options.offset ?? threadsOffset;
+      const state = options.state ?? threadState;
+      const refresh = options.refresh ?? false;
+      await run('threads', async () => {
+        try {
+          const res = await api.get('/mail/threads', {
+            params: { scan: 200, limit: PAGE_SIZE, offset, state, refresh },
+          });
+          setThreads(res.data.threads || []);
+          setThreadsTotal(res.data.total || 0);
+          setThreadsOffset(res.data.offset || 0);
+          setThreadCounts(res.data.counts || {});
+          setThreadsAt(res.data.checked_at || '');
+        } catch (error) {
+          if (error.response && error.response.status === 400) {
+            // Почта не настроена: это не ошибка, просто нечего показывать.
+            setThreads([]);
+            setThreadsTotal(0);
+            return;
+          }
+          setNotice({ type: 'error', text: errorText(error, 'Прочитать ящик не удалось.') });
+        }
+      });
+    },
+    [api, run, threadsOffset, threadState]
+  );
+
+  // Запросы подтягиваются сами при открытии: ответ поддержки не должен ждать,
+  // пока оператор вспомнит нажать кнопку. Backend отдаёт кэш, поэтому лишнего
+  // похода в IMAP не будет. Эффект стоит ниже loadThreads намеренно: колбэк
+  // объявлен const, и до объявления он недоступен.
+  useEffect(() => {
+    if (!autoLoadedRef.current && mailConfig && mailConfig.configured) {
+      autoLoadedRef.current = true;
+      loadThreads({ offset: 0 });
+    }
+  }, [mailConfig, loadThreads]);
+
+  const markThreads = async (tickets, read) => {
+    await run('mark', async () => {
       try {
-        const res = await api.get('/mail/threads', { params: { scan: 200 } });
-        setThreads(res.data.threads || []);
-        setThreadsAt(res.data.checked_at || '');
+        await api.post(read ? '/mail/threads/read' : '/mail/threads/unread', { tickets });
+        await loadThreads({});
       } catch (error) {
-        setNotice({ type: 'error', text: errorText(error, 'Прочитать ящик не удалось.') });
+        setNotice({ type: 'error', text: errorText(error, 'Отметить не удалось.') });
       }
     });
   };
@@ -1222,8 +1269,33 @@ export default function SetupWizard() {
           состояние видно списком, без открытия.
         </Paragraph>
         <Space style={{ marginBottom: 12 }} wrap>
-          <Button icon={<ReloadOutlined />} onClick={loadThreads} loading={busy === 'threads'}>
+          <Segmented
+            value={threadState}
+            onChange={(value) => {
+              setThreadState(value);
+              setThreadsOffset(0);
+              loadThreads({ state: value, offset: 0 });
+            }}
+            options={[
+              { label: `Требуют внимания ${threadCounts.attention ?? 0}`, value: 'attention' },
+              { label: `Активные ${threadCounts.active ?? 0}`, value: 'active' },
+              { label: `Непрочитанные ${threadCounts.unread ?? 0}`, value: 'unread' },
+              { label: `Все ${threadCounts.all ?? 0}`, value: 'all' },
+            ]}
+          />
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => loadThreads({ offset: 0, refresh: true })}
+            loading={busy === 'threads'}
+          >
             Проверить почту
+          </Button>
+          <Button
+            onClick={() => markThreads([], true)}
+            loading={busy === 'mark'}
+            disabled={!threadCounts.unread}
+          >
+            Отметить все прочитанными
           </Button>
           {threadsAt ? (
             <Text type="secondary">Проверено {formatTime(threadsAt)}</Text>
@@ -1233,15 +1305,35 @@ export default function SetupWizard() {
           rowKey="ticket"
           size="small"
           dataSource={threads}
-          pagination={{ pageSize: PAGE_SIZE, hideOnSinglePage: true, size: 'small' }}
-          locale={{ emptyText: 'Запросов пока нет. Нажмите "Проверить почту".' }}
+          loading={busy === 'threads'}
+          pagination={{
+            current: Math.floor(threadsOffset / PAGE_SIZE) + 1,
+            pageSize: PAGE_SIZE,
+            total: threadsTotal,
+            showSizeChanger: false,
+            size: 'small',
+            onChange: (page) => loadThreads({ offset: (page - 1) * PAGE_SIZE }),
+          }}
+          locale={{
+            emptyText:
+              threadState === 'attention'
+                ? 'Ничего не ждёт внимания. Закрытые запросы смотрите в "Все".'
+                : 'Запросов нет',
+          }}
           rowClassName={(record) => (record.needs_action ? 'ant-table-row-selected' : '')}
           columns={[
             {
               title: 'Запрос',
               dataIndex: 'ticket',
-              width: 130,
-              render: (value) => <Text code>SCR#{value}</Text>,
+              width: 150,
+              render: (value, record) => (
+                <Space size={4}>
+                  {record.unread ? <Badge status="processing" /> : null}
+                  <Text code strong={record.unread}>
+                    SCR#{value}
+                  </Text>
+                </Space>
+              ),
             },
             { title: 'Тема', dataIndex: 'topic', ellipsis: true },
             {
@@ -1275,18 +1367,28 @@ export default function SetupWizard() {
             },
             {
               title: '',
-              width: 130,
+              width: 220,
               render: (_, record) => (
-                <Button
-                  size="small"
-                  onClick={() => {
-                    setTicketFilter(record.ticket);
-                    setShowLetters(true);
-                    loadMessages(0, record.ticket);
-                  }}
-                >
-                  Письма
-                </Button>
+                <Space size={4}>
+                  <Button
+                    size="small"
+                    onClick={() => {
+                      setTicketFilter(record.ticket);
+                      setShowLetters(true);
+                      loadMessages(0, record.ticket);
+                    }}
+                  >
+                    Письма
+                  </Button>
+                  <Button
+                    size="small"
+                    type={record.unread ? 'primary' : 'default'}
+                    loading={busy === 'mark'}
+                    onClick={() => markThreads([record.ticket], record.unread)}
+                  >
+                    {record.unread ? 'Прочитано' : 'В непрочитанные'}
+                  </Button>
+                </Space>
               ),
             },
           ]}

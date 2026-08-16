@@ -1,0 +1,287 @@
+{
+  "schemaVersion": 1,
+  "sourcePage": "https://partners.gosuslugi.ru/catalog/api_for_gu",
+  "catalogObservedAt": "2026-08-12",
+  "documents": [
+    {
+      "kind": "regulation",
+      "serviceCode": null,
+      "title": "Регламент подключения к API Госуслуг, версия 1.8",
+      "published": "2026-03-06",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx",
+      "file": "source/Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx",
+      "bytes": 83903,
+      "sha256": "f345383daefc1ede5fe12ba986dc4d447b174478f7686c155ec3bd20f906e455"
+    },
+    {
+      "kind": "agreement",
+      "serviceCode": null,
+      "title": "Договор присоединения кредитных организаций № 144687вн",
+      "published": "2024-12-23",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Dogovor_prisoedineniya_k_usloviyam_integracii_kreditnykh_organizacij_k_epgu.pdf",
+      "file": "source/Dogovor_prisoedineniya_k_usloviyam_integracii_kreditnykh_organizacij_k_epgu.pdf",
+      "bytes": 5465092,
+      "sha256": "3f509c59427aaea93c4771f8375ac237ef109f59954fc62c6a1aee4e85619304"
+    },
+    {
+      "kind": "guide",
+      "serviceCode": null,
+      "title": "Руководство организации-вендора по API-Key, версия 3.2",
+      "published": "2022-10-26",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Rukovodstvo_polzovatelya_dlya_organizacii-vendora_po_formirovaniyu_API-Key_i_polucheniyu_markera_dostupa._Versiya_3.2_ot_26.10.2022_g..pdf",
+      "file": "source/Rukovodstvo_polzovatelya_dlya_organizacii-vendora_po_formirovaniyu_API-Key_i_polucheniyu_markera_dostupa._Versiya_3.2_ot_26.10.2022_g..pdf",
+      "bytes": 740797,
+      "sha256": "f1cb167332ed9faa48e09d7f0eaba1c95fe3be31fe1eb62ccfb2330f078d5fbb"
+    },
+    {
+      "kind": "guide",
+      "serviceCode": null,
+      "title": "Руководство организации-потребителя по API-Key, версия 3.3",
+      "published": "2023-01-31",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Rukovodstvo_polzovatelya_dlya_organizacii-potrebitelya_po_formirovaniyu_API-Key_i_polucheniyu_markera_dostupa._Versiya_3.3_ot_31.01.2023_g.docx",
+      "file": "source/Rukovodstvo_polzovatelya_dlya_organizacii-potrebitelya_po_formirovaniyu_API-Key_i_polucheniyu_markera_dostupa._Versiya_3.3_ot_31.01.2023_g.docx",
+      "bytes": 1033761,
+      "sha256": "96aa8c6e2e45110faf19723aafa381fb4fce5bcebb15251cc650b6fd3664f2cf"
+    },
+    {
+      "kind": "guide",
+      "serviceCode": null,
+      "title": "Инструкция по взаимодействию с Личным кабинетом API ЕПГУ",
+      "published": "",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Instrukciya_LK_API_v1.docx",
+      "file": "source/Instrukciya_LK_API_v1.docx",
+      "bytes": 415100,
+      "sha256": "b90a8df8e0955b23435a229ce25a2ae3489f612fd4e95dd96f07a3172d64bf9f"
+    },
+    {
+      "kind": "core-specification",
+      "serviceCode": null,
+      "title": "Спецификация API ЕПГУ, версия 1.14",
+      "published": "2026-01-29",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_14.docx",
+      "file": "source/Specifikaciya_API_EPGU_v1_14.docx",
+      "bytes": 397044,
+      "sha256": "0c50f630f233935621d4c4f0b3ac0f3a714e355222120b5ef8bfd4fd48c36d31"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000374",
+      "title": "Отправка документов на подпись в Госключ",
+      "published": "2025-08-28",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000374_v1.9.docx",
+      "file": "source/10000000374__Specifikaciya_API_EPGU_Prilozhenie_10000000374_v1.9.docx",
+      "bytes": 79052,
+      "sha256": "ad78aacb591ef37989e6fdd1dd715bfb1b8ec486b13e16e4bca5a9b00a9eab1d"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000352",
+      "title": "Предоставление информации о ходе исполнительного производства онлайн",
+      "published": "2025-09-24",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000352_Hod_IP_v9.docx",
+      "file": "source/10000000352__Specifikaciya_API_EPGU_Prilozhenie_10000000352_Hod_IP_v9.docx",
+      "bytes": 157160,
+      "sha256": "e9d24d1076de92e209e57fc888f00826cce5fdd08fb057d3cf730c68cb64d21e"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60010153",
+      "title": "Предоставление информации о наличии исполнительного производства онлайн",
+      "published": "2024-07-17",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx",
+      "file": "source/60010153__Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8.docx",
+      "bytes": 142704,
+      "sha256": "55a3321abd90ee26bd086ba95e7ed667c23ab5586a0d594948720eae164668e2"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000367",
+      "title": "Подача заявлений, ходатайств, объяснений, отводов и жалоб по исполнительному производству",
+      "published": "2026-03-31",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000367_Podacha_zayavleni_hodatajstv_obyasnenij_v1.4.docx",
+      "file": "source/10000000367__Specifikaciya_API_EPGU_Prilozhenie_10000000367_Podacha_zayavleni_hodatajstv_obyasnenij_v1.4.docx",
+      "bytes": 429071,
+      "sha256": "f955bad0cd9341964c2c1c3a58426a9a044beb2106164af5d277e0c9b848cc5e"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000396",
+      "title": "Информация об исполнительных производствах для снятия ограничений на выезд",
+      "published": "2024-07-18",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000396_servis_snyatiya_ogranichenij_na_vyezd_v1.docx",
+      "file": "source/10000000396__Specifikaciya_API_EPGU_Prilozhenie_10000000396_servis_snyatiya_ogranichenij_na_vyezd_v1.docx",
+      "bytes": 130364,
+      "sha256": "be6a5c9a5fe9b1852b66274a07e4527acb37062f64d5725d5211856e6f3a33c0"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000109",
+      "title": "Приём заявлений о доставке пенсий и иных социальных выплат",
+      "published": "2024-11-15",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000109_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.1.docx",
+      "file": "source/10000000109__Specifikaciya_API_EPGU_Prilozhenie_10000000109_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.1.docx",
+      "bytes": 74176,
+      "sha256": "d1d8d03ee99ab53011fb4b42e3f3fd2d5ffc124c0fca2a1e747a62448d1e5670"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000110",
+      "title": "Назначение страховых и накопительных пенсий (600110_1)",
+      "published": "2025-05-29",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_10000000110_Naznachenie_pensii_v1.1.docx",
+      "file": "source/10000000110__Specifikaciya_API_EPGU_Prilozhenie_10000000110_Naznachenie_pensii_v1.1.docx",
+      "bytes": 66907,
+      "sha256": "a216736cf135a4c769fdc24ae8baf8741129d13f9a777509482b4d1d9f7bda5b"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60013502",
+      "title": "Приём заявлений о доставке пенсии и иных социальных выплат",
+      "published": "2025-01-17",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60013502_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.2.docx",
+      "file": "source/60013502__Specifikaciya_API_EPGU_Prilozhenie_60013502_Priem_zayavlenij_o_dostavke_pensij_i_inykh_socialnykh_vyplat_v1.2.docx",
+      "bytes": 217613,
+      "sha256": "9af863d512415a7ef6d248025268e633311af63bfdff223767cb7a72275097e5"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60013730",
+      "title": "Корректировка сведений индивидуального лицевого счёта",
+      "published": "2024-12-20",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_613730_Priem_ot_zastrakhovannykh_lic_zayavlenij_o_korrektirovke_svedenij_ILS_v1.3.docx",
+      "file": "source/60013730__Specifikaciya_API_EPGU_Prilozhenie_613730_Priem_ot_zastrakhovannykh_lic_zayavlenij_o_korrektirovke_svedenij_ILS_v1.3.docx",
+      "bytes": 192041,
+      "sha256": "d1d168fb766f7bcef6b6587a5dfa501d090d53b8b314ce24613bdb049c557b9b"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60019724",
+      "title": "Назначение страховых и накопительных пенсий",
+      "published": "2024-09-19",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60019724_Naznachenie_pensii_v1.3.docx",
+      "file": "source/60019724__Specifikaciya_API_EPGU_Prilozhenie_60019724_Naznachenie_pensii_v1.3.docx",
+      "bytes": 414719,
+      "sha256": "7da9dd67eb5f4b403a227eb8c57f8d2eccb0e9385e1820b4e18513e4db9de3a1"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000585",
+      "title": "Уведомления о трудовых договорах с иностранными гражданами",
+      "published": "2024-08-15",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.3.docx",
+      "file": "source/10000000585__Specifikaciya_API_EPGU_Uvedomlenie_o_trudovoj_deyatelnosti_1.3.docx",
+      "bytes": 82750,
+      "sha256": "bf343e2ac5091144d490f49c8ef3310443c7be98dd7cb742e1003a391f93b37f"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60057731",
+      "title": "Поиск иностранного гражданина в реестре контролируемых лиц",
+      "published": "2025-03-06",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specification_API_EPGU_Search_for_foreigner_in_RKL_V_1.3.docx",
+      "file": "source/60057731__Specification_API_EPGU_Search_for_foreigner_in_RKL_V_1.3.docx",
+      "bytes": 49596,
+      "sha256": "e1ce3a7341d127f8d4983212f86b7a2df3d7f8fb95df629d91372a97ea0ed5fe"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60025907",
+      "title": "Подписание документов УКЭП юридическими лицами",
+      "published": "2025-08-28",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60025907.docx",
+      "file": "source/60025907__Specifikaciya_API_EPGU_Prilozhenie_60025907.docx",
+      "bytes": 81332,
+      "sha256": "383ecf11f75bcee0221c57990b0a4be6943e0e56d1e76effebfa815f44dc3343"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60048912",
+      "title": "Обмен сведениями с реестром организаторов распространения информации",
+      "published": "2025-12-03",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_TOT_03_12_2025.docx",
+      "file": "source/60048912__Specifikaciya_TOT_03_12_2025.docx",
+      "bytes": 105217,
+      "sha256": "e23ccb1d58247317d10e9274f0f2584afdb43f7cf688476ee8c47924a305bb16"
+    },
+    {
+      "kind": "protocol-specification",
+      "serviceCode": null,
+      "title": "Спецификация API ГЭПС, версия 1.0",
+      "published": "2026-01-29",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_GEPS_v1.0.docx",
+      "file": "source/Specifikaciya_API_GEPS_v1.0.docx",
+      "bytes": 211819,
+      "sha256": "a22e59cc3a979b551f658dbd1cdbdbb778db37b1b0b3924bb5a3c7ec172dee4b"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60078836",
+      "title": "Уведомления медицинских организаций о регистрации граждан",
+      "published": "2026-04-20",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Servisy_uvedomleniya_ot_medicinskih_organizatsiy_o_registracii_grazhdan_v1.0.docx",
+      "file": "source/60078836__Specifikaciya_API_EPGU_Servisy_uvedomleniya_ot_medicinskih_organizatsiy_o_registracii_grazhdan_v1.0.docx",
+      "bytes": 82329,
+      "sha256": "6f2b81c90f79e1f1d3ebcbf3adaaa58130b00a3de1aaa3c6c2e8421b142ff0b5"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000804",
+      "title": "Регистрация транспортных средств",
+      "published": "2026-03-17",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Spetsifikatsiya_API_EPGU_Prilozhenie_10000000804_RegistratsiyaTS_v1.docx",
+      "file": "source/10000000804__Spetsifikatsiya_API_EPGU_Prilozhenie_10000000804_RegistratsiyaTS_v1.docx",
+      "bytes": 258874,
+      "sha256": "8bddfcde235c9854b337deee8c340c947ce108f1657952873d926faacfefd9fb"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60011906",
+      "title": "Подача обращений в органы прокуратуры",
+      "published": "2026-03-03",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specification_API_EPGU_Submission_of_appeals_to_the_prosecutors.docx",
+      "file": "source/60011906__Specification_API_EPGU_Submission_of_appeals_to_the_prosecutors.docx",
+      "bytes": 82656,
+      "sha256": "857212626b5f83a712bbbb7997df243d3754e24ac022d981253a66d43c6e047a"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60080315",
+      "title": "Ежегодная семейная выплата",
+      "published": "2026-06-04",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_680315_Family_v1.0_%20editing_the_directory_SFR_CO_01.docx",
+      "file": "source/60080315__Specifikaciya_API_EPGU_Prilozhenie_680315_Family_v1.0__editing_the_directory_SFR_CO_01.docx",
+      "bytes": 165133,
+      "sha256": "30ae214a9808b3a5fe455bb12523664a485aa50800815b79737983730965f6ed"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "10000000588",
+      "title": "Миграционный и регистрационный учёт для гостиниц",
+      "published": "2026-06-22",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v3.0_600588.docx",
+      "file": "source/10000000588__Specifikaciya_API_EPGU_Servisy_migracionnogo_i_registracionnogo_uchyotov_dlya_gostinic_v3.0_600588.docx",
+      "bytes": 755316,
+      "sha256": "f0c45c87eb241b7814917855470d5963961a1753d3e199afceaff4801a06edb6"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60079416",
+      "title": "Расшифрование документов в Госключе",
+      "published": "2025-11-01",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_60079416_.docx",
+      "file": "source/60079416__Specifikaciya_API_EPGU_Prilozhenie_60079416_.docx",
+      "bytes": 77296,
+      "sha256": "91348129c8cd19557d40600c8c6c647fe0458a564d8869978c9746a2d85aa826"
+    },
+    {
+      "kind": "service-specification",
+      "serviceCode": "60080470",
+      "title": "Подписание УКЭП с сертификатом Федерального казначейства",
+      "published": "2026-02-25",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_Prilozhenie_ukep_roskazna.docx",
+      "file": "source/60080470__Specifikaciya_API_EPGU_Prilozhenie_ukep_roskazna.docx",
+      "bytes": 75385,
+      "sha256": "a153bc7f383d5ed1774b405829626686f2704634c03ba2cd2153d57bf2e95a02"
+    }
+  ]
+}

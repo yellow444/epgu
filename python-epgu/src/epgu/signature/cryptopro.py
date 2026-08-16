@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Подписант на КриптоПро CSP через модуль ``pycades``.
 
 ``pycades`` распространяется вместе с КриптоПро и не ставится из PyPI, поэтому
@@ -8,7 +10,7 @@
 from __future__ import annotations
 
 import base64
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from ..errors import SignatureError
 
@@ -18,7 +20,7 @@ class CryptoProSigner:
 
     Args:
         thumbprint: отпечаток (Thumbprint) сертификата в личном хранилище.
-            Если ``None`` - берётся первый доступный сертификат.
+            Обязателен: библиотека никогда не выбирает «первый» сертификат.
         pin: PIN контейнера закрытого ключа.
         tsa_address: адрес службы меток времени (для CAdES-T можно указать TSA;
             для CAdES-BES не используется при подписи api-key, но оставлен для
@@ -32,15 +34,20 @@ class CryptoProSigner:
 
     def __init__(
         self,
-        thumbprint: Optional[str] = None,
+        thumbprint: str,
         *,
         pin: Optional[str] = None,
         tsa_address: Optional[str] = None,
         check_certificate: bool = True,
         add_timestamp: bool = False,
     ) -> None:
+        if not isinstance(thumbprint, str):
+            raise SignatureError("Не указан отпечаток сертификата для подписи")
+        normalized_thumbprint = "".join(thumbprint.split()).upper()
+        if not normalized_thumbprint:
+            raise SignatureError("Не указан отпечаток сертификата для подписи")
         try:
-            import pycades  # noqa: F401
+            import pycades  # type: ignore[import-not-found] # noqa: F401
         except ImportError as exc:  # pragma: no cover - зависит от окружения
             raise SignatureError(
                 "Модуль 'pycades' не найден. Установите КриптоПро CSP и pycades "
@@ -48,7 +55,7 @@ class CryptoProSigner:
             ) from exc
 
         self._pycades = pycades
-        self.thumbprint = thumbprint
+        self.thumbprint = normalized_thumbprint
         self.pin = pin
         self.tsa_address = tsa_address
         self.check_certificate = check_certificate
@@ -56,7 +63,7 @@ class CryptoProSigner:
 
     # --- работа с хранилищем сертификатов -------------------------------
 
-    def _open_store(self):
+    def _open_store(self) -> Any:
         store = self._pycades.Store()
         store.Open(
             self._pycades.CADESCOM_CONTAINER_STORE,
@@ -78,17 +85,16 @@ class CryptoProSigner:
         finally:
             store.Close()
 
-    def _find_certificate(self, store):
+    def _find_certificate(self, store: Any) -> Any:
         certs = store.Certificates
         if certs.Count == 0:
             raise SignatureError("В личном хранилище нет сертификатов")
-        if self.thumbprint:
-            for i in range(1, certs.Count + 1):
-                cert = certs.Item(i)
-                if cert.Thumbprint == self.thumbprint:
-                    return cert
-            raise SignatureError(f"Сертификат с отпечатком {self.thumbprint} не найден")
-        return certs.Item(1)
+        for i in range(1, certs.Count + 1):
+            cert = certs.Item(i)
+            candidate = "".join(str(cert.Thumbprint).split()).upper()
+            if candidate == self.thumbprint:
+                return cert
+        raise SignatureError("Явно выбранный сертификат не найден")
 
     # --- подпись --------------------------------------------------------
 
@@ -118,7 +124,7 @@ class CryptoProSigner:
         except SignatureError:
             raise
         except Exception as exc:  # noqa: BLE001
-            raise SignatureError(f"Ошибка подписи КриптоПро: {exc}") from exc
+            raise SignatureError("Ошибка подписи КриптоПро") from exc
         finally:
             store.Close()
 

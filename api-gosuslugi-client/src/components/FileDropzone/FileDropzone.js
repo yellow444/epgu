@@ -14,6 +14,8 @@ function FileDropzone({
   onDrop, // Используем переданную функцию handleFileDrop
   files, // Получаем список файлов из App.js
   setFiles, // Функция для обновления списка файлов
+  onRemove,
+  onClear,
   accept = '*',
   multiple = true,
   description = 'Перетащите файлы сюда или нажмите для выбора',
@@ -31,13 +33,16 @@ function FileDropzone({
     multiple,
   });
 
-  const removeFile = (index) => {
+  const removeFile = async (index) => {
+    const removed = files[index];
     const updatedFiles = files.filter((_, i) => i !== index);
     setFiles(updatedFiles);
+    if (onRemove) await onRemove(removed);
   };
 
-  const clearFiles = () => {
+  const clearFiles = async () => {
     setFiles([]);
+    if (onClear) await onClear();
   };
 
   return (

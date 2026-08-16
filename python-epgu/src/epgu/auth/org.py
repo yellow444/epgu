@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Маркер доступа для организаций (информационных систем) - поток ``ext-app``.
 
 Сценарий не требует участия человека: информационная система подписывает свой
@@ -8,14 +10,24 @@ API-Key ГОСТ-подписью и обменивает его на марке
 from __future__ import annotations
 
 import base64
-from typing import Optional
+from typing import Any, Optional
+from urllib.parse import quote
 
 import httpx
 
 from ..const import USER_AGENT, Env
 from ..errors import AuthError
 from ..signature.base import Signer
-from .token import Token
+from .token import Token, _token_expires_in
+
+
+def _optional_int(value: Any, field_name: str) -> Optional[int]:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError) as exc:
+        raise AuthError(f"Некорректное поле {field_name!r} в ответе ЕСИА") from exc
 
 
 class OrgTokenProvider:
@@ -30,7 +42,8 @@ class OrgTokenProvider:
     Example:
         >>> from epgu import TEST
         >>> from epgu.signature import CryptoProSigner
-        >>> provider = OrgTokenProvider(api_key, CryptoProSigner(pin="..."), env=TEST)
+        >>> signer = CryptoProSigner(thumbprint="...", pin="...")
+        >>> provider = OrgTokenProvider(api_key, signer, env=TEST)
         >>> token = provider.get_token()
     """
 
@@ -68,28 +81,38 @@ class OrgTokenProvider:
         try:
             signature = self._url_safe_signature(self.signer.sign(self.api_key.encode("utf-8")))
         except Exception as exc:  # noqa: BLE001
-            raise AuthError(f"Не удалось подписать API-Key: {exc}") from exc
+            raise AuthError("Не удалось подписать API-Key") from exc
 
-        url = (
-            f"{self.env.esia}/esia-rs/api/public/v1/orgs/ext-app/"
-            f"{self.api_key}/tkn?signature={signature}"
-        )
+        encoded_api_key = quote(self.api_key, safe="")
+        url = f"{self.env.esia}/esia-rs/api/public/v1/orgs/ext-app/{encoded_api_key}/tkn"
         try:
-            resp = self._http().get(url, headers={"User-Agent": USER_AGENT})
+            resp = self._http().get(
+                url,
+                params={"signature": signature},
+                headers={"User-Agent": USER_AGENT},
+            )
         except httpx.HTTPError as exc:
-            raise AuthError(f"Сетевая ошибка при получении маркера: {exc}") from exc
+            raise AuthError("Сетевая ошибка при получении маркера ЕСИА") from exc
 
         if resp.status_code != 200:
-            raise AuthError(
-                f"ЕСИА вернула {resp.status_code} при получении маркера: {resp.text}"
-            )
-        data = resp.json()
+            raise AuthError(f"ЕСИА вернула HTTP {resp.status_code} при получении маркера")
+        try:
+            data = resp.json()
+        except ValueError as exc:
+            raise AuthError("ЕСИА вернула не-JSON вместо маркера организации") from exc
+        if not isinstance(data, dict):
+            raise AuthError("Ответ маркера ЕСИА должен быть JSON-объектом")
         access = data.get("accessTkn")
         if not access:
-            raise AuthError(f"В ответе ЕСИА нет accessTkn: {data}")
+            raise AuthError("В ответе ЕСИА нет обязательного поля accessTkn")
+        declared_ttl = _optional_int(
+            data.get("expiresIn") if data.get("expiresIn") is not None else data.get("expires_in"),
+            "expiresIn",
+        )
+        expires_in = _token_expires_in(str(access), declared_ttl)
         self._token = Token(
-            access_token=access,
-            expires_in=data.get("expiresIn") or data.get("expires_in"),
+            access_token=str(access),
+            expires_in=expires_in,
             raw=data,
         )
         return self._token
@@ -101,6 +124,13 @@ class OrgTokenProvider:
         return self._token
 
     def close(self) -> None:
+        """Закрыть созданный экземпляром HTTP-клиент."""
         if self._owns_client and self._client is not None:
             self._client.close()
             self._client = None
+
+    def __enter__(self) -> "OrgTokenProvider":
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        self.close()

@@ -4,14 +4,13 @@
 
 - /version       - расширенный health + информация о текущей среде / spec version
 - /environments  - справочник известных сред (test/prod) для UI
-- /services/{code} - описание одной услуги
 
 Подключается из app.py: ``app.include_router(diagnostics_router())``.
 """
 
 from typing import Any, Callable, Dict, Optional
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from config import (
@@ -19,7 +18,6 @@ from config import (
     SPEC_SOURCE,
     SPEC_VERSION,
     detect_environment,
-    serialize_service,
 )
 
 
@@ -76,15 +74,5 @@ def diagnostics_router(
     async def environments_route():
         """Справочник известных сред (test/prod) ЕСИА/ЕПГУ."""
         return JSONResponse(content=ENVIRONMENTS, status_code=200)
-
-    @router.get("/services/{code}")
-    async def get_service(code: str = Path(..., description="Код услуги")):
-        """Описание одной услуги по коду (404 - если не зарегистрирована)."""
-        if code not in services_dict:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Услуга '{code}' не зарегистрирована",
-            )
-        return JSONResponse(content=serialize_service(code, services_dict[code]))
 
     return router

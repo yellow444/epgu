@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """Константы и адреса контуров ЕПГУ/ЕСИА."""
 
 from __future__ import annotations
@@ -23,16 +25,23 @@ class Env:
         self.epgu = epgu.rstrip("/")
 
 
-# Тестовый контур (SVCDEV / test.gosuslugi.ru).
+# Тестовый контур прямого ГОСТ TLS из спецификации API ЕПГУ 1.14.
 TEST = Env(
     esia="https://esia-portal1.test.gosuslugi.ru",
-    epgu="https://svcdev-beta.test.gosuslugi.ru",
+    epgu="https://svcdev-gostapi.test.gosuslugi.ru",
 )
 
-# Боевой контур.
+# Боевой контур прямого ГОСТ TLS из спецификации API ЕПГУ 1.14.
 PROD = Env(
     esia="https://esia.gosuslugi.ru",
-    epgu="https://api.gosuslugi.ru",
+    epgu="https://www.gosuslugi.ru",
+)
+
+# Старый тестовый шлюз из примеров ранних версий спецификации. Оставлен как
+# явный opt-in для интеграций, которым его ещё не отключили.
+TEST_BETA = Env(
+    esia="https://esia-portal1.test.gosuslugi.ru",
+    epgu="https://svcdev-beta.test.gosuslugi.ru",
 )
 
 # Служба меток времени (TSA) тестового контура КриптоПро.

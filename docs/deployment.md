@@ -1,90 +1,120 @@
 # Развёртывание
 
-## Через docker-compose
+## Docker Compose
+
+Из корня репозитория:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
-Сервисы:
+Compose публикует только два порта:
 
-| Сервис | Образ | Порты | Назначение |
+| Сервис | Образ | Host → container | Назначение |
 |---|---|---|---|
-| `api` | `api-gosuslugi-backend:latest` | `5000` (HTTP), `5678` (debugpy) | FastAPI |
-| `frontend` | `api-gosuslugi-client` | `5080:80` | Nginx + React build |
+| `api` | `api-gosuslugi-backend:latest` | `127.0.0.1:${API_PORT:-55000}:5000` | FastAPI core/catalogue |
+| `frontend` | `api-gosuslugi-client` | `127.0.0.1:${FRONTEND_PORT:-50080}:80` | React UI и Nginx proxy `/api/` |
 
-Все переменные окружения читаются из корневого `.env`. См. [api.md](./api.md#переменные-окружения) и корневой [HOWTO.md](../HOWTO.md).
+Backend проверяется встроенным Docker healthcheck через `GET /version`. Frontend объявляет `depends_on: api: condition: service_healthy`, поэтому Nginx запускается только после готовности core API. Сам frontend проверяется запросом `GET /`.
 
-## Сборка backend-образа
+Оба порта привязаны только к loopback и недоступны напрямую с других машин. Это обязательная граница по умолчанию: backend хранит access token и выбранный сертификат в глобальном состоянии процесса и рассчитан на одного оператора.
 
-Multi-stage Dockerfile (`api-gosuslugi-backend/Dockerfile`):
+`/hc` не используется для compose readiness: без отдельно лицензированных CryptoPro/`pycades` он намеренно возвращает degraded/`503`, тогда как `/version` остаётся доступен.
 
-```mermaid
-flowchart LR
-    base["base
-python:3.12-bookworm + CryptoPro CSP + pcsclite"]
-    build["build
-cmake, boost, pycades.so"]
-    runtime["runtime
-pycades.so + cprocsp + requirements.txt + CA-cert"]
-    base --> build
-    base --> runtime
-    build -- "pycades.so" --> runtime
-```
+## Backend-образ
 
-Ключевые шаги:
-
-1. Установка КриптоПро CSP из `linux-amd64_deb.tgz`.
-2. Сборка `pycades.so` из исходников (`cryptopro.ru/.../pycades.zip`).
-3. Установка CA-сертификата тестового ЕСИА (`certenroll.test.gosuslugi.ru/cdp/test_ca_rtk3.cer`).
-4. Монтирование папки ключа через compose-volume: `${key_folder}:/var/opt/cprocsp/keys/app/xxx.000`.
-5. `entrypoint.sh` выполняет инициализацию CSP перед стартом uvicorn.
-
-## Сборка frontend-образа
+Публичный [Dockerfile](../api-gosuslugi-backend/Dockerfile) собирается из корня monorepo на `python:3.12-slim-bookworm`:
 
 ```mermaid
 flowchart LR
-    Build["node:*
-npm ci && webpack build"] --> Nginx["nginx:alpine
-+ default.conf.template + entrypoint.sh"]
+    root["monorepo context"] --> sdk["python-epgu"]
+    sdk --> deps["pinned backend dependencies"]
+    deps --> app["app + config + profiles + XML/XSD"]
+    app --> runtime["USER app, port 5000, health /version"]
 ```
 
-`entrypoint.sh` подставляет переменные (`BACKEND_API`) в `default.conf.template` -> `/etc/nginx/conf.d/default.conf` и запускает Nginx. Путь `/api` проксируется на backend.
+Образ:
 
-## Volumes
+- запускается непривилегированным пользователем `app`;
+- содержит Python-библиотеку, backend-код, `service_profiles.json` и runtime XML/XSD;
+- не содержит и не распространяет CryptoPro CSP, `pycades` или контейнеры закрытых ключей;
+- поддерживает каталог, Swagger, XML/XSD-проверку и preview без CSP;
+- требует отдельного лицензированного signing runtime для получения подписанного токена и операций detached CAdES.
 
-| Источник (хост) | Цель (контейнер) | Сервис |
-|---|---|---|
-| `./api-gosuslugi-backend/app.py` | `/app/app.py` | api |
-| `./api-gosuslugi-backend/.env` | `/app/.env` | api |
-| `${key_folder}` | `/var/opt/cprocsp/keys/app/xxx.000` | api |
-| `./api-gosuslugi-backend/certs` | `/certs` | api (внутри: `public/` - публичные CA, `personal/` - личные, gitignored) |
-| `./api-gosuslugi-backend/xml` | `/xml` | api |
-| `./api-gosuslugi-client/default.conf.template` | `/etc/nginx/conf.d/default.conf.template` | frontend |
-| `./api-gosuslugi-client/entrypoint.sh` | `/entrypoint.sh` | frontend |
+## Frontend-образ и proxy
 
-## Ресурсы
+Frontend — multi-stage образ: сборка выполняется на `node:24-alpine`, runtime — `nginx:stable-alpine`.
 
-В `docker-compose.yml` для `api` заданы лимиты: `cpus=0.5`, `memory=512M`. Для нагрузочного теста увеличить.
+```mermaid
+flowchart LR
+    src["React sources"] --> node["Node 24: npm ci + npm run build"]
+    node --> nginx["Nginx: static build + template + entrypoint"]
+```
+
+`BACKEND_URL` — build argument React, по умолчанию `/api`. `BACKEND_API` — runtime-адрес upstream для Nginx, по умолчанию `http://api:5000`.
+
+Шаблон Nginx и `entrypoint.sh` встроены в образ. При старте `envsubst` атомарно создаёт конфигурацию, после чего Nginx запускается foreground-процессом. Правило:
+
+```nginx
+location /api/ {
+    proxy_pass ${BACKEND_API}/;
+}
+```
+
+снимает внешний префикс: запрос браузера `/api/version` уходит backend как `/version`. Поэтому в `BACKEND_API` не нужно добавлять `/api`.
+
+Nginx принимает тело запроса не более `64m`, отключает request/response buffering для API и использует `proxy_read_timeout`/`proxy_send_timeout` по 300 секунд. Frontend передаёт исходный комплект целиком; backend ограничивает каждый файл и сумму 50 000 000 байт, затем собирает ZIP и нарезает upstream-части до 50 МБ.
+
+## Неизменяемые контейнеры
+
+В текущем `docker-compose.yml` нет bind mounts или named volumes. Исходники, profile registry, XML/XSD, frontend build, Nginx template и entrypoint входят в образы. После изменения любого из этих файлов образ нужно пересобрать:
+
+```bash
+docker compose up -d --build api
+docker compose up -d --build frontend
+```
+
+Локальные `.env`, сертификаты и ключевые контейнеры не монтируются в публичный runtime.
+
+## Конфигурация услуг
+
+Compose намеренно читает `SERVICES_OVERRIDE` из корневого `.env` и передаёт его процессу backend под именем `SERVICES`:
+
+```yaml
+- SERVICES=${SERVICES_OVERRIDE:-}
+```
+
+Это не позволяет старому legacy `SERVICES` из локального `.env` незаметно заменить versioned-каталог. При standalone-запуске backend без Compose приложение по-прежнему читает переменную `SERVICES` напрямую.
+
+## Проверка запуска
+
+```bash
+docker compose config --quiet
+docker compose ps
+curl http://localhost:55000/version
+curl http://localhost:50080/
+curl http://localhost:50080/api/version
+```
+
+Логи:
+
+```bash
+docker compose logs -f api frontend
+```
 
 ## Production-чеклист
 
-- [ ] `production=1` (отключает debugpy, уровень INFO).
-- [ ] Заменить тестовые `esia_host`/`svcdev_host` на боевые:
-      - `esia_host=https://esia.gosuslugi.ru`
-      - `svcdev_host=https://lk.gosuslugi.ru` (для прямого ГОСТ TLS)
-- [ ] Подключение по ГОСТ TLS: установить и доверять корневым CA Минцифры / ФСБ (в `certs/public/`).
-- [ ] Альтернатива: подключение через СМЭВ4 (ПОДД) - установить Агент ПОДД, см. [Документы СМЭВ 4 (ПОДД)](https://info.gosuslugi.ru/docs/section/%D0%A1%D0%9C%D0%AD%D0%92_4_(%D0%9F%D0%9E%D0%94%D0%94)/).
-- [ ] Ограничить CORS `allow_origins` конкретным доменом.
-- [ ] `KeyPin` - через Docker secrets / Vault, а не env.
-- [ ] HTTPS на frontend (отдельный reverse proxy / certs).
-- [ ] Журналирование операций подписания (audit log).
-- [ ] Мониторинг `/hc`, алерты на ошибки.
-- [ ] Регламентная регистрация ИС на технологическом портале ЕСИА: <https://esia.gosuslugi.ru/console/tech/>. Тест: <https://esia-portal1.test.gosuslugi.ru/console/tech>.
-- [ ] Проверить выданные согласия пользователей: <https://lk.gosuslugi.ru/settings/third-party/agreements/acting> (тест: <https://svcdev-betalk.test.gosuslugi.ru/settings/third-party/agreements/acting>).
+- [ ] Не публиковать `55000` или `50080` напрямую в LAN/Internet и не заменять loopback bind на `0.0.0.0` без защищённого gateway.
+- [ ] Для shared/public deployment поставить внешний reverse proxy с TLS, authentication, authorization, rate limits и аудитом перед frontend/API.
+- [ ] Выделять отдельный backend process/runtime на оператора или tenant: общие `ACCESS_TKN_ESIA`, `CURRENT_CERT_ID` и certificate store нельзя безопасно разделять между пользователями.
+- [ ] Использовать формальные адреса среды: test `svcdev-gostapi.test.gosuslugi.ru`, production `www.gosuslugi.ru`.
+- [ ] Задать `ALLOWED_ORIGINS` точным HTTPS origin frontend; CORS не заменяет authentication/authorization.
+- [ ] Хранить API key и все signing secrets вне Git и вне публичного образа.
+- [ ] Подключить отдельно лицензированный CryptoPro/`pycades` runtime и доверенную для контура цепочку CA, если нужны операции подписи.
+- [ ] Завершить TLS на внешнем reverse proxy перед frontend/API.
+- [ ] Мониторить `/version` как core readiness; состояние CSP проверять отдельно через `/hc`/`/status`.
+- [ ] Согласовать ingress/body limits, backend memory и таймауты с реальными размерами документов; не повышать `64m`/300 с без нагрузочной проверки.
+- [ ] Включить аудит операций подписания без журналирования PII и содержимого заявлений.
+- [ ] Проверить регламентную регистрацию ИС и согласия отдельно для test/prod контуров.
 
-## Отладка
-
-- VS Code -> Remote Attach -> `localhost:5678`.
-- Логи: `docker-compose logs -f api frontend`.
-- Проверка health: `curl http://localhost:5000/hc`.
+Подробности переменных окружения: [api.md](./api.md#переменные-окружения).

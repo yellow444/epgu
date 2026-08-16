@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """epgu - Python-клиент API Госуслуг (ЕПГУ/ЕСИА).
 
 Подача заявлений, отслеживание статусов и работа с файлами - для граждан и
@@ -6,22 +8,25 @@
 
 Быстрый старт (организация)::
 
+    import os
     from epgu import EpguClient, OrderMeta, TEST
     from epgu.auth import OrgTokenProvider
     from epgu.signature import CryptoProSigner
 
-    signer = CryptoProSigner(pin="1234567890")
-    auth = OrgTokenProvider(api_key="...", signer=signer, env=TEST)
+    signer = CryptoProSigner(thumbprint=os.environ["EPGU_CERT_THUMBPRINT"],
+                             pin=os.environ.get("EPGU_KEY_PIN"))
+    auth = OrgTokenProvider(api_key=os.environ["EPGU_API_KEY"], signer=signer, env=TEST)
 
+    meta = OrderMeta(region=os.environ["EPGU_REGION"],
+                     service_code=os.environ["EPGU_SERVICE_CODE"],
+                     target_code=os.environ["EPGU_TARGET_CODE"])
     with EpguClient(auth, env=TEST) as epgu:
-        meta = OrderMeta(region="45000000000", service_code="10001449665",
-                         target_code="-10001449665")
         order_id = epgu.create_order(meta)
 """
 
 from .archive import OrderArchive
 from .client import EpguClient
-from .const import PROD, TEST, TSA_TEST, Env
+from .const import PROD, TEST, TEST_BETA, TSA_TEST, Env
 from .errors import (
     ApiError,
     AuthError,
@@ -32,9 +37,18 @@ from .errors import (
     SignatureError,
     ValidationError,
 )
-from .models import Order, OrderFile, OrderMeta, OrderStatus
+from .models import (
+    DictionaryItem,
+    DictionaryResult,
+    Order,
+    OrderFile,
+    OrderMeta,
+    OrdersPage,
+    OrderStatus,
+)
+from .xml_validation import validate_xml
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "__version__",
@@ -45,9 +59,14 @@ __all__ = [
     "Order",
     "OrderFile",
     "OrderStatus",
+    "OrdersPage",
+    "DictionaryItem",
+    "DictionaryResult",
+    "validate_xml",
     # контуры
     "Env",
     "TEST",
+    "TEST_BETA",
     "PROD",
     "TSA_TEST",
     # ошибки

@@ -24,6 +24,7 @@
         order_id = epgu.create_order(meta)
 """
 
+from . import geps
 from .archive import OrderArchive
 from .client import EpguClient
 from .const import PROD, TEST, TEST_BETA, TSA_TEST, Env
@@ -48,11 +49,12 @@ from .models import (
 )
 from .xml_validation import validate_xml
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "__version__",
     # клиент и модели
+    "geps",
     "EpguClient",
     "OrderArchive",
     "OrderMeta",

@@ -7,8 +7,10 @@ COPY api-gosuslugi-backend/requirements.txt api-gosuslugi-backend/requirements-t
 RUN python -m pip install --no-cache-dir --upgrade pip \
  && python -m pip install --no-cache-dir -r requirements-test.txt
 
-COPY api-gosuslugi-backend/app.py api-gosuslugi-backend/config.py api-gosuslugi-backend/routers.py api-gosuslugi-backend/service_profiles.json ./
+# Копируем все модули и все тесты списком по маске. Перечисление по именам
+# уже один раз отстало от кода: appeared inbound_api, mailbox, setup_api,
+# и образ перестал собирать тесты вообще.
+COPY api-gosuslugi-backend/*.py api-gosuslugi-backend/pytest.ini api-gosuslugi-backend/service_profiles.json ./
 COPY api-gosuslugi-backend/xml /xml
-COPY api-gosuslugi-backend/test_app.py api-gosuslugi-backend/test_config.py api-gosuslugi-backend/test_submission_contracts.py api-gosuslugi-backend/test_goskey_api.py api-gosuslugi-backend/pytest.ini ./
 ENV XML_ROOT=/xml
 ENTRYPOINT ["python", "-m", "pytest", "-q"]

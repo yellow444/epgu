@@ -1601,6 +1601,9 @@ async def submit_goskey_request(
         raise HTTPException(status_code=503, detail="Для Госключа требуется pycades/CryptoPro CSP")
 
     try:
+        # Маркер спрашиваем до подписи: без него отправлять всё равно некуда,
+        # а подпись - обращение к закрытому ключу, и делать его зря не нужно.
+        session = _require_access_token()
         request_model = _goskey_request(payload)
         validate_submission_window(payload.signExpiration)
         document_payloads: Dict[str, bytes] = {}
@@ -1633,17 +1636,18 @@ async def submit_goskey_request(
             "targetCode": str(service_data["serviceTargetCode"]),
         }
         if decision.mode is GoskeyTransportMode.PUSH:
-            result, chunks_count = await _push_goskey_archive(meta, archive, client)
+            result, chunks_count = await _push_goskey_archive(meta, archive, client, session)
         else:
             order_id = decision.order_id
             if decision.reserve_order:
-                order_id = await _reserve_upstream_order(meta, client)
+                order_id = await _reserve_upstream_order(meta, client, session)
             assert order_id is not None
             result, chunks_count = await _push_goskey_archive_chunked(
                 meta,
                 archive,
                 order_id,
                 client,
+                session,
                 chunk_size=_resolve_submission(service_data)["chunk_size"],
             )
         return {

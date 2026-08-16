@@ -61,11 +61,32 @@ services:
     build:
       context: .
       dockerfile: ./api-gosuslugi-backend/Dockerfile
-    command: ["uvicorn", "inbound:app", "--host", "0.0.0.0", "--port", "5001"]
+    # Заголовок с названием и версией сервера наружу не отдаём, соединение
+    # не держим бесконечно, число одновременных запросов ограничено: всё это
+    # про порт, который смотрит в интернет.
+    command:
+      - uvicorn
+      - inbound:app
+      - --host=0.0.0.0
+      - --port=5001
+      - --no-server-header
+      - --timeout-keep-alive=15
+      - --limit-concurrency=64
     environment:
       - IS_MNEMONIC=${IS_MNEMONIC:-}
       - INBOUND_PUBLIC_URL=${INBOUND_PUBLIC_URL:-}
       - INBOUND_MAX_BODY=${INBOUND_MAX_BODY:-1048576}
+      # Кого пускаем. Пока адрес не опубликован, можно оставить пустым:
+      # ограничение частоты работает в любом случае.
+      - INBOUND_ALLOW_NETS=${INBOUND_ALLOW_NETS:-}
+      - INBOUND_TOKEN=${INBOUND_TOKEN:-}
+      - INBOUND_TRUSTED_PROXIES=${INBOUND_TRUSTED_PROXIES:-}
+      - INBOUND_RATE_PER_MINUTE=${INBOUND_RATE_PER_MINUTE:-60}
+      - INBOUND_RATE_BURST=${INBOUND_RATE_BURST:-20}
+      - INBOUND_RATE_GLOBAL_PER_MINUTE=${INBOUND_RATE_GLOBAL_PER_MINUTE:-600}
+      - INBOUND_JOURNAL_BODY_MAX=${INBOUND_JOURNAL_BODY_MAX:-65536}
+      - INBOUND_JOURNAL_KEEP=${INBOUND_JOURNAL_KEEP:-3}
+      - INBOUND_PUBLIC_IDENTITY=${INBOUND_PUBLIC_IDENTITY:-0}
     ports:
       # Единственный порт, который смотрит наружу: сюда редиректится трафик
       # с внешнего адреса ИС.

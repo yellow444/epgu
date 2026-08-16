@@ -40,7 +40,10 @@ def get_secret(name: str, default: str = "") -> str:
             "Провайдер секретов с мастер-паролем ещё не реализован; "
             "уберите SECRET_PROVIDER или задайте значение в окружении"
         )
-    return os.getenv(name, default)
+    # Сохранённое из интерфейса важнее того, с чем стартовал контейнер.
+    import settings_store
+
+    return settings_store.get(name, default)
 
 
 def set_runtime_secret(name: str, value: Optional[str]) -> None:
@@ -60,12 +63,23 @@ def clear_runtime_secrets() -> None:
 
 
 def describe(name: str) -> Dict[str, object]:
-    """Безопасное описание секрета для UI: есть или нет, откуда и какой длины."""
-    from_runtime = name in _runtime_overrides
-    value = get_secret(name) if (from_runtime or provider_name() == PROVIDER_ENV) else ""
+    """Безопасное описание секрета для UI: есть или нет, откуда и какой длины.
+
+    Источник называется честно: оператор должен понимать, что именно
+    подействует, если он поменяет .env или сохранит настройки из интерфейса.
+    """
+    import settings_store
+
+    if name in _runtime_overrides:
+        source = "память процесса"
+    elif name in settings_store.load():
+        source = "сохранено из интерфейса"
+    else:
+        source = "окружение"
+    value = get_secret(name) if provider_name() == PROVIDER_ENV else ""
     return {
         "name": name,
         "configured": bool(value),
         "length": len(value),
-        "source": "память процесса" if from_runtime else "окружение",
+        "source": source,
     }

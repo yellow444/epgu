@@ -8,20 +8,91 @@
 api-gosuslugi-backend/.env
 api-gosuslugi-backend/.env.local
 
+# Proprietary/local CryptoPro distributions are never redistributable artifacts
+/linux-amd64_deb.tgz
+/pycades.zip
+/api-gosuslugi-backend/linux-amd64_deb.tgz
+/api-gosuslugi-backend/pycades.zip
+
 # Personal certs / keys (must never be committed)
 api-gosuslugi-backend/certs/personal/*
 !api-gosuslugi-backend/certs/personal/.gitignore
+!api-gosuslugi-backend/certs/personal/.gitkeep
 !api-gosuslugi-backend/certs/personal/README.md
-api-gosuslugi-backend/xxx.000/
-api-gosuslugi-backend/*.000/
+
+# CryptoPro key containers (anywhere in repo)
+**/*.000/
+xxx.000/
+
+# Private-key formats — never commit anywhere
+*.pfx
+*.p12
+*.jks
+*.keystore
+*.kdbx
+*.ppk
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+
+# Private CryptoPro/SSH key file names (header/masks/name/primary)
+**/header.key
+**/masks.key
+**/masks2.key
+**/name.key
+**/primary.key
+**/primary2.key
+
+# Personal cert bundles (public certs live in certs/public/)
+**/personal/*.cer
+**/personal/*.crt
+**/personal/*.pem
+**/personal/*.key
+**/personal/*.zip
+**/personal/*.tar
+**/personal/*.tgz
+**/personal/*.7z
+**/personal/*.rar
+
+# Locally downloaded certificate bundles (curated public files belong in certs/public/)
+/certs/
+/api-gosuslugi-backend/certs/*.cer
+/api-gosuslugi-backend/certs/*.crt
+/api-gosuslugi-backend/certs/*.p7b
+/api-gosuslugi-backend/certs/*.bak
 
 # Build artifacts
 api-gosuslugi-client/build/
 api-gosuslugi-client/node_modules/
 api-gosuslugi-backend/__pycache__/
 api-gosuslugi-backend/.pytest_cache/
+api-gosuslugi-backend/.ruff_cache/
 **/__pycache__/
+python-epgu/.coverage
+python-epgu/.pytest_cache/
+python-epgu/build/
+python-epgu/dist/
+python-epgu/dist-*/
+python-epgu/src/*.egg-info/
+python-epgu/tests/fixtures/goskey/
+
+# Official source documents are downloaded locally and verified by URL/SHA-256.
+# Their public availability does not grant this repository redistribution rights.
+/docs/*.docx
+/docs/api_for_gu/source/
+/docs/api_for_gu/extracted/
 
 # OS
 Thumbs.db
 .DS_Store
+
+# Restored local copies of the obsolete pre-monorepo stack. The supported
+# publication/runtime files live under api-gosuslugi-backend/client and the
+# root docker-compose.yml; do not resurrect these with a blanket git add.
+/Dockerfile
+/docker-compose-production.yml
+/app.py
+/requirements.txt
+/unittest.py
+/wsgi.py

@@ -5,7 +5,11 @@ __pycache__/
 build/
 dist/
 .pytest_cache/
+.pytest-temp-local/
 .ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
 .venv/
 venv/
 *.pem

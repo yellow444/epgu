@@ -25,10 +25,11 @@ class CallableSigner:
         self._func = func
 
     def sign(self, data: bytes) -> bytes:
+        """Вызвать внешний подписант и нормализовать результат в ``bytes``."""
         try:
             result = self._func(data)
         except Exception as exc:  # noqa: BLE001 - оборачиваем любую ошибку подписи
-            raise SignatureError(f"Внешний подписант завершился ошибкой: {exc}") from exc
+            raise SignatureError("Внешний подписант завершился ошибкой") from exc
         if not isinstance(result, (bytes, bytearray)):
             raise SignatureError(
                 "Функция подписи должна возвращать bytes (DER-подпись), "

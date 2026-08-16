@@ -1,9 +1,10 @@
-fastapi
-uvicorn
-debugpy
-requests
-python-dotenv
-python-multipart
-lxml
-httpx 
-pydantic
+# Runtime dependency lock for the backend container (Python 3.12).
+# CryptoPro/pycades is supplied by the image and is intentionally not on PyPI.
+fastapi==0.141.1
+uvicorn==0.52.1
+python-dotenv==1.2.2
+python-multipart==0.0.32
+lxml==6.1.1
+httpx==0.28.1
+pydantic==2.13.4
+-e ../python-epgu[xml]

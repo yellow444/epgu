@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import io
+import posixpath
 import zipfile
 from dataclasses import dataclass, field
 from typing import List, Optional, Union
@@ -53,12 +54,37 @@ class OrderArchive:
     sig_suffix: str = ".sig"
     _entries: List[_Entry] = field(default_factory=list, init=False, repr=False)
 
+    def __post_init__(self) -> None:
+        if not self.sig_suffix or any(char in self.sig_suffix for char in ("/", "\\", "\x00")):
+            raise ValidationError("sig_suffix должен быть непустым расширением без разделителей")
+
+    @staticmethod
+    def _validate_name(name: str) -> None:
+        normalized = name.replace("\\", "/")
+        parts = normalized.split("/")
+        if (
+            not name
+            or "\x00" in name
+            or normalized.startswith("/")
+            or posixpath.isabs(normalized)
+            or any(part in {"", ".", ".."} for part in parts)
+            or (len(normalized) >= 2 and normalized[1] == ":")
+        ):
+            raise ValidationError(f"Недопустимое имя файла в архиве: {name!r}")
+
     def add_file(self, name: str, content: BytesLike, *, sign: bool = False) -> "OrderArchive":
         """Добавить файл в архив. При ``sign=True`` рядом кладётся ``<name>.sig``."""
+        self._validate_name(name)
         if sign and self.signer is None:
-            raise ValidationError(
-                f"Для подписи файла {name!r} нужен signer, но он не задан"
-            )
+            raise ValidationError(f"Для подписи файла {name!r} нужен signer, но он не задан")
+        reserved_names = set(self.filenames)
+        output_names = {name, name + self.sig_suffix} if sign else {name}
+        if reserved_names.intersection(output_names):
+            raise ValidationError(f"Файл с именем {name!r} уже добавлен в архив")
+        if not sign and any(
+            entry.sign and entry.name + self.sig_suffix == name for entry in self._entries
+        ):
+            raise ValidationError(f"Имя {name!r} уже занято файлом подписи")
         self._entries.append(_Entry(name=name, content=_as_bytes(content), sign=sign))
         return self
 

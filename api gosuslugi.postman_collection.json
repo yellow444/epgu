@@ -704,12 +704,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/order",
+							"raw": "http://localhost:55000/order",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order"
 							]
@@ -742,12 +742,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/order/{{orderId}}",
+							"raw": "http://localhost:55000/order/{{orderId}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"{{orderId}}"
@@ -781,12 +781,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/order/{{orderId}}/cancel",
+							"raw": "http://localhost:55000/order/{{orderId}}/cancel",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"{{orderId}}",
@@ -836,12 +836,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/getOrdersStatus/?pageNum=0&pageSize=5",
+							"raw": "http://localhost:55000/getOrdersStatus/?pageNum=0&pageSize=5",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"getOrdersStatus",
 								""
@@ -900,12 +900,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
+							"raw": "http://localhost:55000/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"getUpdatedAfter",
 								""
@@ -978,12 +978,12 @@
 							]
 						},
 						"url": {
-							"raw": "http://localhost:5000/push",
+							"raw": "http://localhost:55000/push",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"push"
 							]
@@ -1056,12 +1056,12 @@
 							]
 						},
 						"url": {
-							"raw": "http://localhost:5000/chunked",
+							"raw": "http://localhost:55000/chunked",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"chunked"
 							]
@@ -1094,12 +1094,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/order/{{orderId}}?embed=STATUS_HISTORY",
+							"raw": "http://localhost:55000/order/{{orderId}}?embed=STATUS_HISTORY",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"{{orderId}}"
@@ -1142,12 +1142,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:5000/download/21001285203/3?mnemonic=piev_epgu.zip&eserviceCode=60010153",
+							"raw": "http://localhost:55000/download/21001285203/3?mnemonic=piev_epgu.zip&eserviceCode=60010153",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"download",
 								"21001285203",
@@ -1183,12 +1183,12 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5000/dictionary/{{code}}",
+							"raw": "http://localhost:55000/dictionary/{{code}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"dictionary",
 								"{{code}}"
@@ -1213,12 +1213,12 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5000/order/get_certificates",
+							"raw": "http://localhost:55000/order/get_certificates",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"get_certificates"
@@ -1243,12 +1243,12 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5000/order/set_current_certificate",
+							"raw": "http://localhost:55000/order/set_current_certificate",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"set_current_certificate"
@@ -1273,12 +1273,12 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5000/order/get_current_certificate",
+							"raw": "http://localhost:55000/order/get_current_certificate",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"get_current_certificate"
@@ -1303,12 +1303,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5000/order/status",
+							"raw": "http://localhost:55000/order/status",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"order",
 								"status"
@@ -1333,12 +1333,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5000/hc",
+							"raw": "http://localhost:55000/hc",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"hc"
 							]
@@ -1377,12 +1377,12 @@
 							]
 						},
 						"url": {
-							"raw": "http://localhost:5000/accessTkn_esia",
+							"raw": "http://localhost:55000/accessTkn_esia",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"accessTkn_esia"
 							]
@@ -1433,12 +1433,12 @@
 							]
 						},
 						"url": {
-							"raw": "http://localhost:5000//download_file/{{objectId}}/{{objectType}}",
+							"raw": "http://localhost:55000//download_file/{{objectId}}/{{objectType}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5000",
+							"port": "55000",
 							"path": [
 								"",
 								"download_file",
@@ -1761,12 +1761,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:5000/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
+					"raw": "http://localhost:55000/getUpdatedAfter/?pageNum=0&pageSize=5&updatedAfter={{$timestamp}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "5000",
+					"port": "55000",
 					"path": [
 						"getUpdatedAfter",
 						""
@@ -1817,7 +1817,7 @@
 		},
 		{
 			"key": "api_key",
-			"value": "0"
+			"value": "{{api_key}}"
 		},
 		{
 			"key": "sig",

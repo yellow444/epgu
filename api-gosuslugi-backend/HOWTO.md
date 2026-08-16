@@ -1,86 +1,141 @@
-# HOWTO — backend (FastAPI + КриптоПро)
+# HOWTO — backend FastAPI
 
-## Локальный запуск без Docker
+Backend имеет два режима:
 
-> Требуется установленный КриптоПро CSP + собранный `pycades.so` для текущей версии Python. В Windows это нетривиально — рекомендуем Docker.
+- **core/catalogue** — публичный Python runtime без CryptoPro; доступны `/version`, Swagger, profiles, XML/XSD и preview;
+- **signing** — отдельно лицензированный runtime с совместимыми CryptoPro CSP и `pycades`.
 
-```bash
+Публичный Docker-образ не устанавливает CSP и запускается непривилегированным пользователем `app`.
+
+## Standalone-запуск
+
+Из каталога `api-gosuslugi-backend` с Python 3.12:
+
+```powershell
 python -m venv .venv
-source .venv/Scripts/activate      # Windows Git Bash
-pip install -r requirements.txt
-cp ../.env .env
-uvicorn app:app --reload --host 0.0.0.0 --port 5000
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn app:app --reload --host 127.0.0.1 --port 5000
 ```
 
-## Запуск в Docker (рекомендовано)
+Проверка:
+
+```powershell
+curl.exe http://127.0.0.1:5000/version
+```
+
+CryptoPro не нужен для core-запуска. При standalone-режиме overlay каталога передаётся непосредственно переменной `SERVICES`; имя `SERVICES_OVERRIDE` используется только внешним Compose.
+
+## Docker Compose
 
 Из корня репозитория:
 
 ```bash
-docker-compose up -d --build api
-docker-compose logs -f api
+docker compose up -d --build api
+docker compose logs -f api
 ```
 
-Сервис слушает `:5000` (HTTP) и `:5678` (debugpy, если `production` не задан).
+API публикуется только на loopback: <http://localhost:55000/> (`127.0.0.1:55000`). Стандартный Compose не публикует debug-порт и не использует bind mounts.
 
-## Отладка в VS Code
-
-`.vscode/launch.json`:
-
-```json
-{
-  "name": "Python: Remote Attach",
-  "type": "debugpy",
-  "request": "attach",
-  "connect": { "host": "localhost", "port": 5678 },
-  "pathMappings": [
-    { "localRoot": "${workspaceFolder}/api-gosuslugi-backend",
-      "remoteRoot": "/app" }
-  ]
-}
-```
-
-## Проверка жизнеспособности
+Backend image содержит код, Python-библиотеку, `service_profiles.json` и `xml/`. После их изменения пересоберите image:
 
 ```bash
-curl http://localhost:5000/hc        # {"status":"Ok"}
-curl http://localhost:5000/status    # версия PyCades
+docker compose up -d --build api
 ```
+
+## Health и диагностика
+
+```bash
+curl http://localhost:55000/version
+curl http://localhost:55000/hc
+curl http://localhost:55000/status
+```
+
+- `/version` — core readiness и Docker healthcheck; должен вернуть `200` без CSP.
+- `/hc` — CSP readiness; в публичном образе ожидаем degraded/`503`.
+- `/status` — версия pycades; без signing runtime ожидаем `503`.
+
+Frontend ждёт healthy `/version`, а не `/hc`.
+
+## Граница доступа
+
+Backend хранит `ACCESS_TKN_ESIA`, `CURRENT_CERT_ID` и certificate registry глобально в процессе. Один process/runtime предназначен для одного оператора/tenant; встроенной пользовательской authentication/authorization нет.
+
+Не заменяйте loopback bind стандартного Compose на `0.0.0.0` для прямого LAN/Internet доступа. Shared/public deployment требует:
+
+- внешний reverse proxy с TLS, authentication, authorization, rate limits и аудитом;
+- отдельный backend process/runtime и secrets scope на каждого оператора/tenant;
+- точный `ALLOWED_ORIGINS` как дополнительную browser-policy, а не замену auth.
+
+Frontend Nginx принимает тело до 64 МБ и использует 300-секундные read/send timeouts. Backend ограничивает каждый исходный файл и их сумму 50 000 000 байт, собирает ZIP в памяти и затем нарезает upstream chunks до 50 МБ. Проверяйте крупные комплекты нагрузочным тестом до изменения лимитов.
 
 ## Тесты
 
+Из `api-gosuslugi-backend`:
+
 ```bash
-pytest -c pytest.ini
+python -m pip install -r requirements-test.txt
+python -m pytest -c pytest.ini
 ```
 
-Для запуска в контейнере — `Dockerfile.test`.
+Контейнерная проверка из корня репозитория:
 
-## Частые задачи
+```bash
+docker build -f api-gosuslugi-backend/Dockerfile.test -t epgu-backend-test .
+docker run --rm epgu-backend-test
+```
 
-### Добавить новую услугу
+## Конфигурация услуг
 
-1. Положить эталонные `req.xml` и `piev_epgu.xml` в `xml/`.
-2. Обновить XSD `piev_epgu.xsd` (если изменилась схема).
-3. В корневом `.env` расширить `SERVICES`:
-   ```json
-   { "<код>": { "description": "...", "req_file": "req.xml", "piev_epgu_file": "piev_epgu.xml" } }
+Встроенный `service_profiles.json` генерируется из локального снимка официального каталога. Добавление рабочей услуги — это не только новая строка в JSON:
+
+1. Обновить и проверить официальный снимок:
+
+   ```bash
+   python scripts/sync_api_for_gu_docs.py
+   python scripts/extract_api_for_gu_assets.py
    ```
-4. `docker-compose up -d --build api`.
 
-### Подменить сертификат
+2. Описать точный транспорт, archive name, документы, XSD, подписи и capability state в генераторе profiles.
+3. Добавить безопасные XML/XSD или typed-генератор и golden/contract tests.
+4. Перегенерировать registry:
 
-1. Заменить содержимое `${key_folder}` (по умолчанию `./xxx.000`).
-2. Перезапустить контейнер — startup-hook перечитает `CERTIFICATES`.
-3. В UI выбрать нужный сертификат, либо `POST /set_current_certificate?cert_id=...`.
+   ```bash
+   python scripts/build_service_profiles.py
+   ```
 
-### Продиагностировать подпись
+5. Запустить backend и Python SDK tests. `available=true` ставится только для `status=verified` контракта.
 
-Логи с `logger.exception` показывают стек. Типовые ошибки:
+Для локального изменения существующего профиля:
 
-| Сообщение | Причина |
+- Compose: корневая переменная `SERVICES_OVERRIDE`;
+- standalone backend: переменная `SERVICES`.
+
+Обе переменные задают строгий deep-overlay. Новый профиль должен быть полным и пройти startup-валидацию; нельзя отправлять XML другой услуги под новым кодом.
+
+## Signing runtime
+
+Операции `/accessTkn_esia` и `/goskey/submit` требуют `pycades`. Оператор signing runtime отвечает за:
+
+- лицензированную установку CryptoPro CSP/pycades;
+- закрытый ключ и секреты вне Git/image;
+- доверенную цепочку CA выбранного контура;
+- минимальные права процесса и аудит операций подписи.
+
+Простое добавление ключевого файла к публичному контейнеру не устанавливает CSP. Конкретный способ предоставления ключа зависит от лицензированного runtime и инфраструктуры секретов.
+
+## Типовые ошибки
+
+| Симптом | Причина / действие |
 |---|---|
-| `Сертификаты не найдены.` | Пустое хранилище CSP / неверный volume |
-| `Текущий сертификат не установлен.` | Не вызван `/set_current_certificate` |
-| `Invalid XML: ...` | Несоответствие `piev_epgu.xml` XSD |
+| `/version` недоступен или container unhealthy | Ошибка core startup; смотрите `docker compose logs api` |
+| `/hc` и `/status` возвращают `503` | Ожидаемо для публичного no-CSP образа |
+| `/accessTkn_esia` или `/goskey/submit` возвращает `503` | Нужен отдельно настроенный signing runtime |
+| `Некорректный реестр услуг` при старте | Невалидный `SERVICES`/`SERVICES_OVERRIDE` overlay |
+| `Invalid XML: ...` | Документ не well-formed или не соответствует XSD своего профиля |
+| Изменение host-файла не видно в контейнере | Bind mounts отсутствуют; пересоберите image |
+| Крупный upload завершается `413` | Тело превысило Nginx `client_max_body_size 64m` или backend-лимит 50 000 000 байт |
+| Container завершается на крупном upload | ZIP собирается в памяти; согласуйте body limit и backend memory |
 
-См. также [../docs/api.md](../docs/api.md), [../docs/security.md](../docs/security.md).
+См. [REST API](../docs/api.md), [развёртывание](../docs/deployment.md), [безопасность](../docs/security.md) и [каталог услуг](../docs/SERVICES.md).

@@ -11,13 +11,15 @@
   (например, внешний микросервис подписи или аппаратный токен).
 """
 
+from typing import Any
+
 from .base import Signer
 from .callable import CallableSigner
 
 __all__ = ["Signer", "CallableSigner", "CryptoProSigner"]
 
 
-def __getattr__(name: str):  # noqa: D401 - ленивый импорт опциональной зависимости
+def __getattr__(name: str) -> Any:  # noqa: ANN401,D401 - динамический экспорт
     # CryptoProSigner импортирует pycades только при обращении, чтобы пакет
     # ставился и работал там, где КриптоПро отсутствует.
     if name == "CryptoProSigner":

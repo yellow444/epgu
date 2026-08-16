@@ -7,6 +7,13 @@
 загрузить -> дождаться статуса».
 """
 
-from .submit import SubmitResult, submit_application
+from . import goskey
+from .submit import GoskeySubmitResult, SubmitResult, submit_application, submit_goskey
 
-__all__ = ["submit_application", "SubmitResult"]
+__all__ = [
+    "goskey",
+    "submit_application",
+    "submit_goskey",
+    "SubmitResult",
+    "GoskeySubmitResult",
+]

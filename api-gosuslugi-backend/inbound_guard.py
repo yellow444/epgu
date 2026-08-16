@@ -33,6 +33,9 @@ from typing import Dict, List, Optional, Tuple
 logger = logging.getLogger("inbound.guard")
 
 TOKEN_HEADER = "x-inbound-token"
+# Тот же набор проверок нужен и отдаче наружу, только переменные у неё свои.
+# Поэтому имя переменной складывается из префикса: INBOUND_TOKEN, OUTBOUND_TOKEN.
+DEFAULT_PREFIX = "INBOUND"
 
 _lock = threading.Lock()
 _buckets: "OrderedDict[str, Tuple[float, float]]" = OrderedDict()
@@ -57,33 +60,33 @@ def _nets(name: str) -> List[ipaddress._BaseNetwork]:
     return result
 
 
-def allow_nets() -> List[ipaddress._BaseNetwork]:
-    return _nets("INBOUND_ALLOW_NETS")
+def allow_nets(prefix: str = DEFAULT_PREFIX) -> List[ipaddress._BaseNetwork]:
+    return _nets(f"{prefix}_ALLOW_NETS")
 
 
-def trusted_proxies() -> List[ipaddress._BaseNetwork]:
-    return _nets("INBOUND_TRUSTED_PROXIES")
+def trusted_proxies(prefix: str = DEFAULT_PREFIX) -> List[ipaddress._BaseNetwork]:
+    return _nets(f"{prefix}_TRUSTED_PROXIES")
 
 
-def token() -> str:
-    return os.getenv("INBOUND_TOKEN", "").strip()
+def token(prefix: str = DEFAULT_PREFIX) -> str:
+    return os.getenv(f"{prefix}_TOKEN", "").strip()
 
 
-def token_is_transferable() -> bool:
+def token_is_transferable(prefix: str = DEFAULT_PREFIX) -> bool:
     """Секрет должен быть латиницей: кириллицу заголовок HTTP не перенесёт."""
-    return token().isascii()
+    return token(prefix).isascii()
 
 
-def rate_per_minute() -> float:
-    return float(os.getenv("INBOUND_RATE_PER_MINUTE", "60"))
+def rate_per_minute(prefix: str = DEFAULT_PREFIX) -> float:
+    return float(os.getenv(f"{prefix}_RATE_PER_MINUTE", "60"))
 
 
-def rate_burst() -> float:
-    return float(os.getenv("INBOUND_RATE_BURST", "20"))
+def rate_burst(prefix: str = DEFAULT_PREFIX) -> float:
+    return float(os.getenv(f"{prefix}_RATE_BURST", "20"))
 
 
-def rate_global_per_minute() -> float:
-    return float(os.getenv("INBOUND_RATE_GLOBAL_PER_MINUTE", "600"))
+def rate_global_per_minute(prefix: str = DEFAULT_PREFIX) -> float:
+    return float(os.getenv(f"{prefix}_RATE_GLOBAL_PER_MINUTE", "600"))
 
 
 def _parse_ip(value: str) -> Optional[ipaddress._BaseAddress]:
@@ -93,7 +96,7 @@ def _parse_ip(value: str) -> Optional[ipaddress._BaseAddress]:
         return None
 
 
-def client_ip(peer: Optional[str], forwarded: str) -> str:
+def client_ip(peer: Optional[str], forwarded: str, prefix: str = DEFAULT_PREFIX) -> str:
     """Адрес отправителя.
 
     ``X-Forwarded-For`` подставляет кто угодно, поэтому верим ему только
@@ -102,7 +105,7 @@ def client_ip(peer: Optional[str], forwarded: str) -> str:
     его подделать нельзя.
     """
     peer_ip = _parse_ip(peer or "")
-    proxies = trusted_proxies()
+    proxies = trusted_proxies(prefix)
     if forwarded and peer_ip is not None and any(peer_ip in net for net in proxies):
         first = forwarded.split(",")[0].strip()
         if _parse_ip(first) is not None:
@@ -110,8 +113,8 @@ def client_ip(peer: Optional[str], forwarded: str) -> str:
     return str(peer_ip) if peer_ip is not None else "неизвестен"
 
 
-def net_allowed(ip: str) -> bool:
-    nets = allow_nets()
+def net_allowed(ip: str, prefix: str = DEFAULT_PREFIX) -> bool:
+    nets = allow_nets(prefix)
     if not nets:
         return True
     address = _parse_ip(ip)
@@ -120,8 +123,8 @@ def net_allowed(ip: str) -> bool:
     return any(address in net for net in nets)
 
 
-def token_matches(provided: str) -> bool:
-    expected = token()
+def token_matches(provided: str, prefix: str = DEFAULT_PREFIX) -> bool:
+    expected = token(prefix)
     if not expected:
         return True
     # Сравниваем байты: compare_digest не работает со строками, где есть
@@ -141,13 +144,16 @@ def _take(bucket: Tuple[float, float], per_minute: float, burst: float, now: flo
     return (tokens - 1.0, now), True
 
 
-def rate_ok(ip: str) -> bool:
+def rate_ok(ip: str, prefix: str = DEFAULT_PREFIX) -> bool:
     """Не слишком ли часто. Считаем и по отправителю, и по приёмнику в целом."""
     global _global_bucket
     now = time.monotonic()
-    per_minute = rate_per_minute()
-    burst = rate_burst()
+    per_minute = rate_per_minute(prefix)
+    burst = rate_burst(prefix)
     with _lock:
+        # Ключ с префиксом: приёмник и отдача считаются отдельно, даже если
+        # запросы идут с одного адреса.
+        ip = f"{prefix}:{ip}"
         bucket = _buckets.get(ip, (0.0, 0.0))
         bucket, ok = _take(bucket, per_minute, burst, now)
         _buckets[ip] = bucket
@@ -157,9 +163,8 @@ def rate_ok(ip: str) -> bool:
             _buckets.popitem(last=False)
         if not ok:
             return False
-        _global_bucket, ok = _take(
-            _global_bucket, rate_global_per_minute(), rate_global_per_minute(), now
-        )
+        limit = rate_global_per_minute(prefix)
+        _global_bucket, ok = _take(_global_bucket, limit, limit, now)
         return ok
 
 
@@ -184,14 +189,14 @@ def reset() -> None:
         _global_bucket = (0.0, 0.0)
 
 
-def describe() -> Dict[str, object]:
+def describe(prefix: str = DEFAULT_PREFIX) -> Dict[str, object]:
     """Что включено. Значение секрета наружу не отдаём, только факт."""
     return {
-        "allow_nets": [str(net) for net in allow_nets()],
-        "trusted_proxies": [str(net) for net in trusted_proxies()],
-        "token_required": bool(token()),
-        "rate_per_minute": rate_per_minute(),
-        "rate_burst": rate_burst(),
-        "rate_global_per_minute": rate_global_per_minute(),
+        "allow_nets": [str(net) for net in allow_nets(prefix)],
+        "trusted_proxies": [str(net) for net in trusted_proxies(prefix)],
+        "token_required": bool(token(prefix)),
+        "rate_per_minute": rate_per_minute(prefix),
+        "rate_burst": rate_burst(prefix),
+        "rate_global_per_minute": rate_global_per_minute(prefix),
         "rejected": rejected_counters(),
     }

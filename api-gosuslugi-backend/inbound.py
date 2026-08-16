@@ -18,6 +18,10 @@
 намеренно нестрогий. Он принимает любой метод записи, любой content-type,
 сохраняет тело как есть и отвечает 200. Разбор появится, когда станет известен
 реальный формат: его будет видно в журнале.
+
+Нестрогий разбор не означает открытую дверь. Кого пускаем и как часто -
+в ``inbound_guard``; отказы в журнал не пишутся, чтобы поток мусора не вытеснял
+настоящие сообщения.
 """
 
 from __future__ import annotations
@@ -25,11 +29,12 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Tuple
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+import inbound_guard
 import inbound_store
 
 logging.basicConfig(
@@ -40,6 +45,15 @@ logger = logging.getLogger("inbound")
 
 MNEMONIC = os.getenv("IS_MNEMONIC", "")
 PUBLIC_URL = os.getenv("INBOUND_PUBLIC_URL", "")
+
+
+def _identity_is_public() -> bool:
+    """Показывать ли мнемонику и адрес системы всем подряд.
+
+    По умолчанию нет: это внутренние реквизиты регистрации, посторонним они
+    ничего не дают, а нам подсказывают, кого сканировать.
+    """
+    return os.getenv("INBOUND_PUBLIC_IDENTITY", "0").strip().lower() in {"1", "true", "да"}
 
 app = FastAPI(
     title="Приёмник входящих запросов ЕПГУ",
@@ -55,11 +69,8 @@ app = FastAPI(
 
 
 def _identity() -> Dict[str, Any]:
-    return {
+    identity: Dict[str, Any] = {
         "status": "ok",
-        "system": "ЕПГУ API client",
-        "mnemonic": MNEMONIC,
-        "public_url": PUBLIC_URL,
         "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "endpoints": {
             "system": "/is",
@@ -67,6 +78,11 @@ def _identity() -> Dict[str, Any]:
             "health": "/health",
         },
     }
+    if _identity_is_public():
+        identity["system"] = "ЕПГУ API client"
+        identity["mnemonic"] = MNEMONIC
+        identity["public_url"] = PUBLIC_URL
+    return identity
 
 
 async def _read_capped_body(request: Request) -> tuple[bytes, bool]:
@@ -85,11 +101,62 @@ async def _read_capped_body(request: Request) -> tuple[bytes, bool]:
     return bytes(chunks), truncated
 
 
-def _record(request: Request, body: bytes, truncated: bool) -> Dict[str, Any]:
-    forwarded = request.headers.get("x-forwarded-for", "")
-    client = forwarded.split(",")[0].strip() if forwarded else (
-        request.client.host if request.client else None
-    )
+def _sender(request: Request) -> str:
+    peer = request.client.host if request.client else ""
+    return inbound_guard.client_ip(peer, request.headers.get("x-forwarded-for", ""))
+
+
+def _admit(request: Request) -> Tuple[Optional[JSONResponse], str]:
+    """Пускать ли запрос до чтения тела.
+
+    Возвращает готовый отказ или ничего и адрес отправителя. Отказы не
+    журналируются: иначе поток отказов сам вытеснит настоящие сообщения,
+    ради чего его обычно и устраивают.
+    """
+    ip = _sender(request)
+
+    if not inbound_guard.net_allowed(ip):
+        count = inbound_guard.note_rejected("сеть не разрешена")
+        logger.warning("Отклонён запрос с %s: сеть не разрешена (всего %d)", ip, count)
+        return JSONResponse(status_code=403, content={"code": "FORBIDDEN"}), ip
+
+    if not inbound_guard.token_matches(request.headers.get(inbound_guard.TOKEN_HEADER, "")):
+        count = inbound_guard.note_rejected("неверный секрет")
+        logger.warning("Отклонён запрос с %s: неверный секрет (всего %d)", ip, count)
+        return JSONResponse(status_code=401, content={"code": "UNAUTHORIZED"}), ip
+
+    if not inbound_guard.rate_ok(ip):
+        count = inbound_guard.note_rejected("слишком часто")
+        logger.warning("Отклонён запрос с %s: слишком часто (всего %d)", ip, count)
+        return (
+            JSONResponse(
+                status_code=429,
+                content={"code": "TOO_MANY_REQUESTS"},
+                headers={"Retry-After": "60"},
+            ),
+            ip,
+        )
+
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > inbound_store.max_body_bytes():
+        inbound_guard.note_rejected("тело больше лимита")
+        logger.warning("Отклонён запрос с %s: тело %s байт", ip, declared)
+        # Отказываем до чтения: качать мегабайты, чтобы их выбросить, незачем.
+        return (
+            JSONResponse(
+                status_code=413,
+                content={
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "limit": inbound_store.max_body_bytes(),
+                },
+            ),
+            ip,
+        )
+
+    return None, ip
+
+
+def _record(request: Request, body: bytes, truncated: bool, client: str) -> Dict[str, Any]:
     record = inbound_store.build_record(
         method=request.method,
         path=request.url.path,
@@ -120,6 +187,30 @@ async def health() -> JSONResponse:
     return JSONResponse(content={"status": "Ok"})
 
 
+@app.on_event("startup")
+async def announce_protection() -> None:
+    """Сказать в лог, чем закрыт порт. Без этого легко опубликовать адрес
+    и не заметить, что не включена ни одна проверка отправителя."""
+    state = inbound_guard.describe()
+    logger.info(
+        "Приёмник запущен. Сети: %s. Секрет: %s. Частота: %s в минуту, всплеск %s.",
+        ", ".join(state["allow_nets"]) or "любые",
+        "требуется" if state["token_required"] else "не требуется",
+        state["rate_per_minute"],
+        state["rate_burst"],
+    )
+    if not state["allow_nets"] and not state["token_required"]:
+        logger.warning(
+            "Отправитель ничем не ограничен. До публикации адреса задайте "
+            "INBOUND_ALLOW_NETS или INBOUND_TOKEN."
+        )
+    if state["token_required"] and not inbound_guard.token_is_transferable():
+        logger.error(
+            "INBOUND_TOKEN содержит символы вне латиницы: такой заголовок "
+            "отправитель передать не сможет. Возьмите строку из openssl rand -hex 32."
+        )
+
+
 @app.get("/")
 @app.get("/is")
 async def system_url() -> JSONResponse:
@@ -146,17 +237,23 @@ async def head_probe() -> PlainTextResponse:
 
 @app.api_route("/push", methods=["POST", "PUT", "PATCH"])
 async def push_receive(request: Request) -> JSONResponse:
-    """Приём push сообщения. Всегда 200, чтобы отправитель не копил повторы."""
+    """Приём push сообщения. Своим - всегда 200, чтобы не копились повторы."""
+    denied, client = _admit(request)
+    if denied is not None:
+        return denied
     body, truncated = await _read_capped_body(request)
-    record = _record(request, body, truncated)
+    record = _record(request, body, truncated, client)
     return JSONResponse(content={"code": "OK", "message_id": record["id"]})
 
 
 @app.api_route("/{path:path}", methods=["POST", "PUT", "PATCH"])
 async def catch_all(request: Request, path: str) -> JSONResponse:
     """Любой другой входящий вызов тоже сохраняем: путь может отличаться."""
+    denied, client = _admit(request)
+    if denied is not None:
+        return denied
     body, truncated = await _read_capped_body(request)
-    record = _record(request, body, truncated)
+    record = _record(request, body, truncated, client)
     return JSONResponse(content={"code": "OK", "message_id": record["id"]})
 
 

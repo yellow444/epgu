@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 import random
+import time
 import zipfile
 
 import httpx
@@ -95,6 +96,23 @@ class OrderLifecycleClient:
         )
 
 
+@pytest.fixture(autouse=True)
+def operator_session(monkeypatch):
+    """Маркер доступа для методов подачи.
+
+    Приложение отказывает без маркера ещё до обращения к ЕПГУ. Эти тесты
+    проверяют транспорт, а не вход, поэтому сессию делаем действующей.
+
+    Старт приложения перечитывает хранилище сертификатов и по дороге гасит
+    сессию оператора: выбор сертификата - это его решение, и после перезапуска
+    оно недействительно. Поэтому подменяем и чтение хранилища, иначе маркер
+    исчезнет ровно в момент входа в TestClient.
+    """
+    monkeypatch.setattr(app_module, "load_certificates", lambda: [])
+    monkeypatch.setattr(app_module, "ACCESS_TKN_ESIA", "test-bearer")
+    monkeypatch.setattr(app_module, "ACCESS_TKN_EXP", int(time.time()) + 3600)
+
+
 @pytest.fixture()
 def executable_generic_profile(monkeypatch):
     """Enable the generic FSSP fixture only inside transport unit tests.
@@ -165,7 +183,9 @@ def test_chunked_builds_one_zip_then_sends_zero_based_z001_parts(
         _clear_overrides()
 
     assert response.status_code == 200, response.text
-    assert response.json() == {"orderId": 42}
+    # Идентификаторы уходят строкой: в JavaScript число такой длины теряет
+    # точность, и orderId на фронте превращается в другой номер.
+    assert response.json() == {"orderId": "42"}
     assert len(recording.calls) > 1
 
     parts = []

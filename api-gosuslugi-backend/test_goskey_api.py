@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import time
 import zipfile
 from datetime import datetime, timedelta, timezone
 
@@ -62,8 +63,13 @@ def clear_overrides():
 
 
 @pytest.fixture()
-def client():
+def client(monkeypatch):
+    # Старт приложения перечитывает хранилище сертификатов и гасит сессию
+    # оператора, поэтому маркер ставим уже после входа в контекст.
+    monkeypatch.setattr(app_module, "load_certificates", lambda: [])
     with TestClient(app_module.app) as value:
+        monkeypatch.setattr(app_module, "ACCESS_TKN_ESIA", "test-bearer")
+        monkeypatch.setattr(app_module, "ACCESS_TKN_EXP", int(time.time()) + 3600)
         yield value
 
 
@@ -129,6 +135,30 @@ def test_submit_requires_licensed_crypto_runtime(client, monkeypatch):
     assert "CryptoPro" in response.json()["detail"]
 
 
+def test_submit_refuses_without_access_token_and_does_not_sign(client, monkeypatch):
+    """Без маркера доступа отправлять некуда, и подписывать тоже незачем."""
+    monkeypatch.setattr(app_module, "pycades", object())
+    monkeypatch.setattr(app_module, "ACCESS_TKN_ESIA", "")
+    signed = []
+    monkeypatch.setattr(
+        app_module,
+        "_sign_cades_detached",
+        lambda data: signed.append(data) or b"SIGNATURE",
+    )
+    upstream = GoskeyUpstream()
+    _override_client(upstream)
+
+    response = client.post(
+        "/goskey/submit",
+        data={"request": json.dumps(_payload())},
+        files={"documents": ("document.pdf", b"PDF", "application/pdf")},
+    )
+
+    assert response.status_code == 401
+    assert signed == []
+    assert upstream.calls == []
+
+
 def test_submit_reuses_sdk_signs_every_file_and_uses_direct_push(client, monkeypatch):
     monkeypatch.setattr(app_module, "pycades", object())
     monkeypatch.setattr(app_module, "_sign_cades_detached", lambda data: b"SIG:" + data[:8])
@@ -143,7 +173,7 @@ def test_submit_reuses_sdk_signs_every_file_and_uses_direct_push(client, monkeyp
 
     assert response.status_code == 200, response.text
     assert response.json() == {
-        "orderId": 77,
+        "orderId": "77",
         "serviceCode": "10000000374",
         "transport": "push",
         "archiveSize": response.json()["archiveSize"],
@@ -193,7 +223,7 @@ def test_submit_can_reserve_and_use_chunked_transport(client, monkeypatch):
     )
 
     assert response.status_code == 200, response.text
-    assert response.json()["orderId"] == 88
+    assert response.json()["orderId"] == "88"
     assert response.json()["transport"] == "order+chunked"
     assert [call[0].rsplit("/", 1)[-1] for call in upstream.calls] == ["order", "chunked"]
     chunk_files = upstream.calls[1][1]["files"]

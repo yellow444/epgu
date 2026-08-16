@@ -1,6 +1,6 @@
 # Схемы данных
 
-> Актуализировано: **2026-08-12**. Источник истины по XML/XSD — спецификации отдельных услуг на [портале партнёров](https://partners.gosuslugi.ru/catalog/api_for_gu); локальный снимок и SHA-256 находятся в [api_for_gu](./api_for_gu/README.md), полный каталог — в [SERVICES.md](./SERVICES.md).
+> Актуализировано: **2026-08-12**. Источник истины по XML/XSD - спецификации отдельных услуг на [портале партнёров](https://partners.gosuslugi.ru/catalog/api_for_gu); локальный снимок и SHA-256 находятся в [api_for_gu](./api_for_gu/README.md), полный каталог - в [SERVICES.md](./SERVICES.md).
 
 ## XML / XSD
 
@@ -20,11 +20,11 @@ schema = _load_schema(document_profile["schemaFile"])
 schema.assertValid(etree.fromstring(xml_content, parser=parser))
 ```
 
-Перечисления доступны через `GET /xsd?service=<code>&simple_type_name=<name>`. Endpoint принимает только исполняемый профиль с локальной XSD; отсутствие схемы возвращает `404`, reference-only профиль — `409`.
+Перечисления доступны через `GET /xsd?service=<code>&simple_type_name=<name>`. Endpoint принимает только исполняемый профиль с локальной XSD; отсутствие схемы возвращает `404`, reference-only профиль - `409`.
 
 ## Справочник услуг (env `SERVICES`)
 
-`service_profiles.json` — сгенерированный versioned-реестр. `SERVICES` может быть только строгим deep-overlay; добавляемая услуга обязана содержать полный профиль. Ниже — иллюстративный фрагмент встроенного профиля, а не готовый полный override:
+`service_profiles.json` - сгенерированный versioned-реестр. `SERVICES` может быть только строгим deep-overlay; добавляемая услуга обязана содержать полный профиль. Ниже - иллюстративный фрагмент встроенного профиля, а не готовый полный override:
 
 ```json
 {
@@ -70,7 +70,7 @@ schema.assertValid(etree.fromstring(xml_content, parser=parser))
 
 ### `GoskeyRequest`
 
-Typed DTO содержит `serviceCode`, runtime `region`, вариант/тип получателя и его идентификаторы, `signExpiration`, описание, реквизиты организации, optional backlink/orderId. Допустимые варианты публикует `GET /goskey/capabilities`; `reference` варианты не генерируются. `POST /goskey/submit` передаёт DTO строкой в multipart-поле `request`, а документы — повторяемым полем `documents`.
+Typed DTO содержит `serviceCode`, runtime `region`, вариант/тип получателя и его идентификаторы, `signExpiration`, описание, реквизиты организации, optional backlink/orderId. Допустимые варианты публикует `GET /goskey/capabilities`; `reference` варианты не генерируются. `POST /goskey/submit` передаёт DTO строкой в multipart-поле `request`, а документы - повторяемым полем `documents`.
 
 ## Внутренние структуры
 

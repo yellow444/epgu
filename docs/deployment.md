@@ -10,7 +10,7 @@ docker compose up -d --build
 
 Compose публикует только два порта:
 
-| Сервис | Образ | Host → container | Назначение |
+| Сервис | Образ | Host -> container | Назначение |
 |---|---|---|---|
 | `api` | `api-gosuslugi-backend:latest` | `127.0.0.1:${API_PORT:-55000}:5000` | FastAPI core/catalogue |
 | `frontend` | `api-gosuslugi-client` | `127.0.0.1:${FRONTEND_PORT:-50080}:80` | React UI и Nginx proxy `/api/` |
@@ -43,7 +43,7 @@ flowchart LR
 
 ## Frontend-образ и proxy
 
-Frontend — multi-stage образ: сборка выполняется на `node:24-alpine`, runtime — `nginx:stable-alpine`.
+Frontend - multi-stage образ: сборка выполняется на `node:24-alpine`, runtime - `nginx:stable-alpine`.
 
 ```mermaid
 flowchart LR
@@ -51,7 +51,7 @@ flowchart LR
     node --> nginx["Nginx: static build + template + entrypoint"]
 ```
 
-`BACKEND_URL` — build argument React, по умолчанию `/api`. `BACKEND_API` — runtime-адрес upstream для Nginx, по умолчанию `http://api:5000`.
+`BACKEND_URL` - build argument React, по умолчанию `/api`. `BACKEND_API` - runtime-адрес upstream для Nginx, по умолчанию `http://api:5000`.
 
 Шаблон Nginx и `entrypoint.sh` встроены в образ. При старте `envsubst` атомарно создаёт конфигурацию, после чего Nginx запускается foreground-процессом. Правило:
 

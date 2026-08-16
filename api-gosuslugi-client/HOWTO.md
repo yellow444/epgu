@@ -1,4 +1,4 @@
-# HOWTO — frontend (React + Ant Design)
+# HOWTO - frontend (React + Ant Design)
 
 ## 1. Подготовка среды
 
@@ -9,7 +9,7 @@ node --version
 npm ci
 ```
 
-Не заменяйте `npm ci` на `npm install` в CI или Docker: `ci` проверяет соответствие manifest/lockfile, очищает `node_modules` и воспроизводит зафиксированные версии. Текущая runtime-версия Axios — 1.19.0; `react-scripts` находится только в devDependencies, `cra-template` отсутствует.
+Не заменяйте `npm ci` на `npm install` в CI или Docker: `ci` проверяет соответствие manifest/lockfile, очищает `node_modules` и воспроизводит зафиксированные версии. Текущая runtime-версия Axios - 1.19.0; `react-scripts` находится только в devDependencies, `cra-template` отсутствует.
 
 ## 2. Локальный dev-сервер
 
@@ -46,7 +46,7 @@ docker compose logs frontend
 - браузер открывает <http://localhost:50080>;
 - frontend bundle обращается к `/api`;
 - nginx подставляет `BACKEND_API=http://api:5000` в `default.conf.template` при старте;
-- запрос `/api/services` передаётся FastAPI как `/services` — завершающий `/` в `proxy_pass ${BACKEND_API}/` снимает внешний префикс;
+- запрос `/api/services` передаётся FastAPI как `/services` - завершающий `/` в `proxy_pass ${BACKEND_API}/` снимает внешний префикс;
 - SPA fallback обслуживает клиентские пути через `index.html`.
 
 Для переопределения:
@@ -56,7 +56,7 @@ BACKEND_URL=/api BACKEND_API=http://api:5000 FRONTEND_PORT=50080 \
   docker compose up -d --build frontend
 ```
 
-`BACKEND_URL` — build-time значение и требует пересборки. `BACKEND_API` подставляется nginx при запуске контейнера.
+`BACKEND_URL` - build-time значение и требует пересборки. `BACKEND_API` подставляется nginx при запуске контейнера.
 
 ## 4. Выбор услуги
 
@@ -89,8 +89,8 @@ Backend сам создаёт ZIP и делит его на части; frontend
 2. Укажите runtime ОКАТО, срок подписи (Москва, не более 24 часов), тип и идентификатор получателя.
 3. Заполните название/ИНН отправителя, описание и при необходимости backlink.
 4. Добавьте документы; frontend проверит непустое содержимое, уникальные имена, расширения и `maxDocuments` capability.
-5. Нажмите «Предпросмотр XML» — вызывается `POST /goskey/preview`, отправки/подписи нет.
-6. Нажмите «Подписать и отправить» — вызывается multipart `POST /goskey/submit`; backend создаёт `req.xml`, отделённую CAdES-подпись для каждого файла и выбирает `push` либо chunked.
+5. Нажмите «Предпросмотр XML» - вызывается `POST /goskey/preview`, отправки/подписи нет.
+6. Нажмите «Подписать и отправить» - вызывается multipart `POST /goskey/submit`; backend создаёт `req.xml`, отделённую CAdES-подпись для каждого файла и выбирает `push` либо chunked.
 
 Маршруты централизованы в `GOSKEY_ROUTES`:
 
@@ -105,7 +105,7 @@ POST /goskey/submit
 ## 6. Заявления, XML и локальное состояние
 
 - Токен ЕСИА хранится в `sessionStorage` и передаётся Axios как Bearer token.
-- Загруженные документы кешируются в IndexedDB (`files-db`), а XML/ответы — в browser storage для восстановления после перезагрузки. Удаление/«Очистить все» синхронизировано с IndexedDB; по окончании работы нажмите «Удалить все локальные данные и сессию». На общей рабочей станции persistence всё равно не считается безопасным.
+- Загруженные документы кешируются в IndexedDB (`files-db`), а XML/ответы - в browser storage для восстановления после перезагрузки. Удаление/«Очистить все» синхронизировано с IndexedDB; по окончании работы нажмите «Удалить все локальные данные и сессию». На общей рабочей станции persistence всё равно не считается безопасным.
 - Ace Editor редактирует XML выбранного профиля; перед отправкой сохраняйте XML с именем, заданным профилем.
 - Вкладка «Запросы» получает списки/статусы, детали, отменяет заявления и скачивает ответные файлы через backend.
 
@@ -133,7 +133,7 @@ docker build --target build -f Dockerfile .
 | CI build | exit 0, compiled with известными предупреждениями |
 | Docker build-stage | exit 0 на `node:24-alpine` и `npm ci` |
 
-Полный `npm audit` возвращает non-zero: 57 advisories в legacy CRA build/dev-дереве (3 critical, 28 high, 13 moderate, 13 low). Единственная прямая уязвимая зависимость — dev-only `react-scripts`; production-аудит и финальный nginx-runtime чисты. Не запускайте `npm audit fix --force`: безопасное устранение требует отдельной миграции с Create React App. До неё CI/build-среду следует считать отдельной зоной риска и не передавать ей production-секреты.
+Полный `npm audit` возвращает non-zero: 57 advisories в legacy CRA build/dev-дереве (3 critical, 28 high, 13 moderate, 13 low). Единственная прямая уязвимая зависимость - dev-only `react-scripts`; production-аудит и финальный nginx-runtime чисты. Не запускайте `npm audit fix --force`: безопасное устранение требует отдельной миграции с Create React App. До неё CI/build-среду следует считать отдельной зоной риска и не передавать ей production-секреты.
 
 Известные non-blocking warnings:
 

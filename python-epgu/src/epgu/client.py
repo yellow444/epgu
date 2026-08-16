@@ -269,7 +269,7 @@ class EpguClient:
         По умолчанию архив автоматически делится на части по 5 МБ. Поля
         ``chunk``/``chunks`` остаются для совместимости и ручной отправки одной
         заранее подготовленной части. Номер части в форме начинается с нуля,
-        а расширение файла — с ``.z001``, как требует контракт ЕПГУ.
+        а расширение файла - с ``.z001``, как требует контракт ЕПГУ.
         """
         if order_id <= 0:
             raise ValueError("order_id должен быть положительным")
@@ -479,8 +479,8 @@ class EpguClient:
         Поддерживаются legacy и современный контракты:
 
         - Legacy: ``object_type``, ``mnemonic`` и ``eservice_code`` передаются явно.
-        - Current v1.14: ``object_id`` — ссылка ``terrabyte://...``, а
-          ``status_history_id`` — ``currentStatusHistoryId`` из деталей заявки.
+        - Current v1.14: ``object_id`` - ссылка ``terrabyte://...``, а
+          ``status_history_id`` - ``currentStatusHistoryId`` из деталей заявки.
         """
         if object_type is None:
             if not isinstance(object_id, str):

@@ -160,7 +160,7 @@ export const getGoskeyCapabilityOptions = (service, registry) =>
     label:
       capability.state === 'verified'
         ? capability.label
-        : `${capability.label} — справочно: ${capability.reason || 'контракт не проверен'}`,
+        : `${capability.label} - справочно: ${capability.reason || 'контракт не проверен'}`,
     disabled: capability.state !== 'verified',
     capability,
   }));

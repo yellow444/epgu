@@ -1,9 +1,9 @@
-# HOWTO — backend FastAPI
+# HOWTO - backend FastAPI
 
 Backend имеет два режима:
 
-- **core/catalogue** — публичный Python runtime без CryptoPro; доступны `/version`, Swagger, profiles, XML/XSD и preview;
-- **signing** — отдельно лицензированный runtime с совместимыми CryptoPro CSP и `pycades`.
+- **core/catalogue** - публичный Python runtime без CryptoPro; доступны `/version`, Swagger, profiles, XML/XSD и preview;
+- **signing** - отдельно лицензированный runtime с совместимыми CryptoPro CSP и `pycades`.
 
 Публичный Docker-образ не устанавливает CSP и запускается непривилегированным пользователем `app`.
 
@@ -52,9 +52,9 @@ curl http://localhost:55000/hc
 curl http://localhost:55000/status
 ```
 
-- `/version` — core readiness и Docker healthcheck; должен вернуть `200` без CSP.
-- `/hc` — CSP readiness; в публичном образе ожидаем degraded/`503`.
-- `/status` — версия pycades; без signing runtime ожидаем `503`.
+- `/version` - core readiness и Docker healthcheck; должен вернуть `200` без CSP.
+- `/hc` - CSP readiness; в публичном образе ожидаем degraded/`503`.
+- `/status` - версия pycades; без signing runtime ожидаем `503`.
 
 Frontend ждёт healthy `/version`, а не `/hc`.
 
@@ -88,7 +88,7 @@ docker run --rm epgu-backend-test
 
 ## Конфигурация услуг
 
-Встроенный `service_profiles.json` генерируется из локального снимка официального каталога. Добавление рабочей услуги — это не только новая строка в JSON:
+Встроенный `service_profiles.json` генерируется из локального снимка официального каталога. Добавление рабочей услуги - это не только новая строка в JSON:
 
 1. Обновить и проверить официальный снимок:
 

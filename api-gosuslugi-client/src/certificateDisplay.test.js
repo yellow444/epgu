@@ -14,9 +14,9 @@ test('renders certificate identity and validity from the backend contract', () =
     { label: 'Субъект', value: 'Иванов Иван' },
     { label: 'Организация', value: 'ООО Ромашка' },
     { label: 'Идентификатор', value: 'AA BB CC' },
-    { label: 'Действителен', value: '2026-01-01 — 2027-01-01' },
+    { label: 'Действителен', value: '2026-01-01 - 2027-01-01' },
   ]);
   expect(certificateOptionLabel(certificate)).toBe(
-    'Иван Иванов — ООО Ромашка (до 2027-01-01)'
+    'Иван Иванов - ООО Ромашка (до 2027-01-01)'
   );
 });

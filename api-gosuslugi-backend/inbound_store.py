@@ -50,6 +50,22 @@ def max_body_bytes() -> int:
     return int(os.getenv("INBOUND_MAX_BODY", str(1024 * 1024)))
 
 
+def max_journal_body_bytes() -> int:
+    """Сколько тела попадает в журнал.
+
+    Принять можно мегабайт, но хранить целиком каждое тело незачем: журнал
+    ограничен по размеру, и несколько больших запросов вытесняют из него всё
+    остальное. В записи всегда остаются настоящий размер и хэш, так что
+    обрезка видна и проверяема.
+    """
+    return int(os.getenv("INBOUND_JOURNAL_BODY_MAX", str(64 * 1024)))
+
+
+def journal_keep() -> int:
+    """Сколько прошлых файлов журнала держим кроме текущего."""
+    return max(0, int(os.getenv("INBOUND_JOURNAL_KEEP", "3")))
+
+
 def redact_headers(headers: Mapping[str, str]) -> Dict[str, str]:
     result: Dict[str, str] = {}
     for name, value in headers.items():
@@ -74,10 +90,17 @@ def build_record(
 ) -> Dict[str, Any]:
     """Собрать запись журнала. Тело не разбирается, только сохраняется."""
     preview: Optional[str]
+    keep = max_journal_body_bytes()
+    stored = body[:keep]
+    shortened = len(body) > keep
     try:
-        preview = body.decode("utf-8")
+        preview = stored.decode("utf-8")
     except UnicodeDecodeError:
-        preview = None
+        # Обрезали посреди многобайтового символа или тело вообще не текст.
+        try:
+            preview = stored.decode("utf-8", "ignore") if shortened else None
+        except Exception:
+            preview = None
     return {
         "id": str(uuid.uuid4()),
         "received_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
@@ -91,8 +114,35 @@ def build_record(
         "size": len(body),
         "truncated": truncated,
         "body_text": preview,
+        "body_stored": len(stored),
+        "body_shortened": shortened,
         "body_sha256": hashlib.sha256(body).hexdigest() if body else None,
     }
+
+
+def _rotate(path: Path) -> None:
+    """Сдвинуть журнал: .2 становится .3, .1 становится .2 и так далее.
+
+    Одного запасного файла мало: при потоке мусора две ротации подряд
+    затирают всё, что было записано раньше, включая настоящие сообщения.
+    """
+    keep = journal_keep()
+    if keep == 0:
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        return
+    oldest = path.with_name(path.name + "." + str(keep))
+    try:
+        oldest.unlink()
+    except FileNotFoundError:
+        pass
+    for number in range(keep - 1, 0, -1):
+        source = path.with_name(path.name + "." + str(number))
+        if source.exists():
+            source.replace(path.with_name(path.name + "." + str(number + 1)))
+    path.replace(path.with_name(path.name + ".1"))
 
 
 def append(record: Mapping[str, Any]) -> None:
@@ -104,7 +154,7 @@ def append(record: Mapping[str, Any]) -> None:
         limit = max_journal_bytes()
         try:
             if path.exists() and path.stat().st_size + len(line.encode("utf-8")) > limit:
-                path.replace(path.with_suffix(path.suffix + ".1"))
+                _rotate(path)
         except OSError:
             pass
         with path.open("a", encoding="utf-8") as handle:
@@ -151,7 +201,12 @@ def clear() -> None:
     увидеть, что очистка не прошла, а не считать журнал пустым."""
     path = journal_path()
     with _write_lock:
-        for candidate in (path, path.with_suffix(path.suffix + ".1")):
+        candidates = [path]
+        candidates += [
+            path.with_name(path.name + "." + str(number))
+            for number in range(1, journal_keep() + 1)
+        ]
+        for candidate in candidates:
             try:
                 candidate.unlink()
             except FileNotFoundError:

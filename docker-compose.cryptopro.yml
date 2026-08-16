@@ -1,11 +1,18 @@
 # Оверлей для стенда с КриптоПро: подпись, сертификаты, маркер доступа ЕСИА.
 #
+# Сам образ собирается из отдельной поставки: в ней лежат Dockerfile, entrypoint
+# и скрипт создания тестового ключа. В этом репозитории их нет, потому что он
+# публичный. По умолчанию поставка ожидается в соседнем каталоге:
+#
+#   ../epgu-private/cryptopro
+#
+# Другое расположение задаётся переменными CRYPTOPRO_DELIVERY и
+# CRYPTOPRO_DOCKERFILE в .env. Если поставки нет, сборка честно падает с
+# сообщением о ненайденном файле: молча собрать образ без КриптоПро и
+# подписать его нужным тегом было бы хуже.
+#
 # Запуск:
 #   docker compose -f docker-compose.yml -f docker-compose.cryptopro.yml up -d --build
-#
-# Базовый docker-compose.yml собирает публичный образ без проприетарных
-# бинарников. Этот файл подменяет только сборку и то, что нужно для подписи:
-# ключевой контейнер и публичные сертификаты с хоста.
 #
 # Демонстрационная лицензия CSP живёт 90 дней с момента установки, то есть с
 # момента сборки образа. Когда срок вышел, пересоберите образ:
@@ -17,7 +24,10 @@ services:
   api:
     image: api-gosuslugi-backend:cryptopro
     build:
-      dockerfile: ./api-gosuslugi-backend/Dockerfile.cryptopro
+      dockerfile: ${CRYPTOPRO_DOCKERFILE:-../epgu-private/cryptopro/Dockerfile.cryptopro}
+      additional_contexts:
+        # Файлы поставки, которых нет в публичном репозитории.
+        delivery: ${CRYPTOPRO_DELIVERY:-../epgu-private/cryptopro}
     environment:
       - CRYPTOPRO_SERIAL=${CRYPTOPRO_SERIAL:-}
       - KeyPin=${KeyPin:-}

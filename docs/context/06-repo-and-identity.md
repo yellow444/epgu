@@ -41,31 +41,44 @@ sh scripts/push_mirror.sh
 ```
 
 Аккаунты разные, и смешивать их нельзя: основной репозиторий должен уходить под
-`yellow444`, зеркало под своим владельцем. Активный аккаунт `gh` при этом не
-переключается, у зеркала собственный credential helper, который спрашивает
-токен у `gh` по имени аккаунта и ничего не хранит на диске:
+`yellow444`, зеркало под своим владельцем. Разделяет их имя пользователя прямо
+в адресе remote:
 
 ```
-git remote add mirror https://QuadYellow@github.com/QuadYellow/epgu.git
-git config --local credential.https://github.com/QuadYellow.useHttpPath true
-git config --local credential.https://github.com/QuadYellow.helper '!f() { ... gh auth token --user QuadYellow ... }; f'
+origin   https://yellow444@github.com/yellow444/epgu.git
+mirror   https://QuadYellow@github.com/QuadYellow/epgu.git
 ```
 
-Переключать `gh auth switch` ради пуша не надо: легко забыть вернуть обратно и
-отправить основной репозиторий не тем аккаунтом.
+Имя из адреса попадает в запрос учётных данных, и хранилище отдаёт строку
+именно этого аккаунта. Без имени в адресе git берёт первую подходящую запись
+по хосту, а на машине их несколько, в том числе от посторонних аккаунтов.
+Именно так однажды и получилось `Permission to yellow444/epgu.git denied to
+QuadYellow`, 403.
 
-Так и вышло: активный аккаунт `gh` однажды оказался рабочим, и push в
-`yellow444/epgu` отвалился с 403. Поэтому за своим аккаунтом закреплён и
-основной репозиторий, симметрично зеркалу:
+Дополнительно за каждым адресом закреплён список помощников: пустое значение
+сбрасывает всё, что настроено выше по цепочке, дальше остаётся только `store`.
 
 ```
-git config --local credential.https://github.com/yellow444.useHttpPath true
-git config --local credential.https://github.com/yellow444.helper '!f() { ... gh auth token --user yellow444 ... }; f'
+git config --local credential.https://github.com/yellow444.helper ""
+git config --local --add credential.https://github.com/yellow444.helper store
+git config --local credential.https://github.com/yellow444.useHttpPath false
 ```
 
-Теперь каждый remote берёт токен своего аккаунта по имени, и активный аккаунт
-`gh` на пуши не влияет вообще. Если 403 всё-таки появился, смотреть надо сюда,
-а не на активный аккаунт.
+То же самое для `QuadYellow` в основном репозитории и для `yellow444` в
+приватном. `useHttpPath` именно `false`: записи в `~/.git-credentials` лежат без
+пути, и при `true` git требует совпадения пути, не находит запись и уходит
+спрашивать пароль у терминала.
+
+`gh` в этой схеме не участвует. Проверяется просто: убрать `gh` из `PATH` и
+выполнить `git ls-remote` по каждому remote.
+
+Проверка, что аккаунты действительно не путаются: под `yellow444` репозиторий
+зеркала недоступен.
+
+```
+$ git ls-remote https://yellow444@github.com/QuadYellow/epgu.git
+fatal: repository 'https://github.com/QuadYellow/epgu.git/' not found
+```
 
 ### Что лежало в зеркале до этого
 
@@ -82,23 +95,20 @@ git config --local credential.https://github.com/yellow444.helper '!f() { ... gh
 
 На машине лежали учётные данные сразу нескольких аккаунтов, и push уходил под
 первый попавшийся: `Permission to yellow444/epgu.git denied to QuadYellow`,
-403. Учётные данные `QuadYellow` удалены и из `~/.git-credentials`, и из
-диспетчера учётных данных Windows.
+403.
 
-Чтобы выбор аккаунта не зависел от порядка записей, GitHub переведён на
-credential helper от `gh`:
+Сейчас в `~/.git-credentials` записи трёх аккаунтов GitHub: `yellow444`,
+`QuadYellow` и рабочий. Все три без пути, то есть подходят под любой
+репозиторий на `github.com`. Единственное, что их различает, - имя
+пользователя, и поэтому оно стоит в адресе каждого remote.
 
-```
-credential.https://github.com.helper = !gh auth git-credential
-```
+Что стоит знать про сам файл:
 
-`gh` авторизован под `yellow444` (активный) и под рабочим аккаунтом. Push идёт
-от активного, поэтому после `gh auth switch` он поедет под другим аккаунтом.
-Остальные хосты остались на прежнем helper, их это не задело.
-
-Отдельно стоит знать: `~/.git-credentials` хранит токены открытым текстом, там
-лежат ключи и от других хостов. Файл на совести машины, не проекта, но при
-случае его стоит перевести на менеджер учётных данных.
+- токены лежат открытым текстом, там же ключи от других хостов;
+- в файле 222 нулевых байта, часть строк записана в другой кодировке. Git его
+  читает, но выглядит это как след от чужой утилиты;
+- записи рабочего аккаунта в нём остались. Если он больше не нужен, их лучше
+  убрать: одной возможностью перепутать аккаунт станет меньше.
 
 ## Ветки
 

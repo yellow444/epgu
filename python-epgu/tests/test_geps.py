@@ -275,7 +275,11 @@ def test_attachment_downloads_file_and_takes_name_from_headers():
 def test_attachment_signature_uses_sig_path():
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path.endswith("/sig")
-        return httpx.Response(200, content=b"SIGNATURE", headers={"content-type": "application/pkcs7-signature"})
+        return httpx.Response(
+            200,
+            content=b"SIGNATURE",
+            headers={"content-type": "application/pkcs7-signature"},
+        )
 
     signature = make_client(handler).geps_attachment(
         MESSAGE, ATTACHMENT, file_type=geps.FileType.SIGNATURE

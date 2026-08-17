@@ -116,6 +116,11 @@ import geps_scheduler, geps_store, geps_quota
 
 geps_store.clear()
 geps_quota.clear()
+# Настоящий адрес контура запоминаем и печатаем: видно, что именно подменяется
+# двойником и куда пойдут те же запросы, когда появится доступ.
+REAL_HOST = app_module.SVCDEV_HOST
+print("контур стенда:", REAL_HOST)
+print("на время репетиции подменяем на двойника: http://127.0.0.1:9099")
 app_module.SVCDEV_HOST = "http://127.0.0.1:9099"
 app_module.ACCESS_TKN_ESIA = BEARER
 app_module.ACCESS_TKN_EXP = int(time.time()) + 3600
@@ -159,6 +164,23 @@ async def main():
     print("== обращения, которые увидел двойник ==")
     for method, path, ok in seen:
         print("   %-4s %-70s маркер принят: %s" % (method, path[-70:], ok))
+
+    print("== отдача наружу, форматы ==")
+    import outbound
+    records = [geps_store.get_message(MESSAGE)]
+    card = outbound._public_message(records[0], with_detail=True)
+    print("   JSON: отправитель", card["sender"], "| текст:", card["text"].replace(chr(10), " / ")[:70])
+    xml = outbound.letters_xml(records, "REHEARSAL")
+    print("   XML:", xml.decode("utf-8").split(chr(10))[1][:150])
+
+    print("== те же запросы на настоящем контуре ==")
+    import httpx
+    from epgu import geps as geps_mod
+    async with httpx.AsyncClient(timeout=20, verify=False) as client:
+        resp = await client.post(REAL_HOST + geps_mod.search_path(),
+                                 json=geps_scheduler.target_range().to_payload())
+    print("   POST", REAL_HOST + geps_mod.search_path())
+    print("   ответ без маркера доступа: HTTP", resp.status_code)
 
 asyncio.run(main())
 server.shutdown()

@@ -12,12 +12,12 @@
 #
 #   git remote add mirror https://<аккаунт>@github.com/<аккаунт>/epgu.git
 #   git config --local credential.https://github.com/<аккаунт>.helper ""
-#   git config --local --add credential.https://github.com/<аккаунт>.helper store
+#   git config --local --add credential.https://github.com/<аккаунт>.helper manager
 #   git config --local credential.https://github.com/<аккаунт>.useHttpPath false
 #
 # Пустое значение helper сбрасывает всё, что настроено выше по цепочке, дальше
-# остаётся только store. useHttpPath именно false: записи в ~/.git-credentials
-# лежат без пути, и при true git их не находит.
+# остаётся только диспетчер учётных данных Windows. useHttpPath именно false:
+# запись в диспетчере заведена на аккаунт, а не на репозиторий.
 #
 # Проверить, что аккаунты не перепутаны:
 #   git ls-remote origin && git ls-remote mirror

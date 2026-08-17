@@ -101,6 +101,45 @@ services:
       retries: 3
     restart: always
 
+  # Отдача Госпочты внешним системам. Отдельный процесс, как и приёмник: он
+  # читает только том с уже забранными уведомлениями и в ЕПГУ не ходит совсем.
+  # Обращение к ГЭПС запускает процессуальные сроки, и решение об этом
+  # принимает оператор, а не чужая информационная система своим запросом.
+  outbound:
+    image: api-gosuslugi-backend:latest
+    build:
+      context: .
+      dockerfile: ./api-gosuslugi-backend/Dockerfile
+    command:
+      - uvicorn
+      - outbound:app
+      - --host=0.0.0.0
+      - --port=5002
+      - --no-server-header
+      - --timeout-keep-alive=15
+      - --limit-concurrency=64
+    environment:
+      # Пока не задан ни секрет, ни список сетей, данные не отдаются вообще.
+      - OUTBOUND_TOKEN=${OUTBOUND_TOKEN:-}
+      - OUTBOUND_ALLOW_NETS=${OUTBOUND_ALLOW_NETS:-}
+      - OUTBOUND_TRUSTED_PROXIES=${OUTBOUND_TRUSTED_PROXIES:-}
+      - OUTBOUND_RATE_PER_MINUTE=${OUTBOUND_RATE_PER_MINUTE:-60}
+      - OUTBOUND_RATE_BURST=${OUTBOUND_RATE_BURST:-20}
+      - OUTBOUND_RATE_GLOBAL_PER_MINUTE=${OUTBOUND_RATE_GLOBAL_PER_MINUTE:-600}
+      - GEPS_STORE_DIR=${GEPS_STORE_DIR:-/var/lib/epgu-mail/geps}
+    ports:
+      - "${OUTBOUND_PORT:-58081}:5002"
+    volumes:
+      # Только чтение: писать в хранилище имеет право один процесс, основной.
+      - mail-data:/var/lib/epgu-mail:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5002/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    restart: always
+
   frontend:
     image: api-gosuslugi-client
     build:

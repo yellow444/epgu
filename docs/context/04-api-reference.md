@@ -36,6 +36,19 @@
 | GET | `/geps/messages/{uuid}` | Сохранённая карточка с путями к вложениям |
 | POST | `/geps/messages/{uuid}/attachments/{uuid}/save` | Скачать вложение на том |
 
+## Отдача Госпочты наружу (`outbound.py`, порт 58081)
+
+Отдельный процесс. Читает только том с уже забранными уведомлениями, в ЕПГУ не
+ходит. Закрыт, пока не задан `OUTBOUND_TOKEN` или `OUTBOUND_ALLOW_NETS`.
+
+| Метод | Путь | Назначение |
+| --- | --- | --- |
+| GET | `/health` | Живость, отвечает всегда |
+| GET | `/messages` | Уведомления в нашем JSON (`offset`, `limit`, `only_unread`, `since`) |
+| GET | `/messages/{uuid}` | Одно уведомление: текст, разметка, статусы |
+| GET | `/messages/{uuid}/attachments/{uuid}` | Файл вложения или подпись (`signature=true`) |
+| GET | `/letters` | Те же данные в формате `Letters/Letter` (`request_id`) |
+
 Все вызываются фронтендом как `${BACKEND_URL}/<путь>` (см. [03](03-config-and-known-issues.md), грабля №3).
 
 ## Файлы данных бэкенда

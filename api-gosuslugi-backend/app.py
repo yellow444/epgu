@@ -18,6 +18,9 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 from dotenv import find_dotenv, load_dotenv
+from epgu import geps
+from epgu.errors import ConfigError as EpguConfigError
+from epgu.errors import ValidationError as EpguValidationError
 from epgu.services.goskey import (
     CAPABILITIES as GOSKEY_CAPABILITIES,
 )
@@ -60,6 +63,7 @@ from config import (
     validate_service_catalog,
 )
 from routers import diagnostics_router
+import geps_quota
 from inbound_api import inbound_router
 from setup_api import setup_router
 
@@ -392,6 +396,20 @@ class GoskeyRequest(BaseModel):
     orgInn: str = Field(..., min_length=1, max_length=250)
     backlink: Optional[str] = Field(None, max_length=250)
     orderId: Optional[int] = Field(None, gt=0)
+
+
+class GepsSearchRequest(BaseModel):
+    """Заказ списка уведомлений Госпочты.
+
+    Границы периода проверяет epgu.geps: заказов всего пять в сутки, и
+    отдавать их серверу на отказ по формату жалко.
+    """
+
+    model_config = {"extra": "forbid"}
+
+    startDateTime: datetime
+    endDateTime: datetime
+    statusFilter: Literal["ANY", "READ", "UNREAD"] = "ANY"
 
 # Хелперы
 
@@ -1688,6 +1706,333 @@ async def get_service(code: str):
         raise HTTPException(status_code=404, detail="Услуга не найдена")
     _, service_data = _get_service_data(code)
     return JSONResponse(content=serialize_service(code, service_data))
+
+
+# ---------- Госпочта (ГЭПС) ----------
+#
+# Четыре сервиса из «Спецификации API ГЭПС» версии 1.0. Порядок задан
+# спецификацией: заказать список, дождаться готовности, открыть карточку,
+# забрать вложение. Пути, проверки и разбор ответов живут в epgu.geps,
+# здесь только транспорт, маркер доступа и учёт суточных попыток.
+
+
+def _geps_url(path: str) -> str:
+    return f"{SVCDEV_HOST}{path}"
+
+
+def _geps_quota_or_429(kind: str) -> None:
+    """Отказать заранее, если суточные попытки кончились.
+
+    Лимит всё равно посчитает сервер, но узнавать об этом от него дорого:
+    попытка расходуется, а до конца суток ждать нечего.
+    """
+    if geps_quota.exhausted(kind):
+        state = geps_quota.describe()
+        raise HTTPException(
+            status_code=429,
+            detail="Суточный лимит обращений к ГЭПС исчерпан: {0} из {1}. "
+            "Попытки обновятся завтра.".format(
+                state["limits"][kind]["used"], state["limits"][kind]["limit"]
+            ),
+        )
+
+
+def _geps_upstream_error(operation: str, err: httpx.HTTPStatusError) -> HTTPException:
+    """Ответы ГЭПС, у которых есть отдельный смысл."""
+    status = err.response.status_code
+    if status == 403:
+        return HTTPException(
+            status_code=403,
+            detail="ГЭПС требует роль «Руководитель организации» или «Администратор»",
+        )
+    if status == 404:
+        return HTTPException(
+            status_code=404,
+            detail="Данных нет: результат не найден или уже удалён по истечении семи дней",
+        )
+    if status == 429:
+        return HTTPException(
+            status_code=429,
+            detail="ГЭПС отклонил запрос по лимиту обращений, повторите позже",
+        )
+    return _upstream_http_failure(operation, err)
+
+
+@app.post("/geps/search")
+async def geps_search(
+    request_data: GepsSearchRequest,
+    client: httpx.AsyncClient = Depends(get_async_client),
+):
+    """Заказать список уведомлений Госпочты за период.
+
+    Вызов равнозначен входу на портал: по ряду постановлений уведомление
+    считается вручённым с этого момента. Поэтому только по явному действию
+    оператора, без фоновых опросов.
+    """
+    try:
+        session = _require_access_token()
+        try:
+            search_range = geps.SearchRange(
+                start=request_data.startDateTime,
+                end=request_data.endDateTime,
+                status=request_data.statusFilter,
+            )
+            search_range.validate_against(datetime.now(timezone.utc))
+        except EpguValidationError as err:
+            raise HTTPException(status_code=422, detail=str(err)) from err
+
+        _geps_quota_or_429("search")
+        left = geps_quota.take("search")
+        response = await client.post(
+            _geps_url(geps.search_path()),
+            json=search_range.to_payload(),
+            headers={"Authorization": f"Bearer {session.bearer}"},
+        )
+        _ensure_session_current(session)
+        response.raise_for_status()
+        body = response.json()
+        task_uuid = body.get("searchTaskUuid") if isinstance(body, dict) else None
+        if not task_uuid:
+            raise HTTPException(status_code=502, detail="ГЭПС не вернул searchTaskUuid")
+        return JSONResponse(
+            content={
+                "searchTaskUuid": str(task_uuid),
+                "range": search_range.to_payload(),
+                "quota": geps_quota.describe(),
+                "attemptsLeft": left,
+                "hint": "Список готовится асинхронно, приходить за ним примерно через час",
+            }
+        )
+    except httpx.HTTPStatusError as err:
+        raise _geps_upstream_error("geps search", err) from err
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise _internal_failure("geps search", err) from err
+
+
+@app.get("/geps/search/{task_uuid}")
+async def geps_search_result(
+    task_uuid: str,
+    offset: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=geps.MAX_PAGE_SIZE),
+    client: httpx.AsyncClient = Depends(get_async_client),
+):
+    """Забрать заказанный список.
+
+    Пока он не готов, приходит статус SEARCH или PROCESSING: это не ошибка,
+    а повод прийти позже. Попыток пятнадцать в сутки.
+    """
+    try:
+        session = _require_access_token()
+        try:
+            path = geps.result_path(task_uuid)
+            params = geps.page_params(offset=offset, limit=limit)
+        except EpguValidationError as err:
+            raise HTTPException(status_code=422, detail=str(err)) from err
+
+        _geps_quota_or_429("result")
+        left = geps_quota.take("result")
+        response = await client.get(
+            _geps_url(path),
+            params=params,
+            headers={"Authorization": f"Bearer {session.bearer}"},
+        )
+        _ensure_session_current(session)
+        response.raise_for_status()
+        try:
+            page = geps.SearchResult.from_payload(response.json())
+        except EpguValidationError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        return JSONResponse(
+            content={
+                "status": page.status.value,
+                "ready": page.ready,
+                "offset": page.offset,
+                "limit": page.limit,
+                "total": page.total,
+                "messages": [
+                    {
+                        "threadUuid": item.thread_uuid,
+                        "messageUuid": item.message_uuid,
+                        "sender": item.feed_title,
+                        "subject": item.feed_subtitle,
+                        "isRead": item.is_read,
+                        "createDate": item.create_date.isoformat()
+                        if item.create_date
+                        else None,
+                    }
+                    for item in page.messages
+                ],
+                "quota": geps_quota.describe(),
+                "attemptsLeft": left,
+            }
+        )
+    except httpx.HTTPStatusError as err:
+        raise _geps_upstream_error("geps result", err) from err
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise _internal_failure("geps result", err) from err
+
+
+@app.get("/geps/message/{thread_uuid}/{message_uuid}")
+async def geps_message(
+    thread_uuid: str,
+    message_uuid: str,
+    client: httpx.AsyncClient = Depends(get_async_client),
+):
+    """Карточка уведомления: текст, вложения и история статусов.
+
+    Текст приходит в виде HTML со стилями ЕПГУ. Это чужая разметка, и
+    вставлять её в страницу как есть нельзя.
+    """
+    try:
+        session = _require_access_token()
+        try:
+            path = geps.message_path(thread_uuid, message_uuid)
+        except EpguValidationError as err:
+            raise HTTPException(status_code=422, detail=str(err)) from err
+
+        response = await client.get(
+            _geps_url(path),
+            headers={"Authorization": f"Bearer {session.bearer}"},
+        )
+        _ensure_session_current(session)
+        response.raise_for_status()
+        try:
+            card = geps.MessageDetail.from_payload(response.json())
+        except EpguValidationError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        return JSONResponse(
+            content={
+                "threadUuid": card.thread_uuid,
+                "messageUuid": card.message_uuid,
+                "sender": card.sender,
+                "subject": card.subject,
+                "isRead": card.is_read,
+                "createDate": card.create_date.isoformat() if card.create_date else None,
+                "html": card.text,
+                "params": {key: str(value) for key, value in card.params.items()},
+                "attachments": [
+                    {
+                        "attachmentUuid": item.attachment_uuid,
+                        "fileName": item.file_name,
+                        "fileSize": item.file_size,
+                        "mimeType": item.mime_type,
+                        "signed": item.signed,
+                        "status": item.status.value,
+                        "statusDescription": item.status_description,
+                        "downloadable": item.downloadable,
+                    }
+                    for item in card.attachments
+                ],
+                "statuses": [
+                    {
+                        "mnemonic": item.mnemonic,
+                        "description": item.description,
+                        "originator": item.originator,
+                        "createDate": item.create_date.isoformat()
+                        if item.create_date
+                        else None,
+                    }
+                    for item in card.statuses
+                ],
+            }
+        )
+    except httpx.HTTPStatusError as err:
+        raise _geps_upstream_error("geps message", err) from err
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise _internal_failure("geps message", err) from err
+
+
+@app.get("/geps/attachment/{message_uuid}/{attachment_uuid}/{file_type}")
+async def geps_attachment(
+    message_uuid: str,
+    attachment_uuid: str,
+    file_type: Literal["file", "sig"] = "file",
+    client: httpx.AsyncClient = Depends(get_async_client),
+):
+    """Вложение уведомления или отсоединённая подпись к нему.
+
+    Имя файла приходит от отправителя, то есть снаружи, и очищается до
+    простого имени: дальше его сохраняют на диск.
+    """
+    spooled = tempfile.SpooledTemporaryFile(max_size=DOWNLOAD_SPOOL_MEMORY_BYTES)
+    try:
+        session = _require_access_token()
+        try:
+            path = geps.attachment_path(message_uuid, attachment_uuid, file_type)
+        except (EpguValidationError, EpguConfigError) as err:
+            raise HTTPException(status_code=422, detail=str(err)) from err
+
+        async with client.stream(
+            "GET",
+            _geps_url(path),
+            headers={
+                "Authorization": f"Bearer {session.bearer}",
+                "User-Agent": USER_AGENT,
+            },
+            follow_redirects=True,
+        ) as response:
+            _ensure_session_current(session)
+            response.raise_for_status()
+            declared_length = response.headers.get("content-length")
+            if declared_length and int(declared_length) > MAX_DOWNLOAD_BYTES:
+                raise HTTPException(status_code=413, detail="Вложение превышает 100 MB")
+            downloaded = 0
+            async for block in response.aiter_bytes(UPLOAD_READ_CHUNK_BYTES):
+                _ensure_session_current(session)
+                downloaded += len(block)
+                if downloaded > MAX_DOWNLOAD_BYTES:
+                    raise HTTPException(status_code=413, detail="Вложение превышает 100 MB")
+                spooled.write(block)
+            media_type = response.headers.get("content-type", "application/octet-stream")
+            filename = geps.file_name_from_headers(
+                response.headers,
+                default="attachment.sig" if file_type == "sig" else "attachment",
+            )
+        spooled.seek(0)
+        encoded_filename = quote(filename, safe="")
+
+        def iter_spooled_file():
+            try:
+                while True:
+                    block = spooled.read(UPLOAD_READ_CHUNK_BYTES)
+                    if not block:
+                        break
+                    yield block
+            finally:
+                spooled.close()
+
+        return StreamingResponse(
+            iter_spooled_file(),
+            media_type=media_type,
+            headers={
+                "Content-Disposition": (
+                    "attachment; filename=\"attachment\"; filename*=UTF-8''{}".format(
+                        encoded_filename
+                    )
+                )
+            },
+        )
+    except httpx.HTTPStatusError as err:
+        spooled.close()
+        raise _geps_upstream_error("geps attachment", err) from err
+    except HTTPException:
+        spooled.close()
+        raise
+    except Exception as err:
+        spooled.close()
+        raise _internal_failure("geps attachment", err) from err
+
+
+@app.get("/geps/quota")
+async def geps_quota_route():
+    """Сколько суточных попыток осталось. Читается без обращения к ЕПГУ."""
+    return JSONResponse(content=geps_quota.describe())
 
 
 @app.get("/xsd")

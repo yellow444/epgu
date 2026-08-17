@@ -23,6 +23,11 @@
 | POST | `/zipsize` | Размер будущего ZIP-архива |
 | POST | `/push` | Отправка файла |
 | POST | `/push/chunked` | Отправка файла по частям (`meta`, `orderId`, `chunks`, `chunk`) |
+| POST | `/geps/search` | Заказать список уведомлений Госпочты за период |
+| GET | `/geps/search/{task_uuid}` | Забрать заказанный список (`offset`, `limit`) |
+| GET | `/geps/message/{thread}/{message}` | Карточка уведомления: текст, вложения, статусы |
+| GET | `/geps/attachment/{message}/{attachment}/{file\|sig}` | Вложение или отсоединённая подпись |
+| GET | `/geps/quota` | Остаток суточных попыток ГЭПС, без обращения к ЕПГУ |
 
 Все вызываются фронтендом как `${BACKEND_URL}/<путь>` (см. [03](03-config-and-known-issues.md), грабля №3).
 

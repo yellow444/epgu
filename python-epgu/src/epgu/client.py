@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote, unquote, urlparse
 
@@ -13,6 +14,7 @@ import httpx
 
 from .auth.base import StaticToken, TokenProvider
 from .const import USER_AGENT, Env
+from . import geps
 from .errors import ApiError, ConfigError, HttpError
 from .models import DictionaryResult, Order, OrderMeta, OrdersPage
 
@@ -520,6 +522,91 @@ class EpguClient:
             raise ValueError("page_num должен быть >= 0")
         if page_size <= 0:
             raise ValueError("page_size должен быть > 0")
+
+    # --- Госпочта (ГЭПС) ------------------------------------------------
+    #
+    # Четыре сервиса из «Спецификации API ГЭПС» версии 1.0. Порядок задан
+    # спецификацией: заказать список, дождаться готовности, открыть карточку,
+    # забрать вложение. Ограничения и разбор ответов - в epgu.services.geps.
+
+    def geps_search(
+        self,
+        search_range: "geps.SearchRange",
+        *,
+        now: Optional[datetime] = None,
+    ) -> str:
+        """Заказать список уведомлений Госпочты. Возвращает ``searchTaskUuid``.
+
+        POST ``/api/gusmev/proxy/geps-api-ext/api/messages/v1/search``
+
+        Период проверяется до отправки: заказов всего пять в сутки, и отдавать
+        их серверу на отказ по формату жалко.
+
+        Вызов равнозначен входу на портал: по ряду постановлений уведомление
+        считается вручённым с этого момента.
+        """
+        search_range.validate_against(now or datetime.now(timezone.utc))
+        resp = self._request("POST", geps.search_path(), json=search_range.to_payload())
+        data = self._json(resp)
+        task_uuid = data.get("searchTaskUuid") if isinstance(data, dict) else None
+        if not task_uuid:
+            raise ApiError("В ответе ГЭПС нет searchTaskUuid", body=data)
+        return str(task_uuid)
+
+    def geps_search_result(
+        self,
+        task_uuid: str,
+        *,
+        offset: int = 0,
+        limit: int = geps.MAX_PAGE_SIZE,
+    ) -> "geps.SearchResult":
+        """Забрать заказанный список.
+
+        GET ``.../messages/v1/search/{searchTaskUuid}``
+
+        Список готовится асинхронно: пока он не готов, приходит статус
+        ``SEARCH`` или ``PROCESSING``, и это не ошибка. Спецификация советует
+        приходить через час; попыток пятнадцать в сутки.
+        """
+        resp = self._request(
+            "GET",
+            geps.result_path(task_uuid),
+            params=geps.page_params(offset=offset, limit=limit),
+        )
+        return geps.SearchResult.from_payload(self._json(resp))
+
+    def geps_message(self, thread_uuid: str, message_uuid: str) -> "geps.MessageDetail":
+        """Карточка уведомления: текст, вложения и история статусов.
+
+        GET ``.../messages/v1/message/{threadUuid}/{messageUuid}``
+        """
+        resp = self._request("GET", geps.message_path(thread_uuid, message_uuid))
+        return geps.MessageDetail.from_payload(self._json(resp))
+
+    def geps_attachment(
+        self,
+        message_uuid: str,
+        attachment_uuid: str,
+        *,
+        file_type: "geps.FileType" = geps.FileType.FILE,
+    ) -> "geps.AttachmentFile":
+        """Вложение или отсоединённая подпись к нему.
+
+        GET ``.../messages/v1/attachment/{messageUuid}/{attachmentUuid}/{file|sig}``
+
+        Имя файла приходит в ``Content-Disposition`` от отправителя, то есть
+        снаружи. Оно очищается до простого имени: сохранять его на диск как
+        есть нельзя.
+        """
+        resp = self._request(
+            "GET",
+            geps.attachment_path(message_uuid, attachment_uuid, file_type),
+        )
+        return geps.AttachmentFile(
+            content=resp.content,
+            file_name=geps.file_name_from_headers(resp.headers),
+            mime_type=resp.headers.get("content-type", "application/octet-stream"),
+        )
 
     # --- управление ресурсами ------------------------------------------
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "epgu-api"
-version = "0.2.0"
+version = "0.3.0"
 description = "Python-клиент API Госуслуг (ЕПГУ/ЕСИА): подача заявлений, статусы, файлы - для граждан и организаций"
 readme = "README.md"
 requires-python = ">=3.10"

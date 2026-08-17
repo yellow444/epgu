@@ -228,6 +228,17 @@ def setup_router() -> APIRouter:
         secret_store.clear_runtime_secrets()
         cleared["settings"] = settings_result["removed"]
 
+        # Госпочта: заявки, уведомления, скачанные вложения и счётчик суточных
+        # попыток. Счётчик стирается вместе с остальным намеренно: сброс делают
+        # на чистом стенде, а не для того, чтобы обойти лимит ЕПГУ, который
+        # всё равно считается на его стороне.
+        import geps_quota
+        import geps_store
+
+        cleared["geps_messages"] = geps_store.counts()["messages"]
+        geps_store.clear()
+        geps_quota.clear()
+
         if request.clear_inbound:
             import inbound_store
 

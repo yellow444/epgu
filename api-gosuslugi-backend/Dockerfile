@@ -13,9 +13,11 @@ COPY api-gosuslugi-backend/requirements.txt ./
 RUN python -m pip install --no-cache-dir --upgrade pip \
  && python -m pip install --no-cache-dir -r requirements.txt
 
-COPY --chown=app:app api-gosuslugi-backend/app.py api-gosuslugi-backend/config.py api-gosuslugi-backend/routers.py api-gosuslugi-backend/service_profiles.json ./
-COPY --chown=app:app api-gosuslugi-backend/inbound.py api-gosuslugi-backend/inbound_api.py api-gosuslugi-backend/inbound_guard.py api-gosuslugi-backend/inbound_store.py ./
-COPY --chown=app:app api-gosuslugi-backend/geps_quota.py api-gosuslugi-backend/mailbox.py api-gosuslugi-backend/maildiscovery.py api-gosuslugi-backend/mail_state.py api-gosuslugi-backend/certsources.py api-gosuslugi-backend/setup_api.py api-gosuslugi-backend/secret_store.py api-gosuslugi-backend/settings_store.py ./
+# Копируем модули по маске, а не списком имён: перечисление уже дважды
+# отставало от кода, и приложение падало при старте на ModuleNotFoundError.
+# Тесты в рабочий образ не едут, для них есть Dockerfile.test.
+COPY --chown=app:app api-gosuslugi-backend/*.py api-gosuslugi-backend/service_profiles.json ./
+RUN rm -f test_*.py
 COPY --chown=app:app api-gosuslugi-backend/xml /xml
 
 # Каталоги журнала входящих запросов и вложений из почты. Владелец

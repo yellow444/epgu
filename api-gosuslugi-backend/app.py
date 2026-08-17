@@ -64,6 +64,9 @@ from config import (
 )
 from routers import diagnostics_router
 import geps_quota
+import geps_scheduler
+import geps_store
+import settings_store
 from inbound_api import inbound_router
 from setup_api import setup_router
 
@@ -264,7 +267,13 @@ async def lifespan(_application: FastAPI):
         load_certificates()
     except Exception as exc:
         logger.warning("CryptoPro certificates are unavailable: %s", exc)
-    yield
+    # Планировщик Госпочты крутится всегда, но такт делает только при явно
+    # включённом автоматическом режиме: чтение запускает процессуальные сроки.
+    geps_worker.start()
+    try:
+        yield
+    finally:
+        await geps_worker.stop()
 
 app = FastAPI(
     root_path="/api",
@@ -410,6 +419,14 @@ class GepsSearchRequest(BaseModel):
     startDateTime: datetime
     endDateTime: datetime
     statusFilter: Literal["ANY", "READ", "UNREAD"] = "ANY"
+
+
+class GepsScheduleRequest(BaseModel):
+    """Выключатель автоматического забора Госпочты."""
+
+    model_config = {"extra": "forbid"}
+
+    enabled: bool
 
 # Хелперы
 
@@ -586,14 +603,19 @@ def signkey(api_key: str) -> str:
 # Зависимость для асинхронного HTTP клиента
 
 
-async def get_async_client() -> httpx.AsyncClient:
+def _new_upstream_client() -> httpx.AsyncClient:
+    """Клиент к ЕПГУ с общими таймаутами. Нужен и запросам, и фоновой задаче."""
     timeout = httpx.Timeout(
         connect=float(os.getenv("UPSTREAM_CONNECT_TIMEOUT", "15")),
         read=float(os.getenv("UPSTREAM_READ_TIMEOUT", "300")),
         write=float(os.getenv("UPSTREAM_WRITE_TIMEOUT", "300")),
         pool=float(os.getenv("UPSTREAM_POOL_TIMEOUT", "30")),
     )
-    async with httpx.AsyncClient(timeout=timeout) as client:
+    return httpx.AsyncClient(timeout=timeout)
+
+
+async def get_async_client() -> httpx.AsyncClient:
+    async with _new_upstream_client() as client:
         yield client
 
 
@@ -2033,6 +2055,230 @@ async def geps_attachment(
 async def geps_quota_route():
     """Сколько суточных попыток осталось. Читается без обращения к ЕПГУ."""
     return JSONResponse(content=geps_quota.describe())
+
+
+class GepsGateway:
+    """Обращения к ГЭПС для планировщика: маркер доступа и разбор ответов.
+
+    Живёт ровно один такт: сессия оператора может смениться, и держать её
+    снимок дольше нельзя.
+    """
+
+    def __init__(self, session: "SessionSnapshot", client: httpx.AsyncClient) -> None:
+        self._session = session
+        self._client = client
+
+    async def aclose(self) -> None:
+        await self._client.aclose()
+
+    def _headers(self) -> Dict[str, str]:
+        _ensure_session_current(self._session)
+        return {
+            "Authorization": f"Bearer {self._session.bearer}",
+            "User-Agent": USER_AGENT,
+        }
+
+    async def search(self, payload: Dict[str, str]) -> str:
+        response = await self._client.post(
+            _geps_url(geps.search_path()), json=payload, headers=self._headers()
+        )
+        response.raise_for_status()
+        body = response.json()
+        task_uuid = body.get("searchTaskUuid") if isinstance(body, dict) else None
+        if not task_uuid:
+            raise RuntimeError("ГЭПС не вернул searchTaskUuid")
+        return str(task_uuid)
+
+    async def result(self, task_uuid: str, offset: int, limit: int) -> Dict[str, Any]:
+        response = await self._client.get(
+            _geps_url(geps.result_path(task_uuid)),
+            params=geps.page_params(offset=offset, limit=limit),
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        page = geps.SearchResult.from_payload(response.json())
+        return {
+            "status": page.status.value,
+            "ready": page.ready,
+            "total": page.total,
+            "messages": [
+                {
+                    "threadUuid": item.thread_uuid,
+                    "messageUuid": item.message_uuid,
+                    "sender": item.feed_title,
+                    "subject": item.feed_subtitle,
+                    "isRead": item.is_read,
+                    "createDate": item.create_date.isoformat() if item.create_date else None,
+                }
+                for item in page.messages
+            ],
+        }
+
+    async def message(self, thread_uuid: str, message_uuid: str) -> Dict[str, Any]:
+        response = await self._client.get(
+            _geps_url(geps.message_path(thread_uuid, message_uuid)),
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        card = geps.MessageDetail.from_payload(response.json())
+        return {
+            "threadUuid": card.thread_uuid,
+            "messageUuid": card.message_uuid,
+            "sender": card.sender,
+            "subject": card.subject,
+            "isRead": card.is_read,
+            "createDate": card.create_date.isoformat() if card.create_date else None,
+            "html": card.text,
+            "params": {key: str(value) for key, value in card.params.items()},
+            "attachments": [
+                {
+                    "attachmentUuid": item.attachment_uuid,
+                    "fileName": item.file_name,
+                    "fileSize": item.file_size,
+                    "mimeType": item.mime_type,
+                    "signed": item.signed,
+                    "status": item.status.value,
+                    "statusDescription": item.status_description,
+                    "downloadable": item.downloadable,
+                }
+                for item in card.attachments
+            ],
+            "statuses": [
+                {
+                    "mnemonic": item.mnemonic,
+                    "description": item.description,
+                    "originator": item.originator,
+                    "createDate": item.create_date.isoformat() if item.create_date else None,
+                }
+                for item in card.statuses
+            ],
+        }
+
+
+async def _geps_gateway() -> Optional[GepsGateway]:
+    """Собрать шлюз, если сессия оператора действует. Иначе ничего.
+
+    Маркер живёт в памяти процесса и гаснет при перезапуске, поэтому фоновая
+    задача работает ровно столько, сколько жива сессия оператора. Своего
+    маркера у неё нет и быть не должно: API-Key вводит человек.
+    """
+    try:
+        session = _require_access_token()
+    except HTTPException:
+        return None
+    return GepsGateway(session, _new_upstream_client())
+
+
+geps_worker = geps_scheduler.Scheduler(_geps_gateway)
+
+
+@app.get("/geps/scheduler")
+async def geps_scheduler_state():
+    """Состояние планировщика: включён ли, что успел, сколько попыток осталось."""
+    return JSONResponse(content=geps_worker.describe())
+
+
+@app.post("/geps/scheduler")
+async def geps_scheduler_switch(request: GepsScheduleRequest):
+    """Включить или выключить автоматический забор.
+
+    Решение осознанное: обращение к ГЭПС равнозначно входу на портал, и с него
+    начинают течь процессуальные сроки. Поэтому включение фиксируется в логе.
+    """
+    try:
+        settings_store.save({"GEPS_SCHEDULE_ENABLED": "1" if request.enabled else "0"})
+    except (ValueError, OSError) as err:
+        raise HTTPException(status_code=500, detail="Не удалось записать настройку") from err
+    logger.warning(
+        "Автоматический забор Госпочты %s оператором",
+        "включён" if request.enabled else "выключен",
+    )
+    return JSONResponse(content=geps_worker.describe())
+
+
+@app.post("/geps/scheduler/run")
+async def geps_scheduler_run():
+    """Прогнать один такт прямо сейчас, не дожидаясь расписания."""
+    return JSONResponse(content=await geps_worker.run_once())
+
+
+@app.get("/geps/jobs")
+async def geps_jobs(
+    state: str = Query("", pattern="^(|ordered|ready|failed|expired)$"),
+    limit: int = Query(20, ge=1, le=200),
+):
+    """Заказанные списки и их состояние. Читается с тома, без обращения к ЕПГУ."""
+    return JSONResponse(content={"jobs": geps_store.list_jobs(state=state, limit=limit)})
+
+
+@app.get("/geps/messages")
+async def geps_messages(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    only_unread: bool = Query(False),
+    thread_uuid: str = Query("", max_length=64),
+):
+    """Сохранённые уведомления страницами."""
+    page = geps_store.list_messages(
+        offset=offset,
+        limit=limit,
+        only_unread=only_unread,
+        thread_uuid=thread_uuid,
+    )
+    page["counts"] = geps_store.counts()
+    return JSONResponse(content=page)
+
+
+@app.get("/geps/messages/{message_uuid}")
+async def geps_stored_message(message_uuid: str):
+    """Сохранённая карточка уведомления вместе с путями к вложениям."""
+    record = geps_store.get_message(message_uuid)
+    if record is None:
+        raise HTTPException(status_code=404, detail="Уведомление не сохранено")
+    return JSONResponse(content=record)
+
+
+@app.post("/geps/messages/{message_uuid}/attachments/{attachment_uuid}/save")
+async def geps_save_attachment(
+    message_uuid: str,
+    attachment_uuid: str,
+    file_type: Literal["file", "sig"] = Query("file"),
+    client: httpx.AsyncClient = Depends(get_async_client),
+):
+    """Скачать вложение и положить его на том."""
+    try:
+        session = _require_access_token()
+        try:
+            path = geps.attachment_path(message_uuid, attachment_uuid, file_type)
+        except (EpguValidationError, EpguConfigError) as err:
+            raise HTTPException(status_code=422, detail=str(err)) from err
+
+        response = await client.get(
+            _geps_url(path),
+            headers={
+                "Authorization": f"Bearer {session.bearer}",
+                "User-Agent": USER_AGENT,
+            },
+        )
+        _ensure_session_current(session)
+        response.raise_for_status()
+        content = response.content
+        if len(content) > MAX_DOWNLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="Вложение превышает 100 MB")
+        saved = geps_store.save_attachment(
+            message_uuid,
+            attachment_uuid,
+            content,
+            geps.file_name_from_headers(response.headers),
+            signature=file_type == "sig",
+        )
+        return JSONResponse(content=saved)
+    except httpx.HTTPStatusError as err:
+        raise _geps_upstream_error("geps attachment save", err) from err
+    except HTTPException:
+        raise
+    except Exception as err:
+        raise _internal_failure("geps attachment save", err) from err
 
 
 @app.get("/xsd")

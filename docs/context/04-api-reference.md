@@ -28,6 +28,13 @@
 | GET | `/geps/message/{thread}/{message}` | Карточка уведомления: текст, вложения, статусы |
 | GET | `/geps/attachment/{message}/{attachment}/{file\|sig}` | Вложение или отсоединённая подпись |
 | GET | `/geps/quota` | Остаток суточных попыток ГЭПС, без обращения к ЕПГУ |
+| GET | `/geps/scheduler` | Состояние планировщика Госпочты |
+| POST | `/geps/scheduler` | Включить или выключить автоматический забор (`enabled`) |
+| POST | `/geps/scheduler/run` | Один такт прямо сейчас |
+| GET | `/geps/jobs` | Заказанные списки и их состояние (с тома) |
+| GET | `/geps/messages` | Сохранённые уведомления страницами |
+| GET | `/geps/messages/{uuid}` | Сохранённая карточка с путями к вложениям |
+| POST | `/geps/messages/{uuid}/attachments/{uuid}/save` | Скачать вложение на том |
 
 Все вызываются фронтендом как `${BACKEND_URL}/<путь>` (см. [03](03-config-and-known-issues.md), грабля №3).
 

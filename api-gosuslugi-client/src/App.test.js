@@ -184,6 +184,90 @@ describe('App Component Basic Rendering Tests', () => {
     );
   });
 
+  test('shows Gospochta tab with quota, warning and stored notifications', async () => {
+    const scheduler = {
+      running: true,
+      enabled: false,
+      interval_seconds: 900,
+      target_range: {
+        startDateTime: '2026-08-16T00:00:00.000+03:00',
+        endDateTime: '2026-08-17T00:00:00.000+03:00',
+      },
+      last_report: {},
+      last_skip: '',
+      quota: {
+        date: '2026-08-17',
+        limits: {
+          search: { limit: 5, used: 1, remaining: 4 },
+          result: { limit: 15, used: 2, remaining: 13 },
+        },
+      },
+      counts: { messages: 1, unread: 1, attachments_saved: 0 },
+    };
+    const stored = {
+      messages: [
+        {
+          message_uuid: '91160bbb-f997-11ef-8080-808080808080',
+          thread_uuid: '6c7a5efd-2a8c-11f0-8080-808080808080',
+          sender: 'ФССП',
+          subject: 'Извещение о возбуждении',
+          is_read: false,
+          create_date: '2026-08-16T10:20:00+03:00',
+          attachments: [{ attachment_uuid: 'a1', file_name: 'postanovlenie.pdf' }],
+        },
+      ],
+      total: 1,
+      offset: 0,
+      limit: 10,
+      counts: scheduler.counts,
+    };
+    axios.get.mockImplementation((url) => {
+      if (url === '/geps/scheduler') return Promise.resolve({ data: scheduler });
+      if (url === '/geps/jobs') return Promise.resolve({ data: { jobs: [] } });
+      if (url === '/geps/messages') return Promise.resolve({ data: stored });
+      return Promise.resolve({ data: [] });
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Госпочта'));
+
+    expect(await screen.findByText('Чтение Госпочты запускает сроки')).toBeInTheDocument();
+    // Остаток суточных попыток виден до любого обращения к ЕПГУ.
+    expect(await screen.findByText('4 из 5')).toBeInTheDocument();
+    expect(screen.getByText('13 из 15')).toBeInTheDocument();
+    expect(await screen.findByText('Извещение о возбуждении')).toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(axios.get).toHaveBeenCalledWith('/geps/messages', {
+        params: { offset: 0, limit: 10, only_unread: false },
+      })
+    );
+  }, 20000);
+
+  test('Gospochta asks before touching the mailbox', async () => {
+    axios.get.mockImplementation((url) => {
+      if (url === '/geps/scheduler') {
+        return Promise.resolve({
+          data: { running: true, enabled: false, quota: { limits: {} }, counts: {} },
+        });
+      }
+      if (url === '/geps/messages') {
+        return Promise.resolve({ data: { messages: [], total: 0, offset: 0, counts: {} } });
+      }
+      return Promise.resolve({ data: { jobs: [] } });
+    });
+
+    render(<App />);
+    fireEvent.click(screen.getByText('Госпочта'));
+
+    fireEvent.click(await screen.findByText('Забрать сейчас'));
+
+    // Забор почты - осознанное действие: сначала предупреждение о сроках.
+    // antd показывает заголовок диалога в нескольких узлах, хватит любого.
+    expect((await screen.findAllByText('Забрать почту сейчас?')).length).toBeGreaterThan(0);
+    expect(axios.post).not.toHaveBeenCalledWith('/geps/scheduler/run');
+  }, 20000);
+
   test('switches to XML tab on click', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Редактор XML'));
@@ -327,7 +411,8 @@ describe('App Component Basic Rendering Tests', () => {
     fireEvent.change(screen.getByLabelText('API key'), {
       target: { value: 'operator-secret' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Удалить токен/ }));
+    // По тексту, а не по роли: дерево большое, и разбор ролей в jsdom очень долгий.
+    fireEvent.click(screen.getByText('Удалить токен'));
 
     await waitFor(() => expect(axios.post).toHaveBeenCalledWith('/session/clear'));
     expect(sessionStorage.getItem('token')).toBeNull();
@@ -348,7 +433,8 @@ describe('App Component Basic Rendering Tests', () => {
     fireEvent.change(screen.getByLabelText('API key'), {
       target: { value: 'operator-secret' },
     });
-    fireEvent.click(screen.getByRole('button', { name: /Удалить токен/ }));
+    // По тексту, а не по роли: дерево большое, и разбор ролей в jsdom очень долгий.
+    fireEvent.click(screen.getByText('Удалить токен'));
 
     expect(
       await screen.findByText(/server-side токен\/сертификат могли сохраниться/)
@@ -356,9 +442,7 @@ describe('App Component Basic Rendering Tests', () => {
     expect(sessionStorage.getItem('token')).toBeNull();
     expect(screen.getByLabelText('API key')).toHaveValue('');
 
-    fireEvent.click(
-      screen.getByRole('button', { name: /Удалить все локальные данные и сессию/ })
-    );
+    fireEvent.click(screen.getByText('Удалить все локальные данные и сессию'));
     expect(
       await screen.findByText(/Локальные данные удалены, но server-side/)
     ).toBeInTheDocument();

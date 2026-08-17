@@ -42,6 +42,7 @@ import {
   ApiOutlined,
   VerticalAlignTopOutlined,
   InboxOutlined,
+  MailOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
 import moment from 'moment-timezone';
@@ -60,6 +61,7 @@ import GoskeyForm, {
 } from './components/GoskeyForm/GoskeyForm';
 import SetupGuide from './components/SetupGuide/SetupGuide';
 import SetupWizard from './components/SetupWizard/SetupWizard';
+import Gospochta from './components/Gospochta/Gospochta';
 import InboundLog from './components/InboundLog/InboundLog';
 import {
   applyServiceTransforms,
@@ -1062,6 +1064,7 @@ function App() {
               { key: 'xml', icon: <CodeOutlined />, label: 'Редактор XML' },
               { key: 'requests', icon: <UnorderedListOutlined />, label: 'Запросы' },
               { key: 'inbound', icon: <InboxOutlined />, label: 'Входящие' },
+              { key: 'gospochta', icon: <MailOutlined />, label: 'Госпочта' },
             ]}
           />
         </Header>
@@ -1496,6 +1499,7 @@ function App() {
             </>
           )}
           {currentTab === 'inbound' && <InboundLog />}
+          {currentTab === 'gospochta' && <Gospochta />}
 
           {/* Таб для XML редактора */}
           {currentTab === 'xml' && (

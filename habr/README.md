@@ -4,6 +4,7 @@
 |---|---|
 | [01-epgu-integration.md](./01-epgu-integration.md) | Интеграция с API ЕПГУ: подпись КриптоПро, подача заявлений, опыт |
 | [02-frontend-notes.md](./02-frontend-notes.md) | Заметки по фронтенду: React + AceEditor + IndexedDB |
+| [03-modular-system.md](./03-modular-system.md) | Модульная система: разделение официального и вспомогательного, Госпочта, подключаемые приватные модули |
 
 ## Формат
 

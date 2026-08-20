@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,9 @@ import secret_store
 import settings_store
 
 logger = logging.getLogger(__name__)
+
+# Предел ручной загрузки: инструкции и архивы бывают тяжёлыми, но не такими.
+UPLOAD_LIMIT_BYTES = 50 * 1024 * 1024
 
 
 class LetterRequest(BaseModel):
@@ -39,6 +42,13 @@ class ImportRequest(BaseModel):
     path: str
     store: str = "uMy"
     link_container: str = ""
+
+
+class ExtractRequest(BaseModel):
+    """Из какого файла достать вложения. Пустой список - всё, что внутри."""
+
+    path: str = Field(max_length=400)
+    only: List[str] = Field(default_factory=list)
 
 
 class ProfileRequest(BaseModel):
@@ -428,6 +438,92 @@ def setup_router() -> APIRouter:
                 "cryptopro": certsources.cryptopro_available(),
             }
         )
+
+    @router.post("/certsources/upload")
+    async def certsources_upload_route(
+        files: List[UploadFile] = File(...),
+        target: str = Form("certs"),
+    ):
+        """Положить файлы руками: инструкцию, сертификат, архив, контейнер.
+
+        Почта нужна не всем и не всегда настроена. Тот же файл можно принести
+        руками, и дальше он проходит ровно тот же путь: разбор, извлечение
+        вложений, установка сертификата.
+
+        ``target`` выбирает, куда класть: ``certs`` в каталог вложений,
+        ``keys`` в каталог ключевых контейнеров. Файлы ключа кладут отдельно:
+        КриптоПро ищет их в своём каталоге, а не среди документов.
+        """
+        import attachments
+
+        if target not in {"certs", "keys"}:
+            raise HTTPException(status_code=400, detail="target: certs или keys")
+        folder = certsources.cert_dir() if target == "certs" else certsources.keys_dir()
+        try:
+            folder.mkdir(parents=True, exist_ok=True)
+        except OSError as err:
+            raise HTTPException(status_code=500, detail="Каталог недоступен для записи") from err
+
+        saved: List[Dict[str, Any]] = []
+        for upload in files:
+            name = attachments._safe_name(upload.filename or "")
+            if not name:
+                raise HTTPException(status_code=400, detail="Некорректное имя файла")
+            payload = await upload.read()
+            if len(payload) > UPLOAD_LIMIT_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail="Файл %s больше %d МБ" % (name, UPLOAD_LIMIT_BYTES // 1024 // 1024),
+                )
+            destination = folder / name
+            try:
+                destination.write_bytes(payload)
+            except OSError as err:
+                raise HTTPException(status_code=500, detail="Не удалось записать файл") from err
+            logger.info("Загружен файл вручную: %s, %d байт", name, len(payload))
+            saved.append(attachments.describe(destination))
+        return JSONResponse(content={"saved": saved, "target": target, "folder": str(folder)})
+
+    @router.get("/certsources/inspect")
+    async def certsources_inspect_route(path: str = Query(..., max_length=400)):
+        """Разобрать сохранённое вложение: текст, ссылки, вложенные файлы.
+
+        Читать инструкции глазами и распаковывать архивы руками означает
+        потерять смысл автоматизации, поэтому разбор делает сам стенд.
+        """
+        import attachments
+
+        folder = certsources.cert_dir().resolve()
+        candidate = Path(path).resolve()
+        # Путь приходит из UI, проверяем его как чужой.
+        if folder not in candidate.parents:
+            raise HTTPException(
+                status_code=400,
+                detail="Разбирать можно только файлы из каталога вложений",
+            )
+        result = attachments.describe(candidate)
+        if not result.get("exists"):
+            raise HTTPException(status_code=404, detail="Файл не найден")
+        return JSONResponse(content=result)
+
+    @router.post("/certsources/extract")
+    async def certsources_extract_route(request: ExtractRequest):
+        """Достать вложенные файлы из архива или документа на диск."""
+        import attachments
+
+        folder = certsources.cert_dir().resolve()
+        candidate = Path(request.path).resolve()
+        if folder not in candidate.parents:
+            raise HTTPException(
+                status_code=400,
+                detail="Извлекать можно только из файлов каталога вложений",
+            )
+        if not candidate.is_file():
+            raise HTTPException(status_code=404, detail="Файл не найден")
+        result = attachments.extract(candidate, folder, only=request.only or None)
+        if not result["extracted"] and result["skipped"]:
+            raise HTTPException(status_code=400, detail="; ".join(result["skipped"])[:300])
+        return JSONResponse(content=result)
 
     @router.post("/certsources/import")
     async def certsources_import_route(request: ImportRequest):

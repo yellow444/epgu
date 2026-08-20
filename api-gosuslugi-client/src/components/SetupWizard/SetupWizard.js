@@ -9,6 +9,7 @@ import {
   Descriptions,
   Empty,
   Input,
+  Upload,
   Modal,
   Result,
   Row,
@@ -32,6 +33,8 @@ import {
   FolderOpenOutlined,
   FormOutlined,
   KeyOutlined,
+  FileTextOutlined,
+  UploadOutlined,
   MailOutlined,
   MinusCircleOutlined,
   ReloadOutlined,
@@ -165,6 +168,13 @@ function errorText(error, fallback) {
   return fallback;
 }
 
+function formatBytes(size) {
+  if (!size && size !== 0) return '';
+  if (size < 1024) return `${size} Б`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} КБ`;
+  return `${(size / 1024 / 1024).toFixed(2)} МБ`;
+}
+
 export default function SetupWizard() {
   const api = useMemo(
     () => axios.create({ baseURL: BACKEND_URL, timeout: 60000 }),
@@ -180,6 +190,8 @@ export default function SetupWizard() {
   const [certificates, setCertificates] = useState([]);
   const [currentCert, setCurrentCert] = useState(null);
   const [sources, setSources] = useState(null);
+  // Разбор вложения: что нашли внутри файла и что из этого можно достать.
+  const [inspected, setInspected] = useState(null);
   const [linkContainer, setLinkContainer] = useState('');
   // Шаг 3: API-Key
   const [apiKey, setApiKey] = useState('');
@@ -662,6 +674,56 @@ export default function SetupWizard() {
     });
   };
 
+  const uploadFiles = async (fileList, target) => {
+    // Почта нужна не всем: тот же файл можно принести руками, дальше путь общий.
+    const form = new FormData();
+    fileList.forEach((file) => form.append('files', file));
+    form.append('target', target);
+    await run('upload', async () => {
+      try {
+        const res = await api.post('/certsources/upload', form);
+        const saved = res.data.saved || [];
+        setInspected(saved.length === 1 ? saved[0] : null);
+        setNotice({
+          type: 'success',
+          text: `Загружено файлов: ${saved.length}. ${
+            target === 'keys' ? 'Ключевой контейнер положен в каталог ключей.' : ''
+          }`,
+        });
+        await loadCertificates();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Загрузить не удалось.') });
+      }
+    });
+  };
+
+  const inspectFile = async (path) => {
+    await run(`inspect:${path}`, async () => {
+      try {
+        const res = await api.get('/certsources/inspect', { params: { path } });
+        setInspected(res.data);
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Разобрать файл не удалось.') });
+      }
+    });
+  };
+
+  const extractFile = async (path, only) => {
+    await run('extract', async () => {
+      try {
+        const res = await api.post('/certsources/extract', { path, only: only || [] });
+        setNotice({
+          type: 'success',
+          text: `Извлечено файлов: ${(res.data.extracted || []).length}`,
+        });
+        await loadCertificates();
+        await inspectFile(path);
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Извлечь не удалось.') });
+      }
+    });
+  };
+
   const loadMessages = async (offset = 0, ticket = ticketFilter) => {
     await run('messages', async () => {
       try {
@@ -852,20 +914,29 @@ export default function SetupWizard() {
                   { title: 'Действует до', dataIndex: 'valid_to', width: 170 },
                   {
                     title: '',
-                    width: 130,
-                    render: (_, record) =>
-                      record.kind === 'certificate' ? (
+                    width: 230,
+                    render: (_, record) => (
+                      <Space size={4}>
+                        {record.kind === 'certificate' ? (
+                          <Button
+                            size="small"
+                            type="primary"
+                            loading={busy === 'import'}
+                            onClick={() => importCertificate(record.path)}
+                          >
+                            Установить
+                          </Button>
+                        ) : null}
                         <Button
                           size="small"
-                          type="primary"
-                          loading={busy === 'import'}
-                          onClick={() => importCertificate(record.path)}
+                          icon={<FileTextOutlined />}
+                          loading={busy === `inspect:${record.path}`}
+                          onClick={() => inspectFile(record.path)}
                         >
-                          Установить
+                          Разобрать
                         </Button>
-                      ) : (
-                        <Tag>архив, распакуйте</Tag>
-                      ),
+                      </Space>
+                    ),
                   },
                 ]}
               />
@@ -873,6 +944,118 @@ export default function SetupWizard() {
           ) : (
             <Empty description="Список источников недоступен" />
           )}
+        </div>
+
+        <div>
+          <Title level={5}>
+            <UploadOutlined /> Файлы вручную
+          </Title>
+          <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+            Почта нужна не всегда. Инструкцию, сертификат, архив или ключевой контейнер
+            можно принести файлом, и дальше путь тот же: разбор, извлечение вложений,
+            установка. Ключевой контейнер кладите отдельной кнопкой, он должен попасть
+            в каталог ключей, а не к документам.
+          </Paragraph>
+          <Space wrap size={12}>
+            <Upload
+              multiple
+              showUploadList={false}
+              beforeUpload={(file, list) => {
+                if (file === list[0]) uploadFiles(list, 'certs');
+                return false;
+              }}
+            >
+              <Button icon={<UploadOutlined />} loading={busy === 'upload'}>
+                Загрузить документы и сертификаты
+              </Button>
+            </Upload>
+            <Upload
+              multiple
+              showUploadList={false}
+              beforeUpload={(file, list) => {
+                if (file === list[0]) uploadFiles(list, 'keys');
+                return false;
+              }}
+            >
+              <Button icon={<KeyOutlined />} loading={busy === 'upload'}>
+                Загрузить ключевой контейнер
+              </Button>
+            </Upload>
+          </Space>
+
+          {inspected ? (
+            <Card size="small" style={{ marginTop: 12 }} title={`Разбор: ${inspected.name}`}>
+              <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                <Space wrap>
+                  <Tag>{inspected.kind}</Tag>
+                  {inspected.pages ? <Tag>страниц: {inspected.pages}</Tag> : null}
+                  <Text type="secondary">{formatBytes(inspected.size)}</Text>
+                  <Button size="small" onClick={() => setInspected(null)}>
+                    Свернуть
+                  </Button>
+                </Space>
+
+                {(inspected.hints || []).map((hint) => (
+                  <Alert key={hint} type="info" showIcon message={hint} />
+                ))}
+
+                {inspected.links && inspected.links.length ? (
+                  <div>
+                    <Text strong>Ссылки из документа</Text>
+                    <Space direction="vertical" size={2} style={{ width: '100%', marginTop: 6 }}>
+                      {inspected.links.slice(0, 12).map((link) => (
+                        <a key={link} href={link} target="_blank" rel="noreferrer">
+                          {link}
+                        </a>
+                      ))}
+                    </Space>
+                  </div>
+                ) : null}
+
+                {inspected.entries && inspected.entries.length ? (
+                  <div>
+                    <Space style={{ marginBottom: 6 }}>
+                      <Text strong>Вложенные файлы</Text>
+                      <Button
+                        size="small"
+                        loading={busy === 'extract'}
+                        onClick={() => extractFile(inspected.path)}
+                      >
+                        Извлечь все
+                      </Button>
+                    </Space>
+                    <Table
+                      rowKey="name"
+                      size="small"
+                      pagination={false}
+                      dataSource={inspected.entries}
+                      columns={[
+                        { title: 'Имя', dataIndex: 'name', ellipsis: true },
+                        {
+                          title: 'Размер',
+                          dataIndex: 'size',
+                          width: 110,
+                          render: (value) => formatBytes(value),
+                        },
+                      ]}
+                    />
+                  </div>
+                ) : null}
+
+                {inspected.text ? (
+                  <div>
+                    <Text strong>Текст документа</Text>
+                    <Input.TextArea
+                      readOnly
+                      value={inspected.text}
+                      autoSize={{ minRows: 6, maxRows: 18 }}
+                      style={{ marginTop: 6, fontSize: 12 }}
+                    />
+                  </div>
+                ) : null}
+              </Space>
+            </Card>
+          ) : null}
         </div>
 
         <div>

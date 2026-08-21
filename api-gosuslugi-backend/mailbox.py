@@ -533,8 +533,39 @@ def fetch_messages(
     }
 
 
-def save_attachment(config: MailConfig, *, uid: str, index: int) -> Dict[str, Any]:
-    """Сохранить вложение в каталог входящих. Установка - отдельный шаг."""
+def list_attachments(config: MailConfig, *, letters: int = 20) -> List[Dict[str, Any]]:
+    """Вложения последних писем одним списком.
+
+    Оператору нужен ответ на простой вопрос: что вообще прислали. Раскрывать
+    ради этого каждое письмо по очереди неудобно, поэтому здесь плоский список
+    с обратной ссылкой на письмо.
+    """
+    page = fetch_messages(config, limit=letters, offset=0, only_watched=True)
+    items: List[Dict[str, Any]] = []
+    for message in page.get("messages", []):
+        for attachment in message.get("attachments", []):
+            item = dict(attachment)
+            item["uid"] = message["uid"]
+            item["ticket"] = message.get("ticket", "")
+            item["subject"] = message.get("subject", "")
+            item["from"] = message.get("from", "")
+            item["received_at"] = message.get("received_at", "")
+            items.append(item)
+    return items
+
+
+def save_attachment(
+    config: MailConfig,
+    *,
+    uid: str,
+    index: int,
+    target_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Сохранить вложение в каталог входящих. Установка - отдельный шаг.
+
+    Каталог можно задать явно: ключевой контейнер должен лечь к ключам, а не
+    к документам, и решает это вызывающая сторона.
+    """
     client = _imap_connect(config)
     try:
         client.select("INBOX", readonly=True)
@@ -563,12 +594,13 @@ def save_attachment(config: MailConfig, *, uid: str, index: int) -> Dict[str, An
         if len(data) > MAX_ATTACHMENT_BYTES:
             raise MailError("Вложение больше допустимого размера")
         name = safe_attachment_name(filename, index)
-        config.inbox_dir.mkdir(parents=True, exist_ok=True)
-        target = config.inbox_dir / name
+        folder = Path(target_dir) if target_dir else config.inbox_dir
+        folder.mkdir(parents=True, exist_ok=True)
+        target = folder / name
         # Имя пришло снаружи: не даём перезаписать уже сохранённое.
         counter = 1
         while target.exists():
-            target = config.inbox_dir / f"{target.stem}-{counter}{target.suffix}"
+            target = folder / f"{target.stem}-{counter}{target.suffix}"
             counter += 1
         target.write_bytes(data)
         logger.info("Вложение сохранено: %s, %s байт", target.name, len(data))

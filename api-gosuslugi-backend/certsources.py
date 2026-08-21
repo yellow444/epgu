@@ -170,6 +170,11 @@ def _backup_keys() -> str:
         return ""
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
     target = cert_dir() / ("keys-backup-" + stamp)
+    # Два удаления в одну секунду не должны отнимать друг у друга копию.
+    counter = 2
+    while target.exists():
+        target = cert_dir() / ("keys-backup-%s-%d" % (stamp, counter))
+        counter += 1
     try:
         shutil.copytree(source, target)
     except OSError as err:
@@ -235,6 +240,79 @@ def delete_certificate(
         # Вывод certmgr описывает сертификат и не содержит секретов.
         "output": "\n".join(part for part in output if part)[-2000:],
     }
+
+
+BACKUP_NAME = re.compile(r"^keys-backup-\d{8}-\d{6}(-\d+)?$")
+
+
+def list_key_backups() -> List[Dict[str, Any]]:
+    """Копии каталога ключей, сделанные перед удалением сертификатов."""
+    root = cert_dir()
+    if not root.exists():
+        return []
+    backups: List[Dict[str, Any]] = []
+    for item in sorted(root.glob("keys-backup-*"), reverse=True):
+        if not item.is_dir() or not BACKUP_NAME.match(item.name):
+            continue
+        containers = []
+        for container in sorted(item.glob("*.000")):
+            keys = sorted(path.name for path in container.glob("*.key"))
+            containers.append({"name": container.name, "keys": keys})
+        stamp = item.name.replace("keys-backup-", "")
+        backups.append(
+            {
+                "name": item.name,
+                "path": str(item),
+                # Метка в имени: 20260821-055659 читается как дата и время UTC.
+                "made_at": "%s-%s-%s %s:%s:%s UTC"
+                % (
+                    stamp[0:4], stamp[4:6], stamp[6:8],
+                    stamp[9:11], stamp[11:13], stamp[13:15],
+                ),
+                "containers": containers,
+            }
+        )
+    return backups
+
+
+def restore_key_backup(name: str) -> Dict[str, Any]:
+    """Вернуть ключевые контейнеры из копии.
+
+    Сертификат живёт внутри контейнера, поэтому вместе с ключами возвращается
+    и он: приложение снова видит его в списке. Уже существующие файлы не
+    трогаем, чтобы восстановление не затёрло рабочий ключ.
+    """
+    import shutil
+
+    clean = str(name or "").strip()
+    if not BACKUP_NAME.match(clean):
+        raise ValueError("Недопустимое имя копии")
+    source = cert_dir() / clean
+    if not source.is_dir():
+        raise ValueError("Копия не найдена")
+
+    restored: List[str] = []
+    skipped: List[str] = []
+    target_root = keys_dir()
+    target_root.mkdir(parents=True, exist_ok=True)
+    for container in sorted(source.glob("*.000")):
+        target = target_root / container.name
+        target.mkdir(parents=True, exist_ok=True)
+        for item in sorted(container.glob("*")):
+            if not item.is_file():
+                continue
+            destination = target / item.name
+            if destination.exists():
+                skipped.append("%s/%s: уже на месте" % (container.name, item.name))
+                continue
+            try:
+                shutil.copy2(item, destination)
+            except OSError as err:
+                skipped.append("%s/%s: %s" % (container.name, item.name, type(err).__name__))
+                continue
+            restored.append("%s/%s" % (container.name, item.name))
+    logger.info("Восстановление из копии %s: файлов %d", clean, len(restored))
+    return {"restored": restored, "skipped": skipped, "backup": clean}
 
 
 def readers_status() -> Dict[str, Any]:

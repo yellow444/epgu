@@ -107,6 +107,22 @@ _THREADS_CACHE: Dict[str, Any] = {"at": None, "threads": [], "scanned": 0}
 THREADS_TTL_SECONDS = 60
 
 
+def _saved_file_names() -> set:
+    """Имена файлов, которые уже лежат у нас: и документы, и ключи.
+
+    Нужно, чтобы не тащить из письма второй раз то же самое. Ключевой
+    контейнер лежит в другом каталоге, и забыть про него легко.
+    """
+    names = set()
+    for folder in (certsources.cert_dir(), certsources.keys_dir()):
+        if not folder.exists():
+            continue
+        for path in folder.rglob("*"):
+            if path.is_file():
+                names.add(path.name)
+    return names
+
+
 def _threads_cached(config, scan: int, refresh: bool):
     now = datetime.now(timezone.utc)
     cached_at = _THREADS_CACHE["at"]
@@ -415,15 +431,91 @@ def setup_router() -> APIRouter:
         page["watched"] = list(mailbox.WATCHED_DOMAINS)
         return JSONResponse(content=page)
 
-    @router.post("/mail/messages/{uid}/attachments/{index}/save")
-    async def mail_save_attachment_route(uid: str, index: int):
-        """Сохранить вложение в каталог сертификатов. Установка - отдельно."""
+    @router.get("/mail/attachments")
+    async def mail_attachments_route(letters: int = Query(20, ge=1, le=50)):
+        """Вложения последних писем одним списком, с пометкой уже сохранённых."""
         config = mailbox.load_config()
+        if not config.configured:
+            return JSONResponse(content={"configured": False, "attachments": []})
+        import attachments
+
         try:
-            result = mailbox.save_attachment(config, uid=uid, index=index)
+            items = mailbox.list_attachments(config, letters=letters)
         except mailbox.MailError as err:
             raise HTTPException(status_code=502, detail=str(err)) from err
+        saved_names = _saved_file_names()
+        for item in items:
+            item["kind"] = attachments.guess_kind(item["name"])
+            item["saved"] = item["name"] in saved_names
+        return JSONResponse(content={"configured": True, "attachments": items})
+
+    @router.post("/mail/messages/{uid}/attachments/{index}/save")
+    async def mail_save_attachment_route(
+        uid: str,
+        index: int,
+        target: str = Query("certs", pattern="^(certs|keys)$"),
+    ):
+        """Сохранить вложение на диск. Установка - отдельное действие.
+
+        Ключевой контейнер кладём в каталог ключей: в папке с документами
+        КриптоПро его не увидит.
+        """
+        config = mailbox.load_config()
+        folder = certsources.keys_dir() if target == "keys" else None
+        try:
+            result = mailbox.save_attachment(config, uid=uid, index=index, target_dir=folder)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        result["target"] = target
         return JSONResponse(content=result)
+
+    @router.post("/mail/attachments/collect")
+    async def mail_collect_attachments_route(letters: int = Query(20, ge=1, le=50)):
+        """Забрать из писем сертификаты, ключи, архивы и документы.
+
+        Одна кнопка вместо обхода писем руками. Инструкции в PDF и документы
+        Word забираем тоже: ключевой контейнер и ссылку на УЦ присылают внутри
+        них, а разбор такого файла у нас уже есть. Ставить ничего не ставим:
+        файлы просто оказываются в нужных каталогах, дальше решает оператор.
+        """
+        import attachments
+
+        config = mailbox.load_config()
+        if not config.configured:
+            raise HTTPException(status_code=409, detail="Почта не настроена")
+        try:
+            items = mailbox.list_attachments(config, letters=letters)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+
+        saved: List[Dict[str, Any]] = []
+        skipped: List[str] = []
+        existing = _saved_file_names()
+        for item in items:
+            kind = attachments.guess_kind(item["name"])
+            if kind == "unknown":
+                skipped.append("%s: непонятный файл, заберите вручную" % item["name"])
+                continue
+            if item.get("too_large"):
+                skipped.append("%s: вложение слишком большое" % item["name"])
+                continue
+            if item["name"] in existing:
+                skipped.append("%s: уже сохранено" % item["name"])
+                continue
+            folder = certsources.keys_dir() if kind == "key" else None
+            try:
+                result = mailbox.save_attachment(
+                    config, uid=item["uid"], index=item["index"], target_dir=folder
+                )
+            except mailbox.MailError as err:
+                skipped.append("%s: %s" % (item["name"], err))
+                continue
+            result["kind"] = kind
+            result["ticket"] = item.get("ticket", "")
+            saved.append(result)
+            existing.add(result["name"])
+        logger.info("Из писем забрано файлов: %d, пропущено: %d", len(saved), len(skipped))
+        return JSONResponse(content={"saved": saved, "skipped": skipped})
 
     # ---------- Источники сертификатов ----------
 
@@ -436,6 +528,8 @@ def setup_router() -> APIRouter:
                 "readers": certsources.readers_status(),
                 "usb_guide": certsources.usb_guide(),
                 "cryptopro": certsources.cryptopro_available(),
+                # Копии ключей, сделанные перед удалением сертификатов.
+                "key_backups": certsources.list_key_backups(),
             }
         )
 

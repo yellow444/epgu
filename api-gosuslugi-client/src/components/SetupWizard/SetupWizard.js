@@ -46,7 +46,7 @@ import {
   UsbOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import { LETTERS, SENDER_HINT } from '../SetupGuide/letters';
+import { LETTERS, SENDER_HINT, letterToEml, letterToText } from '../SetupGuide/letters';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -63,6 +63,16 @@ const THREAD_STATUS_COLOR = {
   new: 'default',
   file: 'warning',
   comment: 'default',
+};
+
+// Как называть вложение по-русски. Тип определяется по имени файла.
+const ATTACHMENT_KIND = {
+  certificate: 'сертификат',
+  key: 'ключ',
+  archive: 'архив',
+  pdf: 'PDF',
+  docx: 'документ',
+  unknown: 'файл',
 };
 
 const OK = 'ok';
@@ -84,6 +94,19 @@ function StatusTag({ state }) {
       {view.label}
     </Tag>
   );
+}
+
+// Письмо можно унести в свой почтовый клиент: файл .eml открывают все.
+function downloadLetter(letter) {
+  const blob = new Blob([letterToEml(letter)], { type: 'message/rfc822' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${letter.id}.eml`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function CopyButton({ value, title = 'Скопировать' }) {
@@ -193,6 +216,8 @@ export default function SetupWizard() {
   const [sources, setSources] = useState(null);
   // Разбор вложения: что нашли внутри файла и что из этого можно достать.
   const [inspected, setInspected] = useState(null);
+  // Вложения из писем плоским списком: что прислали и что из этого забрано.
+  const [mailFiles, setMailFiles] = useState(null);
   const [linkContainer, setLinkContainer] = useState('');
   // Шаг 3: API-Key
   const [apiKey, setApiKey] = useState('');
@@ -215,7 +240,8 @@ export default function SetupWizard() {
   const [messages, setMessages] = useState([]);
   const [messagesTotal, setMessagesTotal] = useState(0);
   const [messagesOffset, setMessagesOffset] = useState(0);
-  const [showLetters, setShowLetters] = useState(false);
+  // Письма видно сразу: прятать переписку за кнопкой оказалось неудобно.
+  const [showLetters, setShowLetters] = useState(true);
   const [threads, setThreads] = useState([]);
   const [threadsAt, setThreadsAt] = useState('');
   const [threadsTotal, setThreadsTotal] = useState(0);
@@ -653,17 +679,6 @@ export default function SetupWizard() {
     [api, run, threadsOffset, threadState]
   );
 
-  // Запросы подтягиваются сами при открытии: ответ поддержки не должен ждать,
-  // пока оператор вспомнит нажать кнопку. Backend отдаёт кэш, поэтому лишнего
-  // похода в IMAP не будет. Эффект стоит ниже loadThreads намеренно: колбэк
-  // объявлен const, и до объявления он недоступен.
-  useEffect(() => {
-    if (!autoLoadedRef.current && mailConfig && mailConfig.configured) {
-      autoLoadedRef.current = true;
-      loadThreads({ offset: 0 });
-    }
-  }, [mailConfig, loadThreads]);
-
   const markThreads = async (tickets, read) => {
     await run('mark', async () => {
       try {
@@ -773,20 +788,23 @@ export default function SetupWizard() {
     });
   };
 
-  const loadMessages = async (offset = 0, ticket = ticketFilter) => {
-    await run('messages', async () => {
-      try {
-        const res = await api.get('/mail/messages', {
-          params: { limit: PAGE_SIZE, offset, ticket: ticket || '' },
-        });
-        setMessages(res.data.messages || []);
-        setMessagesTotal(res.data.total || 0);
-        setMessagesOffset(res.data.offset || 0);
-      } catch (error) {
-        setNotice({ type: 'error', text: errorText(error, 'Прочитать письма не удалось.') });
-      }
-    });
-  };
+  const loadMessages = useCallback(
+    async (offset = 0, ticket = '') => {
+      await run('messages', async () => {
+        try {
+          const res = await api.get('/mail/messages', {
+            params: { limit: PAGE_SIZE, offset, ticket: ticket || '' },
+          });
+          setMessages(res.data.messages || []);
+          setMessagesTotal(res.data.total || 0);
+          setMessagesOffset(res.data.offset || 0);
+        } catch (error) {
+          setNotice({ type: 'error', text: errorText(error, 'Прочитать письма не удалось.') });
+        }
+      });
+    },
+    [api, run]
+  );
 
   const sendLetter = () => {
     Modal.confirm({
@@ -821,20 +839,102 @@ export default function SetupWizard() {
     });
   };
 
-  const saveAttachment = async (uid, index) => {
-    await run('attachment', async () => {
+  const saveAttachment = async (uid, index, target = 'certs') => {
+    await run(`attachment:${uid}:${index}`, async () => {
       try {
-        const res = await api.post(`/mail/messages/${uid}/attachments/${index}/save`);
+        const res = await api.post(
+          `/mail/messages/${uid}/attachments/${index}/save`,
+          null,
+          { params: { target } }
+        );
         setNotice({
           type: 'success',
-          text: `Сохранено: ${res.data.name}. Файл появился в папке сертификатов.`,
+          text: `Сохранено: ${res.data.name}. Файл лежит в ${
+            target === 'keys' ? 'каталоге ключей' : 'папке сертификатов'
+          }.`,
         });
         await loadCertificates();
+        await loadMailFiles();
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Сохранить вложение не удалось.') });
       }
     });
   };
+
+  // ---------- Вложения из писем ----------
+
+  const loadMailFiles = useCallback(
+    () =>
+      run('mailfiles', async () => {
+        try {
+          const res = await api.get('/mail/attachments', { params: { letters: 10 } });
+          setMailFiles(res.data && res.data.configured ? res.data.attachments || [] : []);
+        } catch (error) {
+          setMailFiles([]);
+          setNotice({
+            type: 'error',
+            text: errorText(error, 'Прочитать вложения из писем не удалось.'),
+          });
+        }
+      }),
+    [api, run]
+  );
+
+  const restoreKeys = async (name) => {
+    await run(`restore:${name}`, async () => {
+      try {
+        const res = await api.post('/certificates/restore-keys', null, { params: { name } });
+        const restored = res.data.restored || [];
+        setNotice({
+          type: restored.length ? 'success' : 'info',
+          text: restored.length
+            ? `Возвращено файлов: ${restored.length}. Сертификат из контейнера снова виден.`
+            : `Возвращать нечего: ${(res.data.skipped || []).slice(0, 3).join('; ')}`,
+        });
+        await loadCertificates();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Восстановить ключи не удалось.') });
+      }
+    });
+  };
+
+  const collectMailFiles = async () => {
+    await run('collect', async () => {
+      try {
+        const res = await api.post('/mail/attachments/collect', null, {
+          params: { letters: 10 },
+        });
+        const saved = res.data.saved || [];
+        const skipped = res.data.skipped || [];
+        setNotice({
+          type: saved.length ? 'success' : 'info',
+          text: saved.length
+            ? `Забрано из писем: ${saved.map((item) => item.name).join(', ')}. ` +
+              'Сертификаты в папке сертификатов, ключи в каталоге ключей. Установка ниже.'
+            : `Забирать нечего. ${skipped.slice(0, 3).join('; ')}`,
+        });
+        await loadCertificates();
+        await loadMailFiles();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Забрать вложения не удалось.') });
+      }
+    });
+  };
+
+  // Запросы, письма и вложения подтягиваются сами при открытии: ответ
+  // поддержки не должен ждать, пока оператор вспомнит нажать кнопку. Backend
+  // отдаёт запросы из кэша, поэтому лишнего похода в IMAP не будет. Эффект
+  // стоит ниже колбэков намеренно: они объявлены через const и до объявления
+  // недоступны.
+  useEffect(() => {
+    if (!autoLoadedRef.current && mailConfig && mailConfig.configured) {
+      autoLoadedRef.current = true;
+      loadThreads({ offset: 0 });
+      // Письма и вложения подтягиваем сразу: оператор пришёл именно за ними.
+      loadMessages(0, '');
+      loadMailFiles();
+    }
+  }, [mailConfig, loadThreads, loadMessages, loadMailFiles]);
 
   const runFinalCheck = async () => {
     await run('final', async () => {
@@ -932,7 +1032,108 @@ export default function SetupWizard() {
               type="warning"
               showIcon
               message="Сертификатов нет"
-              description="Положите файл в папку ниже или заберите его из письма УЦ на шаге Почта."
+              description="Заберите файл из письма УЦ блоком ниже, положите его в папку или принесите вручную."
+            />
+          )}
+        </div>
+
+        <div>
+          <Title level={5}>
+            <MailOutlined /> Из писем
+          </Title>
+          <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+            Вложения последних писем от поддержки и УЦ одним списком, без обхода
+            переписки. Кнопка забирает сертификаты и архивы в папку сертификатов,
+            ключевой контейнер - в каталог ключей. Установка остаётся отдельным
+            шагом ниже: файл сначала виден, потом ставится.
+          </Paragraph>
+          <Space wrap style={{ marginBottom: 12 }}>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              loading={busy === 'collect'}
+              disabled={!mailConfig || !mailConfig.configured}
+              onClick={collectMailFiles}
+            >
+              Забрать всё из писем
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              loading={busy === 'mailfiles'}
+              disabled={!mailConfig || !mailConfig.configured}
+              onClick={loadMailFiles}
+            >
+              Обновить список
+            </Button>
+            <Button icon={<MailOutlined />} onClick={() => setStep(3)}>
+              Открыть письма целиком
+            </Button>
+          </Space>
+          {mailConfig && mailConfig.configured ? (
+            <Table
+              rowKey={(record) => `${record.uid}:${record.index}`}
+              size="small"
+              pagination={false}
+              loading={busy === 'mailfiles' || busy === 'collect'}
+              dataSource={mailFiles || []}
+              locale={{
+                emptyText: 'Вложений в последних письмах нет',
+              }}
+              columns={[
+                {
+                  title: 'Запрос',
+                  dataIndex: 'ticket',
+                  width: 120,
+                  render: (value) => (value ? <Text code>SCR#{value}</Text> : ''),
+                },
+                { title: 'Письмо', dataIndex: 'subject', ellipsis: true },
+                { title: 'Файл', dataIndex: 'name', width: 220, ellipsis: true },
+                {
+                  title: 'Что это',
+                  dataIndex: 'kind',
+                  width: 130,
+                  render: (value) => <Tag>{ATTACHMENT_KIND[value] || value}</Tag>,
+                },
+                {
+                  title: 'Размер',
+                  dataIndex: 'size',
+                  width: 100,
+                  render: (value) => formatBytes(value),
+                },
+                {
+                  title: '',
+                  width: 250,
+                  render: (_, record) => (
+                    <Space size={4}>
+                      {record.saved ? <Tag color="success">забрано</Tag> : null}
+                      <Button
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        disabled={record.too_large}
+                        loading={busy === `attachment:${record.uid}:${record.index}`}
+                        onClick={() => saveAttachment(record.uid, record.index)}
+                      >
+                        Забрать
+                      </Button>
+                      <Button
+                        size="small"
+                        icon={<KeyOutlined />}
+                        disabled={record.too_large}
+                        onClick={() => saveAttachment(record.uid, record.index, 'keys')}
+                      >
+                        В ключи
+                      </Button>
+                    </Space>
+                  ),
+                },
+              ]}
+            />
+          ) : (
+            <Alert
+              type="info"
+              showIcon
+              message="Почта не настроена"
+              description="Ящик задаётся на шаге Почта. Без него вложения можно принести вручную блоком ниже."
             />
           )}
         </div>
@@ -1118,6 +1319,50 @@ export default function SetupWizard() {
             </Card>
           ) : null}
         </div>
+
+        {sources && sources.key_backups && sources.key_backups.length ? (
+          <div>
+            <Title level={5}>
+              <SafetyCertificateOutlined /> Копии ключей
+            </Title>
+            <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+              Копия каталога ключей делается сама перед каждым удалением
+              сертификата. Сертификат лежит внутри контейнера, поэтому вместе с
+              ключами возвращается и он. Уже лежащие на месте файлы не
+              затираются.
+            </Paragraph>
+            <Table
+              rowKey="name"
+              size="small"
+              pagination={false}
+              dataSource={sources.key_backups}
+              columns={[
+                { title: 'Сделана', dataIndex: 'made_at', width: 200 },
+                {
+                  title: 'Контейнеры',
+                  render: (_, record) =>
+                    (record.containers || [])
+                      .map((item) => `${item.name} (${item.keys.length})`)
+                      .join(', ') || 'пусто',
+                },
+                {
+                  title: '',
+                  width: 160,
+                  render: (_, record) => (
+                    <Button
+                      size="small"
+                      icon={<ReloadOutlined />}
+                      loading={busy === `restore:${record.name}`}
+                      onClick={() => restoreKeys(record.name)}
+                    >
+                      Восстановить
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        ) : null}
 
         <div>
           <Title level={5}>
@@ -1445,15 +1690,22 @@ export default function SetupWizard() {
           Плейсхолдеры в угловых скобках заменяются перед отправкой.
         </Paragraph>
         <Space direction="vertical" size={12} style={{ width: '100%' }}>
-          <Select
-            style={{ minWidth: 360 }}
-            value={letterId}
-            onChange={(value) => {
-              setLetterId(value);
-              setLetter(LETTERS[value]);
-            }}
-            options={Object.values(LETTERS).map((item) => ({ value: item.id, label: item.name }))}
-          />
+          {/* Шаблоны видно все сразу: за выпадающим списком их не искали. */}
+          <Space wrap size={8}>
+            {Object.values(LETTERS).map((item) => (
+              <Button
+                key={item.id}
+                size="small"
+                type={item.id === letterId ? 'primary' : 'default'}
+                onClick={() => {
+                  setLetterId(item.id);
+                  setLetter(LETTERS[item.id]);
+                }}
+              >
+                {item.name}
+              </Button>
+            ))}
+          </Space>
           <Input
             addonBefore="Кому"
             value={letter.to}
@@ -1491,6 +1743,13 @@ export default function SetupWizard() {
               Отправить
             </Button>
             <CopyButton value={letter.body} title="Скопировать текст" />
+            <CopyButton
+              value={letterToText(letter)}
+              title="Скопировать письмо целиком, с адресом и темой"
+            />
+            <Button icon={<DownloadOutlined />} onClick={() => downloadLetter(letter)}>
+              Скачать .eml
+            </Button>
           </Space>
           {remainingPlaceholders(`${letter.subject}\n${letter.body}`).length ? (
             <Alert
@@ -1721,17 +1980,34 @@ export default function SetupWizard() {
                       { title: 'Тип', dataIndex: 'content_type', width: 200 },
                       {
                         title: '',
-                        width: 150,
+                        width: 260,
                         render: (_, item) => (
-                          <Button
-                            size="small"
-                            icon={<DownloadOutlined />}
-                            disabled={item.too_large}
-                            loading={busy === 'attachment'}
-                            onClick={() => saveAttachment(record.uid, item.index)}
-                          >
-                            Сохранить
-                          </Button>
+                          <Space size={4}>
+                            <Button
+                              size="small"
+                              icon={<DownloadOutlined />}
+                              disabled={item.too_large}
+                              loading={busy === `attachment:${record.uid}:${item.index}`}
+                              onClick={() => saveAttachment(record.uid, item.index)}
+                            >
+                              Сохранить
+                            </Button>
+                            <Button
+                              size="small"
+                              icon={<KeyOutlined />}
+                              disabled={item.too_large}
+                              onClick={() => saveAttachment(record.uid, item.index, 'keys')}
+                            >
+                              В ключи
+                            </Button>
+                            <Button
+                              size="small"
+                              icon={<SafetyCertificateOutlined />}
+                              onClick={() => setStep(1)}
+                            >
+                              К установке
+                            </Button>
+                          </Space>
                         ),
                       },
                     ]}

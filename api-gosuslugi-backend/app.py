@@ -1187,6 +1187,38 @@ async def delete_certificate_endpoint(cert_id: str = Query(..., min_length=40, m
     )
 
 
+@app.post("/certificates/restore-keys")
+async def restore_keys_endpoint(name: str = Query(..., min_length=20, max_length=40)):
+    """Вернуть ключевой контейнер из копии, сделанной перед удалением.
+
+    Сертификат хранится внутри контейнера, поэтому вместе с ключами он снова
+    появляется в списке. Копия остаётся на месте: удалять её решает оператор.
+    """
+    import certsources
+
+    try:
+        result = certsources.restore_key_backup(name)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+    try:
+        load_certificates()
+    except Exception as exc:
+        logger.info("После восстановления сертификатов не видно: %s", type(exc).__name__)
+
+    logger.warning("Ключи восстановлены из копии %s", name)
+    return JSONResponse(
+        content={
+            "restored": result["restored"],
+            "skipped": result["skipped"],
+            "certificates": [
+                _certificate_summary(cert_id, cert)
+                for cert_id, cert in CERTIFICATES.items()
+            ],
+        }
+    )
+
+
 @app.post("/get_current_certificate")
 async def get_current_certificate_endpoint():
     try:

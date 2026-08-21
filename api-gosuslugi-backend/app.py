@@ -1240,6 +1240,28 @@ async def create_certificate_request(request: CertificateRequest):
     return JSONResponse(content=result)
 
 
+@app.post("/certificates/trust-test-ca")
+async def trust_test_ca_endpoint():
+    """Поставить корни тестового удостоверяющего центра в доверенные.
+
+    Без них выпущенный там сертификат считается недоверенным: подпись падает
+    на проверке цепочки, а сообщение об ошибке про это молчит.
+    """
+    import certsources
+
+    try:
+        result = await asyncio.to_thread(certsources.trust_test_ca)
+    except RuntimeError as err:
+        raise HTTPException(status_code=503, detail=str(err)) from err
+    if not result["installed"] and not result.get("pending"):
+        raise HTTPException(
+            status_code=502,
+            detail="Корни установить не удалось: " + "; ".join(result["failed"]),
+        )
+    logger.warning("Установлены корни тестового УЦ: %d", len(result["installed"]))
+    return JSONResponse(content=result)
+
+
 @app.post("/certificates/restore-keys")
 async def restore_keys_endpoint(name: str = Query(..., min_length=20, max_length=40)):
     """Вернуть ключевой контейнер из копии, сделанной перед удалением.

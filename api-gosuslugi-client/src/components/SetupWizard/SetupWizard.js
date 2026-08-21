@@ -499,6 +499,19 @@ export default function SetupWizard() {
     return parts.join(',');
   };
 
+  const trustTestCa = async () => {
+    await run('catrust', async () => {
+      try {
+        const res = await api.post('/certificates/trust-test-ca');
+        const names = (res.data.installed || []).map((item) => item.title).join(', ');
+        setNotice({ type: 'success', text: `Корни тестового УЦ установлены: ${names}.` });
+        await loadCertificates();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Корни установить не удалось.') });
+      }
+    });
+  };
+
   const createCertificateRequest = async () => {
     await run('request', async () => {
       try {
@@ -1502,6 +1515,21 @@ export default function SetupWizard() {
           </Paragraph>
 
           <Space direction="vertical" size={10} style={{ width: '100%' }}>
+            <Space wrap>
+              <Button
+                icon={<SafetyCertificateOutlined />}
+                loading={Boolean(busy.catrust)}
+                onClick={trustTestCa}
+              >
+                0. Доверять тестовому УЦ
+              </Button>
+              <Text type="secondary">
+                Скачивает корневой и промежуточный сертификаты удостоверяющего центра
+                и ставит их в доверенные. Без этого выпущенный сертификат считается
+                недоверенным, и подпись падает на проверке цепочки.
+              </Text>
+            </Space>
+
             <div>
               <Space wrap style={{ marginBottom: 6 }}>
                 <Text strong>1. Имя владельца в запросе</Text>
@@ -1591,6 +1619,12 @@ export default function SetupWizard() {
                           5. Тот же файл загрузите в карточку своей ИС на
                           технологическом портале ЕСИА: без этого ЕПГУ не узнает
                           подпись.
+                        </Text>
+                        <Text type="secondary">
+                          В кабинете удостоверяющего центра нужна регистрация, а
+                          браузеру - КриптоПро CSP с плагином и поддержкой ГОСТ TLS.
+                          Стенд туда не ходит: он только готовит запрос и принимает
+                          готовый сертификат.
                         </Text>
                       </Space>
                     }

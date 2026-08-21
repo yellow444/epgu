@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sourcePage": "https://partners.gosuslugi.ru/catalog/api_for_gu",
-  "catalogObservedAt": "2026-08-12",
+  "catalogObservedAt": "2026-08-21",
   "documents": [
     {
       "kind": "regulation",
@@ -12,6 +12,16 @@
       "file": "source/Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx",
       "bytes": 83903,
       "sha256": "f345383daefc1ede5fe12ba986dc4d447b174478f7686c155ec3bd20f906e455"
+    },
+    {
+      "kind": "regulation",
+      "serviceCode": null,
+      "title": "Регламент подключения к API Госуслуг, публичная редакция",
+      "published": "",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Reglament_podklyucheniya_k_API_Gosuslug.docx",
+      "file": "source/Reglament_podklyucheniya_k_API_Gosuslug.docx",
+      "bytes": 79466,
+      "sha256": "18aac81c1d29960675bd914fc457e6c680f48ebbcdf5e35a952a171c84f8c916"
     },
     {
       "kind": "agreement",

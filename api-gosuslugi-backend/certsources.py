@@ -348,6 +348,96 @@ RDN_FIELDS = (
 )
 
 
+# Корни тестового удостоверяющего центра. Без них подпись падает на проверке
+# цепочки, а ЕСИА не доверяет выпущенному сертификату.
+TEST_CA_CERTS = (
+    ("mroot", "http://testca2012.cryptopro.ru/cert/rootca.cer", "корневой"),
+    ("uCA", "http://testca2012.cryptopro.ru/cert/subca.cer", "промежуточный"),
+)
+
+
+def trust_test_ca(timeout: int = 30) -> Dict[str, Any]:
+    """Поставить корневой и промежуточный сертификаты тестового УЦ.
+
+    Проверено на стенде: без них ни выпуск через cryptcp, ни проверка цепочки
+    не работают, а сообщение об ошибке говорит про недоверенный центр и ничего
+    про то, что делать.
+    """
+    import urllib.request
+
+    if not cryptopro_available():
+        raise RuntimeError("В этом образе нет КриптоПро, устанавливать нечем")
+
+    installed: List[Dict[str, str]] = []
+    pending: List[Dict[str, str]] = []
+    failed: List[str] = []
+    for store, url, title in TEST_CA_CERTS:
+        target = cert_dir() / url.rsplit("/", 1)[-1]
+        try:
+            with urllib.request.urlopen(url, timeout=timeout) as response:
+                payload = response.read(200000)
+        except Exception as err:
+            failed.append("%s сертификат: %s" % (title, type(err).__name__))
+            continue
+        cert_dir().mkdir(parents=True, exist_ok=True)
+        target.write_bytes(payload)
+        info = describe_certificate(target)
+        result = _run(
+            [CERTMGR, "-inst", "-store", store, "-file", str(target), "-silent"], timeout=60
+        )
+        if result.returncode == 0:
+            installed.append(
+                {
+                    "store": store,
+                    "title": title,
+                    "subject": info.get("subject", ""),
+                    "valid_to": info.get("valid_to", ""),
+                    "file": str(target),
+                }
+            )
+            continue
+        # Доверенные корни машины пишет только root, а приложение работает от
+        # своего пользователя. Кладём файл туда, откуда entrypoint ставит корни
+        # при старте: следующий перезапуск сделает это за нас.
+        parked = _park_root(target)
+        if parked:
+            pending.append(
+                {
+                    "title": title,
+                    "subject": info.get("subject", ""),
+                    "file": parked,
+                    "why": "корень ставится при старте контейнера, перезапустите стенд",
+                }
+            )
+        else:
+            failed.append("%s сертификат не установлен" % title)
+    logger.info(
+        "Корни тестового УЦ: установлено %d, ждут перезапуска %d, отказов %d",
+        len(installed),
+        len(pending),
+        len(failed),
+    )
+    return {"installed": installed, "pending": pending, "failed": failed}
+
+
+def _park_root(source: Path) -> str:
+    """Положить корень туда, откуда entrypoint ставит его при старте.
+
+    Entrypoint образа ставит в доверенные корни всё, что лежит по маске
+    ``<каталог ключей>/*/test-root.cer``. Это единственное место, доступное
+    приложению на запись и попадающее в mroot без прав root.
+    """
+    try:
+        folder = keys_dir() / "ca-trust"
+        folder.mkdir(parents=True, exist_ok=True)
+        target = folder / "test-root.cer"
+        target.write_bytes(source.read_bytes())
+        return str(target)
+    except OSError as err:
+        logger.warning("Корень отложить не удалось: %s", type(err).__name__)
+        return ""
+
+
 def request_rdn(profile: Dict[str, str]) -> str:
     """Собрать строку имени для запроса из реквизитов организации.
 

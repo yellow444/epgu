@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -152,6 +153,87 @@ def import_certificate(path: Path, store: str = "uMy", *, link_container: str = 
         "file": resolved.name,
         # Вывод certmgr не содержит секретов: это описание сертификата.
         "output": (result.stdout or result.stderr)[-2000:],
+    }
+
+
+def _backup_keys() -> str:
+    """Скопировать каталог ключей перед удалением сертификата.
+
+    certmgr уносит ключевой контейнер вместе с сертификатом, а закрытый ключ
+    восстановить неоткуда. Копия стоит копейки и один раз спасает.
+    """
+    import shutil
+    from datetime import datetime, timezone
+
+    source = keys_dir()
+    if not source.exists() or not any(source.iterdir()):
+        return ""
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    target = cert_dir() / ("keys-backup-" + stamp)
+    try:
+        shutil.copytree(source, target)
+    except OSError as err:
+        logger.warning("Копию ключей сделать не удалось: %s", type(err).__name__)
+        return ""
+    logger.info("Ключи скопированы перед удалением: %s", target)
+    return str(target)
+
+
+def delete_certificate(
+    thumbprint: str,
+    *,
+    store: str = "uMy",
+    containers: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Убрать сертификат из хранилищ.
+
+    Хранилищ на самом деле два, и это легко упустить. Обычное хранилище лежит
+    в файловой системе контейнера, а приложение читает сертификаты из
+    ключевого контейнера.
+
+    Важное, проверенное на стенде: certmgr удаляет сертификат вместе с
+    привязанным ключевым контейнером. То есть кнопка "удалить сертификат" в
+    придачу уносит закрытый ключ, и вернуть его неоткуда. Поэтому перед
+    удалением делаем копию каталога ключей и возвращаем путь к ней: если ключ
+    был нужен, его можно положить обратно.
+    """
+    if not cryptopro_available():
+        raise RuntimeError("В этом образе нет КриптоПро, удалять нечем")
+    if store not in ALLOWED_STORES:
+        raise ValueError("Недопустимое хранилище")
+    clean = str(thumbprint or "").strip()
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", clean):
+        raise ValueError("Отпечаток должен быть 40 шестнадцатеричными цифрами")
+
+    backup = _backup_keys()
+    removed: List[str] = []
+    output: List[str] = []
+
+    result = _run([CERTMGR, "-delete", "-store", store, "-thumbprint", clean, "-silent"], timeout=60)
+    output.append((result.stdout or result.stderr)[-1000:])
+    if result.returncode == 0:
+        removed.append(store)
+
+    for container in containers or []:
+        result = _run(
+            [CERTMGR, "-delete", "-container", container, "-thumbprint", clean, "-silent"],
+            timeout=60,
+        )
+        output.append((result.stdout or result.stderr)[-1000:])
+        if result.returncode == 0:
+            removed.append(container)
+
+    logger.info(
+        "Удаление сертификата %s: очищено мест %d", clean[:8], len(removed)
+    )
+    return {
+        "deleted": bool(removed),
+        "removed_from": removed,
+        "thumbprint": clean,
+        "keys_backup": backup,
+        "keys_left": sorted(item.name for item in keys_dir().glob("*.000")) if keys_dir().exists() else [],
+        # Вывод certmgr описывает сертификат и не содержит секретов.
+        "output": "\n".join(part for part in output if part)[-2000:],
     }
 
 

@@ -32,6 +32,7 @@ import {
   ExclamationCircleOutlined,
   FolderOpenOutlined,
   FormOutlined,
+  DeleteOutlined,
   KeyOutlined,
   FileTextOutlined,
   UploadOutlined,
@@ -674,6 +675,54 @@ export default function SetupWizard() {
     });
   };
 
+  const deleteCertificate = (record) => {
+    Modal.confirm({
+      title: 'Удалить сертификат?',
+      icon: <DeleteOutlined />,
+      content: (
+        <Space direction="vertical" size={6}>
+          <Text>{record.common_name || record.id}</Text>
+          <Text type="warning" strong>
+            КриптоПро удаляет сертификат вместе с привязанным ключевым контейнером.
+            Закрытый ключ пропадёт, и восстановить его будет неоткуда.
+          </Text>
+          <Text type="secondary">
+            Перед удалением стенд сам скопирует каталог ключей и покажет путь к копии.
+            Если ключ ещё нужен, его можно вернуть из неё.
+          </Text>
+          <Text type="secondary">
+            Маркер доступа ЕСИА погаснет, его надо будет получить заново.
+          </Text>
+        </Space>
+      ),
+      okText: 'Удалить',
+      okButtonProps: { danger: true },
+      cancelText: 'Отмена',
+      onOk: async () => {
+        await run(`delete:${record.id}`, async () => {
+          try {
+            const res = await api.post('/certificates/delete', null, {
+              params: { cert_id: record.id },
+            });
+            const backup = res.data.keys_backup;
+            setNotice({
+              type: backup ? 'warning' : 'success',
+              text:
+                `Сертификат удалён. Осталось в хранилище: ${(res.data.left || []).length}.` +
+                (backup ? ` Копия каталога ключей: ${backup}` : '') +
+                (res.data.keys_left && res.data.keys_left.length
+                  ? ` Контейнеры на месте: ${res.data.keys_left.join(', ')}`
+                  : ' Ключевых контейнеров не осталось.'),
+            });
+            await loadCertificates();
+          } catch (error) {
+            setNotice({ type: 'error', text: errorText(error, 'Удалить не удалось.') });
+          }
+        });
+      },
+    });
+  };
+
   const uploadFiles = async (fileList, target) => {
     // Почта нужна не всем: тот же файл можно принести руками, дальше путь общий.
     const form = new FormData();
@@ -854,15 +903,27 @@ export default function SetupWizard() {
                 { title: 'Действует до', dataIndex: 'valid_to', width: 180 },
                 {
                   title: '',
-                  width: 150,
-                  render: (_, record) =>
-                    record.selected ? (
-                      <Tag color="success">текущий</Tag>
-                    ) : (
-                      <Button size="small" onClick={() => selectCertificate(record.id)}>
-                        Сделать текущим
+                  width: 260,
+                  render: (_, record) => (
+                    <Space size={4}>
+                      {record.selected ? (
+                        <Tag color="success">текущий</Tag>
+                      ) : (
+                        <Button size="small" onClick={() => selectCertificate(record.id)}>
+                          Сделать текущим
+                        </Button>
+                      )}
+                      <Button
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        loading={busy === `delete:${record.id}`}
+                        onClick={() => deleteCertificate(record)}
+                      >
+                        Удалить
                       </Button>
-                    ),
+                    </Space>
+                  ),
                 },
               ]}
             />

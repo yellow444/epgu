@@ -1140,6 +1140,53 @@ async def set_current_certificate(cert_id: str):
     return JSONResponse(content=None, status_code=200)
 
 
+@app.post("/certificates/delete")
+async def delete_certificate_endpoint(cert_id: str = Query(..., min_length=40, max_length=40)):
+    """Убрать сертификат из хранилищ.
+
+    После удаления список перечитывается, а маркер доступа гаснет: он был
+    получен подписью того ключа, и переживать смену личности не должен.
+    """
+    import certsources
+
+    if cert_id not in CERTIFICATES:
+        raise HTTPException(status_code=404, detail="Сертификат не найден")
+    containers = certsources.readers_status().get("containers") or []
+    try:
+        result = certsources.delete_certificate(cert_id, containers=containers)
+    except RuntimeError as err:
+        raise HTTPException(status_code=503, detail=str(err)) from err
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+
+    # Перечитывание само гасит маркер и снимает выбор сертификата.
+    try:
+        load_certificates()
+    except Exception as exc:
+        logger.info("После удаления сертификатов не осталось: %s", type(exc).__name__)
+
+    if cert_id in CERTIFICATES:
+        raise HTTPException(
+            status_code=502,
+            detail="КриптоПро не убрал сертификат, подробности в логах контейнера",
+        )
+    logger.warning("Сертификат %s удалён оператором", cert_id[:8])
+    return JSONResponse(
+        content={
+            "deleted": True,
+            "removed_from": result["removed_from"],
+            # certmgr уносит ключевой контейнер вместе с сертификатом, поэтому
+            # оператору важно видеть, где лежит копия и что осталось.
+            "keys_backup": result.get("keys_backup", ""),
+            "keys_left": result.get("keys_left", []),
+            "left": [
+                _certificate_summary(other_id, cert)
+                for other_id, cert in CERTIFICATES.items()
+            ],
+        }
+    )
+
+
 @app.post("/get_current_certificate")
 async def get_current_certificate_endpoint():
     try:

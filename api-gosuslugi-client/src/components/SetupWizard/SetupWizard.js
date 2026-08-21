@@ -304,6 +304,8 @@ export default function SetupWizard() {
   // Автоматическая обработка почты и её журнал.
   const [autoState, setAutoState] = useState(null);
   const [deadlines, setDeadlines] = useState([]);
+  const [expandedDeadlines, setExpandedDeadlines] = useState([]);
+  const [deadlineLetters, setDeadlineLetters] = useState({});
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
   // Реквизиты организации: одни и те же во всех письмах Оператору.
@@ -1197,6 +1199,18 @@ export default function SetupWizard() {
       }),
     [api, run]
   );
+
+  const loadDeadlineLetter = async (record) => {
+    if (!record.uid) return;
+    await run(`deadline:${record.ticket}`, async () => {
+      try {
+        const res = await api.get(`/mail/messages/${record.uid}`);
+        setDeadlineLetters((prev) => ({ ...prev, [record.ticket]: res.data }));
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Письмо прочитать не удалось.') });
+      }
+    });
+  };
 
   const saveAuto = async (patch) => {
     const current = autoState || {};
@@ -2743,13 +2757,75 @@ export default function SetupWizard() {
 
           {deadlines.length ? (
             <div>
-              <Text strong>Ждут нашего подтверждения</Text>
+              <Space wrap style={{ marginBottom: 8 }}>
+                <Text strong>Требуют ответа от нас</Text>
+                <Badge count={deadlines.filter((item) => !item.answered).length} />
+              </Space>
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginBottom: 12 }}
+                message="Почему это обязательно"
+                description={
+                  <Space direction="vertical" size={2}>
+                    <Text>
+                      Робот поддержки пишет в каждом решённом запросе: «Просим Вас в течение
+                      3-х календарных дней ответным письмом подтвердить решение запроса. Если
+                      Вы не согласны с решением, в течение 3-х календарных дней отправьте в
+                      ответном письме причину возобновления работ».
+                    </Text>
+                    <Text type="secondary">
+                      Не ответили - запрос закрывается сам, и по тому же вопросу приходится
+                      заводить новый. Тему письма менять нельзя: по ней сшивается тикет.
+                    </Text>
+                  </Space>
+                }
+              />
               <Table
-                style={{ marginTop: 8 }}
                 rowKey="ticket"
                 size="small"
                 pagination={false}
                 dataSource={deadlines}
+                expandable={{
+                  expandedRowKeys: expandedDeadlines,
+                  onExpandedRowsChange: (keys) => {
+                    const next = [...keys];
+                    next.forEach((ticket) => {
+                      const item = deadlines.find((row) => row.ticket === ticket);
+                      if (item && !deadlineLetters[ticket]) loadDeadlineLetter(item);
+                    });
+                    setExpandedDeadlines(next);
+                  },
+                  expandedRowRender: (record) => {
+                    const letter = deadlineLetters[record.ticket];
+                    if (!letter) {
+                      return <Text type="secondary">Читаю письмо...</Text>;
+                    }
+                    return (
+                      <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                        <Space wrap>
+                          <Text strong>{letter.subject}</Text>
+                          <Text type="secondary">от {letter.from}</Text>
+                          <Text type="secondary">{formatMoment(letter.received_at)}</Text>
+                          <CopyButton value={letter.body || ''} title="Скопировать текст письма" />
+                        </Space>
+                        <div
+                          style={{
+                            background: 'rgba(0, 0, 0, 0.03)',
+                            padding: 12,
+                            borderRadius: 6,
+                            whiteSpace: 'pre-wrap',
+                            overflowWrap: 'anywhere',
+                            lineHeight: 1.6,
+                            maxWidth: '72em',
+                          }}
+                        >
+                          {letter.body || 'Текстовой части в письме нет.'}
+                        </div>
+                      </Space>
+                    );
+                  },
+                }}
                 columns={[
                   {
                     title: 'Запрос',
@@ -2757,18 +2833,35 @@ export default function SetupWizard() {
                     width: 130,
                     render: (value) => <Text code>SCR#{value}</Text>,
                   },
-                  { title: 'Тема', dataIndex: 'topic', ellipsis: true },
                   {
                     title: 'Чего ждут',
-                    dataIndex: 'status_label',
-                    width: 190,
-                    render: (value, record) => (
-                      <Tag color={record.kind === 'action' ? 'error' : 'default'}>{value}</Tag>
+                    width: 200,
+                    render: (_, record) => (
+                      <Space direction="vertical" size={0}>
+                        <Tag color={record.kind === 'action' ? 'error' : 'processing'}>
+                          {record.status_label}
+                        </Tag>
+                        <Text type="secondary">
+                          {record.kind === 'action'
+                            ? 'ответ по существу вопроса'
+                            : 'подтвердить решение'}
+                        </Text>
+                      </Space>
+                    ),
+                  },
+                  {
+                    title: 'Письмо',
+                    ellipsis: true,
+                    render: (_, record) => (
+                      <Space direction="vertical" size={0}>
+                        <Text ellipsis>{record.subject || record.topic}</Text>
+                        <Text type="secondary">{formatMoment(record.status_at)}</Text>
+                      </Space>
                     ),
                   },
                   {
                     title: 'Срок',
-                    width: 200,
+                    width: 150,
                     render: (_, record) =>
                       record.overdue ? (
                         <Tag color="error">срок прошёл</Tag>
@@ -2780,26 +2873,67 @@ export default function SetupWizard() {
                   },
                   {
                     title: '',
-                    width: 200,
-                    render: (_, record) =>
-                      record.answered ? (
-                        <Tag color="success">ответили</Tag>
-                      ) : (
+                    width: 330,
+                    render: (_, record) => (
+                      <Space size={4} wrap>
+                        {record.answered ? <Tag color="success">ответили</Tag> : null}
                         <Button
                           size="small"
+                          icon={<FileTextOutlined />}
+                          loading={Boolean(busy[`deadline:${record.ticket}`])}
+                          onClick={() => {
+                            if (!deadlineLetters[record.ticket]) loadDeadlineLetter(record);
+                            setExpandedDeadlines((keys) =>
+                              keys.includes(record.ticket)
+                                ? keys.filter((key) => key !== record.ticket)
+                                : [...keys, record.ticket]
+                            );
+                          }}
+                        >
+                          Текст письма
+                        </Button>
+                        <Button
+                          size="small"
+                          type="primary"
                           icon={<SendOutlined />}
                           loading={Boolean(busy[`reply:${record.uid}`])}
                           disabled={!record.uid}
                           onClick={() => openReply(record.uid, record.ticket, record.kind)}
                         >
-                          Ответить
+                          {record.kind === 'action' ? 'Ответить' : 'Подтвердить решение'}
                         </Button>
-                      ),
+                        <Button
+                          size="small"
+                          icon={<MailOutlined />}
+                          onClick={() => {
+                            showLettersFor(record.ticket);
+                            setExpandedThreads((keys) =>
+                              keys.includes(record.ticket) ? keys : [...keys, record.ticket]
+                            );
+                            if (!threadLetters[record.ticket]) loadThreadLetters(record.ticket);
+                          }}
+                        >
+                          Переписка
+                        </Button>
+                      </Space>
+                    ),
                   },
                 ]}
               />
+              <Paragraph type="secondary" style={{ marginTop: 8, marginBottom: 0 }}>
+                Кнопка «Подтвердить решение» открывает готовое письмо: тема из запроса,
+                текст шаблоном, цитата ниже. Отправка - отдельным нажатием. Чтобы стенд
+                подтверждал сам, включите «Подтверждать решения письмом» выше.
+              </Paragraph>
             </div>
-          ) : null}
+          ) : (
+            <Alert
+              type="success"
+              showIcon
+              message="Запросов, ждущих нашего ответа, нет"
+              description="Здесь появятся запросы, по которым поддержка ждёт подтверждения решения или ответа по существу. На это даётся три календарных дня."
+            />
+          )}
 
           <div>
             <Text strong>Что сделала автоматика</Text>
@@ -3007,6 +3141,29 @@ export default function SetupWizard() {
               </Space>
             </Descriptions.Item>
           </Descriptions>
+
+          <Collapse
+            size="small"
+            items={[
+              {
+                key: 'original',
+                label: 'Письмо, на которое отвечаем',
+                children: (
+                  <div
+                    style={{
+                      whiteSpace: 'pre-wrap',
+                      overflowWrap: 'anywhere',
+                      lineHeight: 1.6,
+                      maxHeight: 260,
+                      overflow: 'auto',
+                    }}
+                  >
+                    {reply.quoteText.replace(/^> ?/gm, '')}
+                  </div>
+                ),
+              },
+            ]}
+          />
 
           <Space wrap size={8}>
             {Object.values(REPLIES).map((item) => (

@@ -591,6 +591,7 @@ def build_threads(headers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "has_files": False,
                 "needs_action": False,
                 "status_uid": "",
+                "status_subject": "",
                 "uids": [],
             },
         )
@@ -611,6 +612,7 @@ def build_threads(headers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             # Отвечать надо на то письмо, которым объявлено решение, а не на
             # позднейший комментарий: он статус не меняет.
             thread["status_uid"] = header["uid"]
+            thread["status_subject"] = header["subject"]
     ordered = sorted(threads.values(), key=lambda item: item["last_at"], reverse=True)
     for thread in ordered:
         if not thread["status"]:

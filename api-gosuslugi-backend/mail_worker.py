@@ -206,6 +206,8 @@ def deadlines(threads: List[Dict[str, Any]], now: Optional[datetime] = None) -> 
                 "answered": thread["ticket"] in confirmed,
                 "kind": thread.get("status_kind", ""),
                 "status_label": thread.get("status", ""),
+                # Конкретное письмо, которым начат срок: тема и время.
+                "subject": thread.get("status_subject", ""),
                 # Отвечаем на письмо, которым объявлено решение.
                 "uid": thread.get("status_uid") or (thread.get("uids") or [""])[-1],
             }

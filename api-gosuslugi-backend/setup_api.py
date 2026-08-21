@@ -52,11 +52,18 @@ def _file_headers(name: str, media: str, download: bool) -> Dict[str, str]:
     """Заголовки отдачи файла: тип, поведение браузера и запрет угадывания."""
     safe = name.encode("ascii", "ignore").decode("ascii") or "file"
     inline = not download and media in INLINE_TYPES
-    return {
+    headers = {
         "Content-Disposition": '%s; filename="%s"' % ("inline" if inline else "attachment", safe),
+        # Тип пришёл снаружи, угадывать его браузер не должен.
         "X-Content-Type-Options": "nosniff",
-        "Content-Security-Policy": "sandbox; default-src 'none'",
     }
+    if not inline:
+        # Файл уходит вложением и не отображается, поэтому запираем его
+        # полностью. Для показываемых типов такой заголовок гасит встроенный
+        # просмотрщик PDF: sandbox запрещает плагины, и вместо документа
+        # получается серый прямоугольник.
+        headers["Content-Security-Policy"] = "sandbox; default-src 'none'"
+    return headers
 
 
 class LetterRequest(BaseModel):
@@ -386,6 +393,20 @@ def setup_router() -> APIRouter:
         except mailbox.MailError as err:
             raise HTTPException(status_code=502, detail=str(err)) from err
         return JSONResponse(content=result)
+
+    @router.get("/mail/messages/{uid}")
+    def mail_message_route(uid: str):
+        """Одно письмо целиком: текст, вложения, статус запроса.
+
+        Нужно, чтобы прочитать письмо, из-за которого запрос ждёт ответа, не
+        разыскивая его в переписке.
+        """
+        config = mailbox.load_config()
+        try:
+            message = mailbox.fetch_message(config, uid=uid)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        return JSONResponse(content=message)
 
     @router.get("/mail/messages/{uid}/reply")
     def mail_reply_draft_route(uid: str):

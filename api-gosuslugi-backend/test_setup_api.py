@@ -524,8 +524,12 @@ def test_pdf_attachment_is_shown_inline(client, modules, monkeypatch):
     response = client.get("/mail/messages/42/attachments/0/raw")
 
     assert response.headers["content-disposition"].startswith("inline")
+    # Показываемому файлу sandbox не ставим: он гасит встроенный просмотрщик
+    # PDF, и вместо документа получается пустой прямоугольник.
+    assert "content-security-policy" not in response.headers
     response = client.get("/mail/messages/42/attachments/0/raw", params={"download": True})
     assert response.headers["content-disposition"].startswith("attachment")
+    assert "sandbox" in response.headers["content-security-policy"]
 
 
 def test_upload_refuses_to_overwrite_settings(client, modules):

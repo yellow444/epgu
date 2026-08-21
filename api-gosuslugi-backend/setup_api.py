@@ -109,17 +109,17 @@ class ExtractRequest(BaseModel):
 class ProfileRequest(BaseModel):
     """Реквизиты организации, которыми заполняются письма Оператору."""
 
-    org_full_name: str = Field(default="", max_length=300)
-    org_short_name: str = Field(default="", max_length=200)
-    org_inn: str = Field(default="", max_length=12)
-    org_ogrn: str = Field(default="", max_length=15)
-    org_oktmo: str = Field(default="", max_length=11)
-    org_role: str = Field(default="", max_length=50)
-    is_mnemonic: str = Field(default="", max_length=100)
-    contact_name: str = Field(default="", max_length=200)
-    contact_role: str = Field(default="", max_length=200)
-    contact_phone: str = Field(default="", max_length=50)
-    contact_email: str = Field(default="", max_length=320)
+    org_full_name: Optional[str] = Field(default=None, max_length=300)
+    org_short_name: Optional[str] = Field(default=None, max_length=200)
+    org_inn: Optional[str] = Field(default=None, max_length=12)
+    org_ogrn: Optional[str] = Field(default=None, max_length=15)
+    org_oktmo: Optional[str] = Field(default=None, max_length=11)
+    org_role: Optional[str] = Field(default=None, max_length=50)
+    is_mnemonic: Optional[str] = Field(default=None, max_length=100)
+    contact_name: Optional[str] = Field(default=None, max_length=200)
+    contact_role: Optional[str] = Field(default=None, max_length=200)
+    contact_phone: Optional[str] = Field(default=None, max_length=50)
+    contact_email: Optional[str] = Field(default=None, max_length=320)
 
 
 class ReadRequest(BaseModel):
@@ -178,6 +178,35 @@ def _saved_file_names() -> set:
     return names
 
 
+def _subject_fields(cert: Any) -> Dict[str, str]:
+    """Реквизиты организации из subject сертификата.
+
+    Разбор берём из приложения: там он уже умеет кавычки и русские названия
+    полей вроде "ИНН ЮЛ". Перепечатывать эти данные руками из окна в окно
+    незачем, они лежат в сертификате.
+    """
+    import app as application
+
+    subject_name = application._certificate_text_attribute(cert, "SubjectName")
+    try:
+        parts = application.parse_string_to_json(subject_name)
+    except (TypeError, ValueError):
+        parts = {}
+    parts = {str(key).strip().upper(): str(value).strip() for key, value in parts.items()}
+    full_name = parts.get("O", "")
+    person = " ".join(
+        part for part in (parts.get("SN", ""), parts.get("G", "")) if part
+    ).strip()
+    return {
+        "ORG_FULL_NAME": full_name,
+        "ORG_SHORT_NAME": full_name[:200],
+        "ORG_INN": parts.get("ИНН ЮЛ", "") or parts.get("ИНН", ""),
+        "ORG_OGRN": parts.get("ОГРН", ""),
+        "CONTACT_NAME": person,
+        "CONTACT_ROLE": parts.get("T", ""),
+    }
+
+
 def _threads_cached(config, scan: int, refresh: bool):
     now = datetime.now(timezone.utc)
     cached_at = _THREADS_CACHE["at"]
@@ -210,6 +239,41 @@ def setup_router() -> APIRouter:
     router = APIRouter(tags=["setup"])
 
     # ---------- Почта ----------
+
+    @router.post("/setup/profile/from-certificate")
+    def setup_profile_from_certificate_route():
+        """Заполнить реквизиты из выбранного сертификата.
+
+        В сертификате организации уже лежит всё, что мы просим вводить руками:
+        наименование, ИНН, ОГРН и ФИО владельца. Перепечатывать это из окна в
+        окно бессмысленно.
+        """
+        import app as application
+
+        cert_id = getattr(application, "CURRENT_CERT_ID", "") or ""
+        certificates = getattr(application, "CERTIFICATES", {})
+        cert = certificates.get(cert_id) or next(iter(certificates.values()), None)
+        if cert is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Сертификатов нет: выберите сертификат на шаге Сертификат",
+            )
+        fields = _subject_fields(cert)
+        values = {key: value for key, value in fields.items() if value}
+        if values:
+            try:
+                settings_store.save(values)
+            except (ValueError, OSError) as err:
+                raise HTTPException(status_code=500, detail=str(err)) from err
+        saved = settings_store.load()
+        return JSONResponse(
+            content={
+                "filled": sorted(values),
+                "profile": {
+                    key: saved.get(key, "") for key in settings_store.PROFILE_FIELDS
+                },
+            }
+        )
 
     @router.get("/mail/config")
     def mail_config_route():
@@ -276,11 +340,27 @@ def setup_router() -> APIRouter:
 
     @router.post("/setup/profile")
     def setup_profile_save_route(profile: ProfileRequest):
-        """Сохранить реквизиты. Они не секретны, но и наружу не публикуются."""
-        values = {
-            key: (getattr(profile, key.lower(), "") or "").strip()
-            for key in settings_store.PROFILE_FIELDS
-        }
+        """Сохранить реквизиты. Они не секретны, но и наружу не публикуются.
+
+        Присланное поле перезаписывается, непереданное остаётся как было:
+        окно ответа сохраняет два поля из одиннадцати, и обнулять остальные
+        оно не должно.
+        """
+        values = {}
+        for key in settings_store.PROFILE_FIELDS:
+            value = getattr(profile, key.lower(), None)
+            if value is None:
+                continue
+            values[key] = value.strip()
+        if not values:
+            saved = settings_store.load()
+            return JSONResponse(
+                content={
+                    "profile": {
+                        key: saved.get(key, "") for key in settings_store.PROFILE_FIELDS
+                    }
+                }
+            )
         try:
             settings_store.save(values)
         except ValueError as err:

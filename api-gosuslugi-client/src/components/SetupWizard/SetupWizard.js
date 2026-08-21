@@ -205,6 +205,13 @@ function errorText(error, fallback) {
   return fallback;
 }
 
+// Ключи реквизитов: backend отдаёт CONTACT_NAME, форма ждёт contact_name.
+function lowerKeys(source) {
+  return Object.fromEntries(
+    Object.entries(source || {}).map(([key, value]) => [key.toLowerCase(), value])
+  );
+}
+
 function formatMoment(value) {
   if (!value) return '';
   const parsed = new Date(value);
@@ -301,6 +308,7 @@ export default function SetupWizard() {
   const [preview, setPreview] = useState(null);
   // Ответ на письмо поддержки.
   const [reply, setReply] = useState(null);
+  const [signature, setSignature] = useState({ name: '', org: '' });
   // Автоматическая обработка почты и её журнал.
   const [autoState, setAutoState] = useState(null);
   const [deadlines, setDeadlines] = useState([]);
@@ -421,7 +429,10 @@ export default function SetupWizard() {
       run('profile', async () => {
         try {
           const res = await api.get('/setup/profile');
-          setProfile({ ...EMPTY_PROFILE, ...(res.data.profile || {}) });
+          // Backend отдаёт ключи заглавными (CONTACT_NAME), форма работает
+          // со строчными. Без приведения сохранённые реквизиты не
+          // показывались в полях и не подставлялись в письма.
+          setProfile({ ...EMPTY_PROFILE, ...lowerKeys(res.data.profile) });
           setPlaceholders(res.data.placeholders || {});
         } catch (error) {
           setPlaceholders({});
@@ -555,7 +566,7 @@ export default function SetupWizard() {
       });
       try {
         const res = await api.post('/setup/profile', payload);
-        setProfile({ ...EMPTY_PROFILE, ...(res.data.profile || {}) });
+        setProfile({ ...EMPTY_PROFILE, ...lowerKeys(res.data.profile) });
         setNotice({ type: 'success', text: 'Реквизиты сохранены.' });
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Сохранить реквизиты не удалось.') });
@@ -1096,6 +1107,10 @@ export default function SetupWizard() {
         const res = await api.get(`/mail/messages/${uid}/reply`);
         // По запросу уточнения подтверждать нечего: там ждут ответа по существу.
         const template = kind === 'action' ? REPLIES.clarify : REPLIES.confirm;
+        setSignature({
+          name: profile.contact_name || '',
+          org: profile.org_short_name || profile.org_full_name || '',
+        });
         setReply({
           uid,
           ticket: res.data.ticket || ticket || '',
@@ -1116,6 +1131,66 @@ export default function SetupWizard() {
           type: 'error',
           text: errorText(error, 'Заготовку ответа получить не удалось.'),
         });
+      }
+    });
+  };
+
+  // Реквизиты для подписи письма. Руками их вводить не нужно: они либо уже
+  // сохранены, либо лежат в сертификате организации.
+  const applyProfileToReply = (next) => {
+    const values = next || profile;
+    const filled = {
+      '<ФИО>': values.contact_name || '<ФИО>',
+      '<организация>': values.org_short_name || values.org_full_name || '<организация>',
+    };
+    setReply((current) =>
+      current
+        ? {
+            ...current,
+            body: Object.entries(filled).reduce(
+              (text, [key, value]) => text.split(key).join(value),
+              current.body
+            ),
+          }
+        : current
+    );
+  };
+
+  const fillProfileFromCertificate = async () => {
+    await run('fromcert', async () => {
+      try {
+        const res = await api.post('/setup/profile/from-certificate');
+        const saved = res.data.profile || {};
+        const next = lowerKeys(saved);
+        setProfile({ ...profile, ...next });
+        applyProfileToReply(next);
+        setNotice({
+          type: 'success',
+          text: `Из сертификата взято: ${(res.data.filled || []).join(', ') || 'ничего'}`,
+        });
+      } catch (error) {
+        setNotice({
+          type: 'error',
+          text: errorText(error, 'В сертификате реквизитов не нашлось.'),
+        });
+      }
+    });
+  };
+
+  const saveReplySignature = async (name, org) => {
+    await run('signature', async () => {
+      try {
+        const res = await api.post('/setup/profile', {
+          contact_name: name,
+          org_short_name: org,
+        });
+        const saved = res.data.profile || {};
+        const next = lowerKeys(saved);
+        setProfile({ ...profile, ...next });
+        applyProfileToReply(next);
+        setNotice({ type: 'success', text: 'Реквизиты сохранены и подставлены в письмо.' });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Сохранить реквизиты не удалось.') });
       }
     });
   };
@@ -3216,8 +3291,57 @@ export default function SetupWizard() {
             <Alert
               type="warning"
               showIcon
-              message="В тексте остались подстановки"
-              description={remainingPlaceholders(reply.body).join(', ')}
+              message="В подписи не хватает реквизитов"
+              description={
+                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  <Text type="secondary">
+                    Осталось подставить: {remainingPlaceholders(reply.body).join(', ')}. Вводить
+                    руками не нужно: возьмите из сертификата или заполните один раз, дальше
+                    подставится само.
+                  </Text>
+                  <Space wrap>
+                    <Input
+                      style={{ width: 260 }}
+                      addonBefore="ФИО"
+                      value={signature.name}
+                      placeholder="Ситников Максим Валериевич"
+                      onChange={(event) =>
+                        setSignature({ ...signature, name: event.target.value })
+                      }
+                    />
+                    <Input
+                      style={{ width: 300 }}
+                      addonBefore="Организация"
+                      value={signature.org}
+                      placeholder="ООО КВИК РЕСТО"
+                      onChange={(event) =>
+                        setSignature({ ...signature, org: event.target.value })
+                      }
+                    />
+                  </Space>
+                  <Space wrap>
+                    <Button
+                      type="primary"
+                      icon={<SaveOutlined />}
+                      loading={Boolean(busy.signature)}
+                      disabled={!signature.name && !signature.org}
+                      onClick={() => saveReplySignature(signature.name, signature.org)}
+                    >
+                      Сохранить и подставить
+                    </Button>
+                    <Button
+                      icon={<SafetyCertificateOutlined />}
+                      loading={Boolean(busy.fromcert)}
+                      onClick={fillProfileFromCertificate}
+                    >
+                      Взять из сертификата
+                    </Button>
+                    <Button onClick={() => applyProfileToReply()}>
+                      Подставить сохранённые
+                    </Button>
+                  </Space>
+                </Space>
+              }
             />
           ) : null}
 

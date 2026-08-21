@@ -31,7 +31,14 @@ import ssl
 from dataclasses import dataclass, field
 from email.header import decode_header, make_header
 from email.message import EmailMessage
-from email.utils import formatdate, make_msgid, parsedate_to_datetime
+from email.utils import (
+    formataddr,
+    formatdate,
+    getaddresses,
+    make_msgid,
+    parseaddr,
+    parsedate_to_datetime,
+)
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -395,6 +402,31 @@ def _smtp_connect(config: MailConfig, password: str) -> smtplib.SMTP:
         ) from err
 
 
+# Адрес в конверте и в заголовке обязан быть в ASCII: SMTPUTF8 поддерживают
+# не все серверы, и наш точно нет.
+_ADDRESS = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
+
+
+def parse_addresses(*values: str) -> List[Tuple[str, str]]:
+    """Разобрать строку получателей на пары имя и адрес.
+
+    Имя у поддержки написано кириллицей, а адрес обязан быть латиницей.
+    Разбираем строку на части: имя потом кодируется по RFC 2047, а в конверт
+    SMTP уходит только адрес.
+    """
+    pairs = []
+    for name, addr in getaddresses([value or "" for value in values]):
+        clean = str(addr or "").strip()
+        if _ADDRESS.match(clean):
+            pairs.append((str(name or "").strip(), clean))
+    return pairs
+
+
+def _header_addresses(value: str) -> str:
+    """Адреса для заголовка письма с человекочитаемыми именами."""
+    return ", ".join(formataddr(pair) for pair in parse_addresses(value))
+
+
 def send_letter(
     config: MailConfig,
     *,
@@ -416,13 +448,16 @@ def send_letter(
         raise MailError("SMTP-сервер не задан")
     if not to.strip():
         raise MailError("Не указан адрес получателя")
+    if not parse_addresses(to):
+        raise MailError("Не разобрать адрес получателя: %s" % to.strip()[:120])
     password = secret_store.get_secret("MAIL_PASSWORD")
 
     message = EmailMessage()
     message["From"] = config.sender or config.user
-    message["To"] = to
+    # Имя получателя кириллицей кодируем по RFC 2047, а не отправляем как есть.
+    message["To"] = _header_addresses(to)
     if cc.strip():
-        message["Cc"] = cc
+        message["Cc"] = _header_addresses(cc)
     message["Subject"] = subject
     # Свои Date и Message-ID: по ним на наш ответ можно сослаться потом, а
     # клиент оператора видит письмо в той же ветке.
@@ -441,9 +476,16 @@ def send_letter(
             data, maintype="application", subtype=subtype, filename=Path(path).name
         )
 
-    recipients = [addr.strip() for addr in (to + "," + cc).split(",") if addr.strip()]
+    # В конверт SMTP идут только адреса. Отправитель письма подписан как
+    # "Федеральный ситуационный центр <sd@...>", и если положить эту строку
+    # целиком, smtplib падает на кодировании конверта в ASCII, а сервер
+    # отвечает, что SMTPUTF8 не поддерживает.
+    recipients = [addr for _, addr in parse_addresses(to, cc)]
+    if not recipients:
+        raise MailError("Не разобрать адрес получателя: %s" % to.strip()[:120])
+    sender = parseaddr(config.sender or config.user)[1] or (config.sender or config.user)
     with _smtp_connect(config, password) as server:
-        server.send_message(message, to_addrs=recipients)
+        server.send_message(message, from_addr=sender, to_addrs=recipients)
     logger.info("Письмо отправлено, получателей: %s", len(recipients))
     return {"sent": True, "recipients": recipients, "subject": subject}
 

@@ -574,3 +574,77 @@ def test_partial_settings_do_not_reset_the_rest(client, modules):
     state = client.get("/mail/auto").json()
     assert state["enabled"] is True
     assert state["confirm"] is True
+
+
+# ---------- Отправка письма с кириллическим именем получателя ----------
+
+
+class FakeSMTP:
+    """SMTP без сети: помнит, что именно ему передали."""
+
+    def __init__(self):
+        self.sent = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def send_message(self, message, from_addr=None, to_addrs=None):
+        self.sent.append({"message": message, "from": from_addr, "to": to_addrs})
+
+
+def test_envelope_carries_bare_addresses(modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    monkeypatch.setenv("MAIL_SMTP_HOST", "smtp.example.org")
+    monkeypatch.setenv("MAIL_FROM", "smev@mirasnowfox.ru")
+    smtp = FakeSMTP()
+    monkeypatch.setattr(mailbox, "_smtp_connect", lambda config, password: smtp)
+    config = mailbox.load_config()
+
+    result = mailbox.send_letter(
+        config,
+        to="Федеральный ситуационный центр <sd@sc.digital.gov.ru>",
+        subject="Запрос SCR#1 выполнен",
+        body="Подтверждаем",
+    )
+
+    # Имя кириллицей в конверте ломало отправку: smtplib кодирует его в ASCII,
+    # а сервер отвечает, что SMTPUTF8 не поддерживает.
+    assert smtp.sent[0]["to"] == ["sd@sc.digital.gov.ru"]
+    assert smtp.sent[0]["from"] == "smev@mirasnowfox.ru"
+    assert result["recipients"] == ["sd@sc.digital.gov.ru"]
+
+
+def test_display_name_is_encoded_in_the_header(modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    monkeypatch.setenv("MAIL_SMTP_HOST", "smtp.example.org")
+    monkeypatch.setenv("MAIL_FROM", "smev@mirasnowfox.ru")
+    smtp = FakeSMTP()
+    monkeypatch.setattr(mailbox, "_smtp_connect", lambda config, password: smtp)
+
+    mailbox.send_letter(
+        mailbox.load_config(),
+        to="Федеральный ситуационный центр <sd@sc.digital.gov.ru>",
+        subject="Тема",
+        body="Текст",
+    )
+
+    raw = smtp.sent[0]["message"].as_bytes().decode("ascii", "replace")
+    # Заголовок уходит в ASCII: кириллица закодирована по RFC 2047. Длинный
+    # заголовок переносится на следующую строку, поэтому склеиваем переносы.
+    unfolded = raw.replace(chr(13) + chr(10) + " ", " ").replace(chr(10) + " ", " ")
+    header = [line for line in unfolded.splitlines() if line.startswith("To:")][0]
+    assert "sd@sc.digital.gov.ru" in header
+    assert "=?utf-8?" in header.lower()
+
+
+def test_letter_without_a_readable_address_is_refused(modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    monkeypatch.setenv("MAIL_SMTP_HOST", "smtp.example.org")
+    smtp = FakeSMTP()
+    monkeypatch.setattr(mailbox, "_smtp_connect", lambda config, password: smtp)
+
+    with pytest.raises(mailbox.MailError):
+        mailbox.send_letter(mailbox.load_config(), to="Просто имя", subject="Тема", body="Текст")

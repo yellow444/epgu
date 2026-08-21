@@ -10,7 +10,9 @@
 Что модуль не делает:
 
 - не отправляет письма сам. Отправка происходит только по явному вызову с уже
-  собранным письмом, автоматических рассылок в ведомства нет;
+  собранным письмом. Единственное исключение живёт в ``mail_worker``: он умеет
+  подтверждать решение запроса, если оператор отдельно это разрешил, и только
+  на ведомственный адрес поддержки;
 - не устанавливает вложения. Он их только сохраняет в каталог, установка -
   отдельное действие оператора;
 - не пишет пароль ни в лог, ни в ответ API.
@@ -29,7 +31,7 @@ import ssl
 from dataclasses import dataclass, field
 from email.header import decode_header, make_header
 from email.message import EmailMessage
-from email.utils import parsedate_to_datetime
+from email.utils import formatdate, make_msgid, parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -41,9 +43,28 @@ logger = logging.getLogger(__name__)
 # Адреса, ответы с которых интересны: поддержка ЕПГУ, УЦ, техпортал.
 WATCHED_DOMAINS = ("gov.ru", "sc.digital.gov.ru", "digital.gov.ru", "gosuslugi.ru")
 
+# Куда отвечать, если письмо пришло с адреса noreply. Это адрес первой линии
+# ФГИС СЦ, он же стоит в шаблонах писем.
+SUPPORT_ADDRESS = "sd@sc.digital.gov.ru"
+
 # Имя файла из вложения приходит от внешнего отправителя, поэтому берётся
 # только базовое имя и только безопасные символы.
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]+")
+
+# Таблица для имён вложений. Ставится до чистки, поэтому русское имя файла
+# остаётся читаемым: "Инструкция.pdf" превращается в "Instrukciya.pdf".
+TRANSLIT = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e",
+    "ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l", "м": "m",
+    "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
+    "ф": "f", "х": "h", "ц": "c", "ч": "ch", "ш": "sh", "щ": "sch",
+    "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+    "А": "A", "Б": "B", "В": "V", "Г": "G", "Д": "D", "Е": "E", "Ё": "E",
+    "Ж": "Zh", "З": "Z", "И": "I", "Й": "Y", "К": "K", "Л": "L", "М": "M",
+    "Н": "N", "О": "O", "П": "P", "Р": "R", "С": "S", "Т": "T", "У": "U",
+    "Ф": "F", "Х": "H", "Ц": "C", "Ч": "Ch", "Ш": "Sh", "Щ": "Sch",
+    "Ъ": "", "Ы": "Y", "Ь": "", "Э": "E", "Ю": "Yu", "Я": "Ya",
+}
 
 MAX_ATTACHMENT_BYTES = int(os.getenv("MAIL_MAX_ATTACHMENT", str(20 * 1024 * 1024)))
 
@@ -194,15 +215,87 @@ def _decode(value: Optional[str]) -> str:
         return value
 
 
+def translit(value: str) -> str:
+    """Кириллица латиницей. Имя должно остаться узнаваемым.
+
+    Вложения от УЦ и поддержки почти всегда названы по-русски, а вычищать
+    кириллицу подчёркиваниями значит превращать "Инструкция.pdf" в мусор.
+    """
+    return "".join(TRANSLIT.get(letter, TRANSLIT.get(letter.lower(), letter)) for letter in value)
+
+
 def safe_attachment_name(raw: Optional[str], index: int) -> str:
-    name = Path(_decode(raw) or "").name
-    name = _SAFE_NAME.sub("_", name).strip("._") or f"attachment-{index}"
-    return name[:120]
+    """Безопасное имя файла с сохранением расширения.
+
+    Расширение отделяется до чистки: по нему определяется тип файла, и
+    потерять его значит потерять и сертификат, и инструкцию среди файлов
+    без имени.
+    """
+    source = Path(_decode(raw) or "").name
+    suffix = Path(source).suffix.lower()[:10]
+    suffix = _SAFE_NAME.sub("", suffix)
+    stem = translit(Path(source).stem)
+    stem = _SAFE_NAME.sub("_", stem).strip("._")
+    if not stem:
+        stem = f"attachment-{index}"
+    return (stem[:100] + suffix)[:120]
+
+
+def _uid_from_prefix(prefix: bytes) -> str:
+    """Достать UID из префикса ответа FETCH.
+
+    Ответ выглядит как ``12 (UID 3456 BODY[...] {size}``: первое число это
+    порядковый номер письма в сессии, и он меняется, стоит кому-то удалить
+    письмо из ящика. Настоящий UID стоит после слова UID, его и берём.
+    """
+    text = prefix.decode("ascii", "replace")
+    match = re.search(r"UID\s+(\d+)", text, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    # Старый сервер мог не вернуть UID: тогда номер сессии лучше, чем ничего.
+    return text.split()[0] if text.split() else ""
 
 
 def _is_watched(address: str) -> bool:
     address = address.lower()
     return any(domain in address for domain in WATCHED_DOMAINS)
+
+
+def is_watched(address: str) -> bool:
+    """Ведомственный ли адрес. Публичное имя для проверок снаружи модуля."""
+    return _is_watched(address or "")
+
+
+def address_only(value: str) -> str:
+    """Голый адрес из строки вида "Имя <box@example.org>"."""
+    match = re.search(r"<([^>]+)>", str(value or ""))
+    return (match.group(1) if match else str(value or "")).strip().lower()
+
+
+def attachment_kind(name: str) -> str:
+    """Вид вложения по имени файла: сертификат, ключ, архив, документ."""
+    import attachments
+
+    return attachments.guess_kind(name)
+
+
+def _is_noreply(address: str) -> bool:
+    lowered = (address or "").lower()
+    return any(marker in lowered for marker in ("noreply", "no-reply", "donotreply"))
+
+
+def reply_address(reply_to: Optional[str], sender: str) -> str:
+    """Куда на самом деле уйдёт ответ.
+
+    Робот ФГИС СЦ пишет с адреса noreply, а ответ ждёт на адрес поддержки.
+    Отправить ответ в noreply значит пропустить срок, думая, что ответил.
+    """
+    explicit = _decode(reply_to)
+    if explicit:
+        return explicit
+    if _is_noreply(sender):
+        return SUPPORT_ADDRESS
+    return sender
 
 
 def _imap_connect(config: MailConfig) -> imaplib.IMAP4:
@@ -309,8 +402,16 @@ def send_letter(
     subject: str,
     body: str,
     cc: str = "",
+    in_reply_to: str = "",
+    references: str = "",
+    attach: Optional[List[Path]] = None,
 ) -> Dict[str, Any]:
-    """Отправить одно письмо. Вызывается только по явному действию оператора."""
+    """Отправить одно письмо. Вызывается только по явному действию оператора.
+
+    ``in_reply_to`` цепляет письмо к существующей переписке: поддержка ведёт
+    тикеты по теме, но почтовые клиенты и роботы сшивают ветку по заголовкам
+    In-Reply-To и References. Без них ответ может уехать в отдельный тикет.
+    """
     if not config.smtp_host:
         raise MailError("SMTP-сервер не задан")
     if not to.strip():
@@ -323,7 +424,22 @@ def send_letter(
     if cc.strip():
         message["Cc"] = cc
     message["Subject"] = subject
+    # Свои Date и Message-ID: по ним на наш ответ можно сослаться потом, а
+    # клиент оператора видит письмо в той же ветке.
+    message["Date"] = formatdate(localtime=True)
+    domain = (config.sender or config.user or "localhost").split("@")[-1] or "localhost"
+    message["Message-ID"] = make_msgid(domain=domain)
+    if in_reply_to.strip():
+        message["In-Reply-To"] = in_reply_to.strip()
+        chain = " ".join(part for part in (references.strip(), in_reply_to.strip()) if part)
+        message["References"] = chain
     message.set_content(body)
+    for path in attach or []:
+        data = Path(path).read_bytes()
+        subtype = Path(path).suffix.lstrip(".").lower() or "octet-stream"
+        message.add_attachment(
+            data, maintype="application", subtype=subtype, filename=Path(path).name
+        )
 
     recipients = [addr.strip() for addr in (to + "," + cc).split(",") if addr.strip()]
     with _smtp_connect(config, password) as server:
@@ -348,19 +464,29 @@ def _message_summary(uid: str, message: email.message.Message) -> Dict[str, Any]
         filename = part.get_filename()
         if "attachment" not in disposition and not filename:
             continue
-        payload = part.get_payload(decode=True) or b""
+        # Точный размер стоил бы раскодировки всех вложений страницы, а это
+        # сотни мегабайт в памяти. Для показа хватает оценки по base64.
+        raw = part.get_payload(decode=False)
+        size = int(len(raw) * 3 / 4) if isinstance(raw, str) else 0
+        name = safe_attachment_name(filename, index)
         attachments.append(
             {
                 "index": index,
-                "name": safe_attachment_name(filename, index),
-                "size": len(payload),
+                "name": name,
+                "size": size,
                 "content_type": part.get_content_type(),
-                "too_large": len(payload) > MAX_ATTACHMENT_BYTES,
+                "too_large": size > MAX_ATTACHMENT_BYTES,
+                # Вид файла нужен интерфейсу, чтобы не предлагать положить
+                # инструкцию в каталог ключей.
+                "kind": attachment_kind(name),
             }
         )
         index += 1
     body = ""
     for part in message.walk():
+        # Вложенный текстовый файл телом письма не является.
+        if "attachment" in (part.get("Content-Disposition") or "").lower():
+            continue
         if part.get_content_type() == "text/plain":
             raw = part.get_payload(decode=True) or b""
             body = raw.decode(part.get_content_charset() or "utf-8", "replace")
@@ -368,6 +494,13 @@ def _message_summary(uid: str, message: email.message.Message) -> Dict[str, Any]
     return {
         "uid": uid,
         "from": sender,
+        # Отвечать надо на Reply-To, если он задан: у роботов поддержки
+        # обратный адрес отличается от того, с которого письмо пришло.
+        "reply_to": reply_address(message.get("Reply-To"), sender),
+        "reply_to_replaced": bool(_is_noreply(sender) and not _decode(message.get("Reply-To"))),
+        "to": _decode(message.get("To")),
+        "message_id": (message.get("Message-Id") or "").strip(),
+        "references": (message.get("References") or "").strip(),
         "subject": _decode(message.get("Subject")),
         "received_at": received,
         "watched": _is_watched(sender),
@@ -385,15 +518,15 @@ def fetch_headers(config: MailConfig, *, scan: int = 200) -> List[Dict[str, Any]
     client = _imap_connect(config)
     try:
         client.select("INBOX", readonly=True)
-        status, data = client.search(None, "ALL")
+        status, data = client.uid("SEARCH", None, "ALL")
         if status != "OK":
             raise MailError("IMAP не отдал список писем")
         uids = data[0].split()[-scan:]
         if not uids:
             return []
-        request = b",".join(uids)
-        status, payload = client.fetch(
-            request, "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])"
+        request = b",".join(uids).decode("ascii")
+        status, payload = client.uid(
+            "FETCH", request, "(UID BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE)])"
         )
         if status != "OK":
             raise MailError("IMAP не отдал заголовки писем")
@@ -402,7 +535,7 @@ def fetch_headers(config: MailConfig, *, scan: int = 200) -> List[Dict[str, Any]
         for item in payload:
             if not isinstance(item, tuple):
                 continue
-            raw_uid = item[0].split()[0].decode("ascii", "replace")
+            raw_uid = _uid_from_prefix(item[0])
             message = email.message_from_bytes(item[1])
             sender = _decode(message.get("From"))
             subject = _decode(message.get("Subject"))
@@ -457,6 +590,7 @@ def build_threads(headers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "messages": 0,
                 "has_files": False,
                 "needs_action": False,
+                "status_uid": "",
                 "uids": [],
             },
         )
@@ -474,6 +608,9 @@ def build_threads(headers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             thread["status"] = status
             thread["status_kind"] = kind
             thread["status_at"] = received
+            # Отвечать надо на то письмо, которым объявлено решение, а не на
+            # позднейший комментарий: он статус не меняет.
+            thread["status_uid"] = header["uid"]
     ordered = sorted(threads.values(), key=lambda item: item["last_at"], reverse=True)
     for thread in ordered:
         if not thread["status"]:
@@ -500,9 +637,13 @@ def fetch_messages(
     десятка на экране незачем.
     """
     headers = fetch_headers(config, scan=500)
-    selected = [item for item in reversed(headers) if not only_watched or item["watched"]]
     if ticket:
-        selected = [item for item in selected if parse_ticket(item["subject"]) == ticket]
+        # Номер запроса - фильтр достаточно узкий сам по себе. Отбор по
+        # ведомственным доменам поверх него прятал письма УЦ с обычного
+        # адреса, и запрос выглядел как переписка без единого письма.
+        selected = [item for item in reversed(headers) if parse_ticket(item["subject"]) == ticket]
+    else:
+        selected = [item for item in reversed(headers) if not only_watched or item["watched"]]
     total = len(selected)
     page = selected[offset : offset + limit]
 
@@ -512,7 +653,7 @@ def fetch_messages(
         try:
             client.select("INBOX", readonly=True)
             for item in page:
-                status, payload = client.fetch(item["uid"].encode("ascii"), "(RFC822)")
+                status, payload = client.uid("FETCH", item["uid"], "(RFC822)")
                 if status != "OK" or not payload or not isinstance(payload[0], tuple):
                     continue
                 message = email.message_from_bytes(payload[0][1])
@@ -531,6 +672,51 @@ def fetch_messages(
         "offset": offset,
         "limit": limit,
     }
+
+
+def fetch_message(config: MailConfig, *, uid: str) -> Dict[str, Any]:
+    """Одно письмо целиком по его номеру в ящике.
+
+    Нужно для ответа: адрес, тема и Message-Id берутся из самого письма, а не
+    из того, что прислал браузер. Так ответ не уедет чужому адресату.
+    """
+    client = _imap_connect(config)
+    try:
+        client.select("INBOX", readonly=True)
+        status, payload = client.uid("FETCH", str(uid), "(RFC822)")
+        if status != "OK" or not payload or not isinstance(payload[0], tuple):
+            raise MailError("Письмо не найдено")
+        message = email.message_from_bytes(payload[0][1])
+    finally:
+        try:
+            client.logout()
+        except Exception:
+            pass
+    summary = _message_summary(str(uid), message)
+    summary["ticket"] = parse_ticket(summary["subject"])
+    summary["status"], summary["status_kind"] = parse_status(summary["subject"])
+    return summary
+
+
+def reply_subject(subject: str) -> str:
+    """Тема ответа - ровно та же, что в письме.
+
+    Робот поддержки просит об этом прямым текстом: "просьба не менять тему
+    письма". По теме сшивается тикет, и даже привычное Re: тут лишнее.
+    """
+    return (subject or "").strip()
+
+
+def quote_original(message: Dict[str, Any], limit: int = 4000) -> str:
+    """Процитировать исходное письмо под ответом.
+
+    Ответ ставится выше цитаты: об этом прямо просит робот поддержки, иначе
+    текст теряется при разборе на их стороне.
+    """
+    head = "%s пишет:" % (message.get("from") or "Отправитель")
+    body = (message.get("body") or "")[:limit]
+    quoted = "\n".join("> " + line for line in body.splitlines())
+    return head + "\n" + quoted
 
 
 def list_attachments(config: MailConfig, *, letters: int = 20) -> List[Dict[str, Any]]:
@@ -554,22 +740,16 @@ def list_attachments(config: MailConfig, *, letters: int = 20) -> List[Dict[str,
     return items
 
 
-def save_attachment(
-    config: MailConfig,
-    *,
-    uid: str,
-    index: int,
-    target_dir: Optional[Path] = None,
-) -> Dict[str, Any]:
-    """Сохранить вложение в каталог входящих. Установка - отдельный шаг.
+def read_attachment(config: MailConfig, *, uid: str, index: int) -> Dict[str, Any]:
+    """Достать вложение из письма в память, ничего не сохраняя.
 
-    Каталог можно задать явно: ключевой контейнер должен лечь к ключам, а не
-    к документам, и решает это вызывающая сторона.
+    Нужно для просмотра: смотреть файл оператор должен до того, как решит,
+    класть его на диск или нет.
     """
     client = _imap_connect(config)
     try:
         client.select("INBOX", readonly=True)
-        status, payload = client.fetch(uid.encode("ascii"), "(RFC822)")
+        status, payload = client.uid("FETCH", str(uid), "(RFC822)")
         if status != "OK" or not payload or not isinstance(payload[0], tuple):
             raise MailError("Письмо не найдено")
         message = email.message_from_bytes(payload[0][1])
@@ -593,16 +773,36 @@ def save_attachment(
         data = part.get_payload(decode=True) or b""
         if len(data) > MAX_ATTACHMENT_BYTES:
             raise MailError("Вложение больше допустимого размера")
-        name = safe_attachment_name(filename, index)
-        folder = Path(target_dir) if target_dir else config.inbox_dir
-        folder.mkdir(parents=True, exist_ok=True)
-        target = folder / name
-        # Имя пришло снаружи: не даём перезаписать уже сохранённое.
-        counter = 1
-        while target.exists():
-            target = folder / f"{target.stem}-{counter}{target.suffix}"
-            counter += 1
-        target.write_bytes(data)
-        logger.info("Вложение сохранено: %s, %s байт", target.name, len(data))
-        return {"saved": True, "path": str(target), "name": target.name, "size": len(data)}
+        return {
+            "name": safe_attachment_name(filename, index),
+            "content_type": part.get_content_type(),
+            "data": data,
+        }
     raise MailError("Вложение с таким номером не найдено")
+
+
+def save_attachment(
+    config: MailConfig,
+    *,
+    uid: str,
+    index: int,
+    target_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
+    """Сохранить вложение в каталог входящих. Установка - отдельный шаг.
+
+    Каталог можно задать явно: ключевой контейнер должен лечь к ключам, а не
+    к документам, и решает это вызывающая сторона.
+    """
+    found = read_attachment(config, uid=uid, index=index)
+    data = found["data"]
+    folder = Path(target_dir) if target_dir else config.inbox_dir
+    folder.mkdir(parents=True, exist_ok=True)
+    target = folder / found["name"]
+    # Имя пришло снаружи: не даём перезаписать уже сохранённое.
+    counter = 1
+    while target.exists():
+        target = folder / f"{target.stem}-{counter}{target.suffix}"
+        counter += 1
+    target.write_bytes(data)
+    logger.info("Вложение сохранено: %s, %s байт", target.name, len(data))
+    return {"saved": True, "path": str(target), "name": target.name, "size": len(data)}

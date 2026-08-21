@@ -3,8 +3,10 @@
 Подключаются к основному приложению, которое слушает только localhost.
 Публичный приёмник входящих запросов этих методов не имеет.
 
-Письма никогда не уходят сами: отправка происходит только явным вызовом
-``POST /mail/send`` с уже собранным текстом, который оператор видел.
+Письма не уходят сами: отправка идёт явным вызовом ``POST /mail/send`` или
+``POST /mail/reply`` с уже собранным текстом, который оператор видел.
+Исключение одно и включается отдельно: автоматическое подтверждение решения
+запроса, см. ``mail_worker`` и docs/context/13-mail-automation.md.
 """
 
 from __future__ import annotations
@@ -15,7 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 import certsources
@@ -30,12 +32,58 @@ logger = logging.getLogger(__name__)
 # Предел ручной загрузки: инструкции и архивы бывают тяжёлыми, но не такими.
 UPLOAD_LIMIT_BYTES = 50 * 1024 * 1024
 
+# Служебные файлы стенда лежат в том же каталоге, что и вложения. Файл с
+# таким именем принять нельзя: в settings.env лежит пароль почтового ящика.
+RESERVED_NAMES = {"settings.env", "mail-state.json", "mail-auto.json"}
+
+# Что безопасно показывать прямо в браузере. Всё остальное отдаётся как
+# поток байтов и с заголовком attachment: вложение приходит от кого угодно,
+# а страница в origin приложения имела бы доступ к его данным.
+INLINE_TYPES = {
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/gif",
+    "text/plain",
+}
+
+
+def _file_headers(name: str, media: str, download: bool) -> Dict[str, str]:
+    """Заголовки отдачи файла: тип, поведение браузера и запрет угадывания."""
+    safe = name.encode("ascii", "ignore").decode("ascii") or "file"
+    inline = not download and media in INLINE_TYPES
+    return {
+        "Content-Disposition": '%s; filename="%s"' % ("inline" if inline else "attachment", safe),
+        "X-Content-Type-Options": "nosniff",
+        "Content-Security-Policy": "sandbox; default-src 'none'",
+    }
+
 
 class LetterRequest(BaseModel):
     to: str = Field(min_length=3, max_length=320)
     subject: str = Field(min_length=1, max_length=500)
     body: str = Field(min_length=1, max_length=100000)
     cc: str = Field(default="", max_length=320)
+
+
+class ReplyRequest(BaseModel):
+    """Ответ на письмо поддержки. Тему и адресата берём из самого письма."""
+
+    uid: str = Field(min_length=1, max_length=40)
+    body: str = Field(min_length=1, max_length=100000)
+    quote: bool = True
+    cc: str = Field(default="", max_length=320)
+    # Имена файлов из каталога сертификатов: путь браузер не задаёт.
+    attach: List[str] = Field(default_factory=list)
+
+
+class AutoMailRequest(BaseModel):
+    """Что разрешено автоматике. Отправка писем наружу - отдельно от чтения."""
+
+    enabled: Optional[bool] = None
+    collect: Optional[bool] = None
+    confirm: Optional[bool] = None
+    confirm_after_hours: Optional[int] = Field(default=None, ge=1, le=71)
 
 
 class ImportRequest(BaseModel):
@@ -103,7 +151,7 @@ class MailSettingsRequest(BaseModel):
 
 # Кэш последнего разбора ящика. Открытие страницы дёргает список запросов
 # автоматически, и без кэша каждый заход шёл бы в IMAP по полминуты.
-_THREADS_CACHE: Dict[str, Any] = {"at": None, "threads": [], "scanned": 0}
+_THREADS_CACHE: Dict[str, Any] = {"at": None, "threads": [], "scanned": 0, "scan": 0}
 THREADS_TTL_SECONDS = 60
 
 
@@ -129,6 +177,9 @@ def _threads_cached(config, scan: int, refresh: bool):
     fresh = (
         cached_at is not None
         and (now - cached_at).total_seconds() < THREADS_TTL_SECONDS
+        # Окно просмотра часть ключа: иначе оператор двигает scan и минуту
+        # не видит разницы.
+        and _THREADS_CACHE.get("scan") == scan
     )
     if fresh and not refresh:
         return (
@@ -138,7 +189,9 @@ def _threads_cached(config, scan: int, refresh: bool):
         )
     headers = mailbox.fetch_headers(config, scan=scan)
     threads = mailbox.build_threads(headers)
-    _THREADS_CACHE.update({"at": now, "threads": threads, "scanned": len(headers)})
+    _THREADS_CACHE.update(
+        {"at": now, "threads": threads, "scanned": len(headers), "scan": scan}
+    )
     return (
         [dict(item) for item in threads],
         now.isoformat(timespec="seconds"),
@@ -152,12 +205,12 @@ def setup_router() -> APIRouter:
     # ---------- Почта ----------
 
     @router.get("/mail/config")
-    async def mail_config_route():
+    def mail_config_route():
         """Настройки ящика без пароля: что задано и куда падают вложения."""
         return JSONResponse(content=mailbox.load_config().describe())
 
     @router.post("/mail/settings")
-    async def mail_settings_route(settings: MailSettingsRequest):
+    def mail_settings_route(settings: MailSettingsRequest):
         """Сохранить настройки ящика из интерфейса.
 
         Значения ложатся в файл на томе и действуют сразу, перезапускать
@@ -198,7 +251,7 @@ def setup_router() -> APIRouter:
         )
 
     @router.get("/setup/profile")
-    async def setup_profile_get_route():
+    def setup_profile_get_route():
         """Реквизиты организации для подстановки в письма."""
         saved = settings_store.load()
         return JSONResponse(
@@ -215,7 +268,7 @@ def setup_router() -> APIRouter:
         )
 
     @router.post("/setup/profile")
-    async def setup_profile_save_route(profile: ProfileRequest):
+    def setup_profile_save_route(profile: ProfileRequest):
         """Сохранить реквизиты. Они не секретны, но и наружу не публикуются."""
         values = {
             key: (getattr(profile, key.lower(), "") or "").strip()
@@ -240,7 +293,7 @@ def setup_router() -> APIRouter:
         )
 
     @router.post("/setup/reset")
-    async def setup_reset_route(request: ResetRequest):
+    def setup_reset_route(request: ResetRequest):
         """Общий сброс: вернуть стенд к состоянию до настройки.
 
         Что стирается, оператор выбирает сам. Файлы из каталога сертификатов
@@ -296,7 +349,7 @@ def setup_router() -> APIRouter:
         )
 
     @router.post("/mail/discover")
-    async def mail_discover_route(request: DiscoverRequest):
+    def mail_discover_route(request: DiscoverRequest):
         """Определить адреса серверов по домену ящика через DNS."""
         try:
             result = maildiscovery.discover(request.address)
@@ -306,7 +359,7 @@ def setup_router() -> APIRouter:
         return JSONResponse(content=result)
 
     @router.post("/mail/check")
-    async def mail_check_route():
+    def mail_check_route():
         """Проверить вход по IMAP и SMTP."""
         config = mailbox.load_config()
         if not config.imap_host and not config.smtp_host:
@@ -319,7 +372,7 @@ def setup_router() -> APIRouter:
         return JSONResponse(content=result)
 
     @router.post("/mail/send")
-    async def mail_send_route(letter: LetterRequest):
+    def mail_send_route(letter: LetterRequest):
         """Отправить письмо. Только по явному действию оператора."""
         config = mailbox.load_config()
         try:
@@ -334,8 +387,143 @@ def setup_router() -> APIRouter:
             raise HTTPException(status_code=502, detail=str(err)) from err
         return JSONResponse(content=result)
 
+    @router.get("/mail/messages/{uid}/reply")
+    def mail_reply_draft_route(uid: str):
+        """Заготовка ответа на письмо: кому, тема, цитата.
+
+        Ничего не отправляет. Нужна и для ответа отсюда, и для того, чтобы
+        унести текст в свой почтовый клиент.
+        """
+        config = mailbox.load_config()
+        try:
+            original = mailbox.fetch_message(config, uid=uid)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        return JSONResponse(
+            content={
+                "to": original["reply_to"],
+                # Робот пишет с noreply, а ответ ждёт на адресе поддержки.
+                # Интерфейс должен показать подмену, а не молчать про неё.
+                "to_replaced": original.get("reply_to_replaced", False),
+                "from_address": original.get("from", ""),
+                "subject": mailbox.reply_subject(original["subject"]),
+                "quote": mailbox.quote_original(original),
+                "ticket": original.get("ticket", ""),
+                "received_at": original.get("received_at", ""),
+                "from": original.get("from", ""),
+                "message_id": original.get("message_id", ""),
+                "references": original.get("references", ""),
+                "files": sorted(
+                    path.name
+                    for path in certsources.cert_dir().glob("*")
+                    if path.is_file()
+                ),
+            }
+        )
+
+    @router.post("/mail/reply")
+    def mail_reply_route(reply: ReplyRequest):
+        """Ответить в переписку. Только по явному действию оператора.
+
+        Адрес, тема и Message-Id берутся из письма на сервере: браузер их не
+        подсказывает, иначе ответ можно было бы увести чужому адресату.
+        """
+        config = mailbox.load_config()
+        try:
+            original = mailbox.fetch_message(config, uid=reply.uid)
+            body = reply.body
+            if reply.quote:
+                body = body.rstrip() + "\n\n" + mailbox.quote_original(original)
+            attach = []
+            for name in reply.attach:
+                candidate = (certsources.cert_dir() / Path(name).name).resolve()
+                if candidate.is_file() and certsources.cert_dir().resolve() in candidate.parents:
+                    attach.append(candidate)
+                else:
+                    raise HTTPException(status_code=400, detail="Файл %s не найден" % name)
+            result = mailbox.send_letter(
+                config,
+                to=original["reply_to"],
+                subject=mailbox.reply_subject(original["subject"]),
+                body=body,
+                cc=reply.cc,
+                in_reply_to=original.get("message_id", ""),
+                references=original.get("references", ""),
+                attach=attach,
+            )
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        ticket = original.get("ticket", "")
+        if ticket:
+            # Ответили - значит запрос больше не ждёт нас.
+            mail_state.mark_read(ticket, original.get("received_at", ""))
+        # Список запросов кэшируется на минуту, и без сброса оператор ещё
+        # минуту видел бы "нужен ответ от нас" по запросу, на который ответил.
+        _THREADS_CACHE["at"] = None
+        result["ticket"] = ticket
+        result["in_reply_to"] = original.get("message_id", "")
+        result["attached"] = [path.name for path in attach]
+        logger.info("Ответ отправлен по запросу %s", ticket or "без номера")
+        return JSONResponse(content=result)
+
+    @router.get("/mail/auto")
+    def mail_auto_state_route():
+        """Что настроено у автоматики и что она успела сделать."""
+        import mail_worker
+
+        return JSONResponse(content=mail_worker.describe())
+
+    @router.post("/mail/auto")
+    def mail_auto_save_route(request: AutoMailRequest):
+        """Разрешить или запретить автоматическую обработку почты.
+
+        Подтверждение решения отправляет письмо наружу от имени организации,
+        поэтому включается отдельно от всего остального и пишется в лог.
+        """
+        import mail_worker
+
+        # Пишем только то, что прислали: переключатель в интерфейсе может
+        # менять один флаг, и это не повод сбрасывать остальные.
+        values = {}
+        if request.enabled is not None:
+            values["MAIL_AUTO_ENABLED"] = "1" if request.enabled else "0"
+        if request.collect is not None:
+            values["MAIL_AUTO_COLLECT"] = "1" if request.collect else "0"
+        if request.confirm is not None:
+            values["MAIL_AUTO_CONFIRM"] = "1" if request.confirm else "0"
+        if request.confirm_after_hours is not None:
+            values["MAIL_AUTO_CONFIRM_AFTER"] = str(request.confirm_after_hours)
+        if not values:
+            return JSONResponse(content=mail_worker.describe())
+        try:
+            settings_store.save(values)
+        except (ValueError, OSError) as err:
+            raise HTTPException(status_code=400, detail=str(err)) from err
+        if request.enabled and request.confirm:
+            logger.warning(
+                "Оператор разрешил автоматические подтверждения решений через %d ч",
+                request.confirm_after_hours,
+            )
+        return JSONResponse(content=mail_worker.describe())
+
+    @router.get("/mail/deadlines")
+    def mail_deadlines_route():
+        """Запросы, которые ждут подтверждения, и сколько времени осталось."""
+        import mail_worker
+
+        config = mailbox.load_config()
+        if not config.configured:
+            return JSONResponse(content={"configured": False, "waiting": []})
+        try:
+            threads, _, _ = _threads_cached(config, 200, False)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        return JSONResponse(
+            content={"configured": True, "waiting": mail_worker.deadlines(threads)}
+        )
+
     @router.get("/mail/threads")
-    async def mail_threads_route(
+    def mail_threads_route(
         scan: int = Query(200, ge=10, le=1000),
         limit: int = Query(10, ge=1, le=100),
         offset: int = Query(0, ge=0),
@@ -387,7 +575,7 @@ def setup_router() -> APIRouter:
         )
 
     @router.post("/mail/threads/read")
-    async def mail_threads_read_route(request: ReadRequest):
+    def mail_threads_read_route(request: ReadRequest):
         """Отметить прочитанным. Свой учёт, флаги IMAP не трогаем."""
         config = mailbox.load_config()
         try:
@@ -403,14 +591,14 @@ def setup_router() -> APIRouter:
         return JSONResponse(content={"marked": changed})
 
     @router.post("/mail/threads/unread")
-    async def mail_threads_unread_route(request: ReadRequest):
+    def mail_threads_unread_route(request: ReadRequest):
         """Снять отметку прочитанного, чтобы вернуть запрос в поле зрения."""
         for ticket in request.tickets:
             mail_state.forget(ticket)
         return JSONResponse(content={"cleared": len(request.tickets)})
 
     @router.get("/mail/messages")
-    async def mail_messages_route(
+    def mail_messages_route(
         limit: int = Query(10, ge=1, le=100),
         offset: int = Query(0, ge=0),
         only_watched: bool = Query(True),
@@ -432,7 +620,7 @@ def setup_router() -> APIRouter:
         return JSONResponse(content=page)
 
     @router.get("/mail/attachments")
-    async def mail_attachments_route(letters: int = Query(20, ge=1, le=50)):
+    def mail_attachments_route(letters: int = Query(20, ge=1, le=50)):
         """Вложения последних писем одним списком, с пометкой уже сохранённых."""
         config = mailbox.load_config()
         if not config.configured:
@@ -450,7 +638,7 @@ def setup_router() -> APIRouter:
         return JSONResponse(content={"configured": True, "attachments": items})
 
     @router.post("/mail/messages/{uid}/attachments/{index}/save")
-    async def mail_save_attachment_route(
+    def mail_save_attachment_route(
         uid: str,
         index: int,
         target: str = Query("certs", pattern="^(certs|keys)$"),
@@ -469,8 +657,56 @@ def setup_router() -> APIRouter:
         result["target"] = target
         return JSONResponse(content=result)
 
+    @router.get("/mail/messages/{uid}/attachments/{index}/preview")
+    def mail_attachment_preview_route(uid: str, index: int):
+        """Что внутри вложения: текст, ссылки, вложенные файлы, подсказки.
+
+        Файл на диск не ложится: он разбирается во временном каталоге и
+        оттуда исчезает. Смотреть до сохранения - нормальное желание.
+        """
+        import tempfile
+
+        import attachments
+
+        config = mailbox.load_config()
+        try:
+            found = mailbox.read_attachment(config, uid=uid, index=index)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / found["name"]
+            path.write_bytes(found["data"])
+            described = attachments.describe(path)
+        described.pop("path", None)
+        described["content_type"] = found["content_type"]
+        described["uid"] = uid
+        described["index"] = index
+        return JSONResponse(content=described)
+
+    @router.get("/mail/messages/{uid}/attachments/{index}/raw")
+    def mail_attachment_raw_route(uid: str, index: int, download: bool = False):
+        """Само вложение байтами, для показа в интерфейсе.
+
+        Отдаём с ``inline``: PDF открывается прямо на странице, а не падает
+        в загрузки браузера непонятно куда.
+        """
+        from fastapi.responses import Response
+
+        config = mailbox.load_config()
+        try:
+            found = mailbox.read_attachment(config, uid=uid, index=index)
+        except mailbox.MailError as err:
+            raise HTTPException(status_code=502, detail=str(err)) from err
+        media = found["content_type"] or "application/octet-stream"
+        headers = _file_headers(found["name"], media, download)
+        if media not in INLINE_TYPES:
+            # Тип пришёл из письма. Показывать в браузере чужой HTML или SVG
+            # в origin приложения нельзя: страница получила бы его данные.
+            media = "application/octet-stream"
+        return Response(content=found["data"], media_type=media, headers=headers)
+
     @router.post("/mail/attachments/collect")
-    async def mail_collect_attachments_route(letters: int = Query(20, ge=1, le=50)):
+    def mail_collect_attachments_route(letters: int = Query(20, ge=1, le=50)):
         """Забрать из писем сертификаты, ключи, архивы и документы.
 
         Одна кнопка вместо обхода писем руками. Инструкции в PDF и документы
@@ -520,7 +756,7 @@ def setup_router() -> APIRouter:
     # ---------- Источники сертификатов ----------
 
     @router.get("/certsources")
-    async def certsources_route():
+    def certsources_route():
         """Папка с сертификатами, что видит КриптоПро и гайд по токену."""
         return JSONResponse(
             content={
@@ -534,7 +770,7 @@ def setup_router() -> APIRouter:
         )
 
     @router.post("/certsources/upload")
-    async def certsources_upload_route(
+    def certsources_upload_route(
         files: List[UploadFile] = File(...),
         target: str = Form("certs"),
     ):
@@ -563,13 +799,24 @@ def setup_router() -> APIRouter:
             name = attachments._safe_name(upload.filename or "")
             if not name:
                 raise HTTPException(status_code=400, detail="Некорректное имя файла")
-            payload = await upload.read()
+            payload = upload.file.read()
             if len(payload) > UPLOAD_LIMIT_BYTES:
                 raise HTTPException(
                     status_code=413,
                     detail="Файл %s больше %d МБ" % (name, UPLOAD_LIMIT_BYTES // 1024 // 1024),
                 )
+            if name.lower() in RESERVED_NAMES:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Имя %s занято служебным файлом стенда" % name,
+                )
             destination = folder / name
+            # Имя пришло снаружи: чужая загрузка не должна затирать уже
+            # лежащий файл, как это сделано и при сохранении из письма.
+            counter = 1
+            while destination.exists():
+                destination = folder / ("%s-%d%s" % (Path(name).stem, counter, Path(name).suffix))
+                counter += 1
             try:
                 destination.write_bytes(payload)
             except OSError as err:
@@ -579,7 +826,7 @@ def setup_router() -> APIRouter:
         return JSONResponse(content={"saved": saved, "target": target, "folder": str(folder)})
 
     @router.get("/certsources/inspect")
-    async def certsources_inspect_route(path: str = Query(..., max_length=400)):
+    def certsources_inspect_route(path: str = Query(..., max_length=400)):
         """Разобрать сохранённое вложение: текст, ссылки, вложенные файлы.
 
         Читать инструкции глазами и распаковывать архивы руками означает
@@ -601,7 +848,7 @@ def setup_router() -> APIRouter:
         return JSONResponse(content=result)
 
     @router.post("/certsources/extract")
-    async def certsources_extract_route(request: ExtractRequest):
+    def certsources_extract_route(request: ExtractRequest):
         """Достать вложенные файлы из архива или документа на диск."""
         import attachments
 
@@ -614,13 +861,38 @@ def setup_router() -> APIRouter:
             )
         if not candidate.is_file():
             raise HTTPException(status_code=404, detail="Файл не найден")
-        result = attachments.extract(candidate, folder, only=request.only or None)
+        result = attachments.extract(
+            candidate,
+            folder,
+            only=request.only or None,
+            keys_dir=certsources.keys_dir(),
+        )
         if not result["extracted"] and result["skipped"]:
             raise HTTPException(status_code=400, detail="; ".join(result["skipped"])[:300])
         return JSONResponse(content=result)
 
+    @router.get("/certsources/file")
+    def certsources_file_route(path: str, download: bool = False):
+        """Отдать файл из каталога вложений.
+
+        По умолчанию ``inline``: PDF открывается прямо в интерфейсе. С
+        ``download=1`` браузер честно сохраняет файл себе, и это разные вещи,
+        которые до сих пор путались в одной кнопке.
+        """
+        import mimetypes
+
+        folder = certsources.cert_dir().resolve()
+        candidate = Path(path).resolve()
+        if folder not in candidate.parents or not candidate.is_file():
+            raise HTTPException(status_code=400, detail="Файл вне каталога вложений")
+        media = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
+        headers = _file_headers(candidate.name, media, download)
+        if media not in INLINE_TYPES:
+            media = "application/octet-stream"
+        return FileResponse(candidate, media_type=media, headers=headers)
+
     @router.post("/certsources/import")
-    async def certsources_import_route(request: ImportRequest):
+    def certsources_import_route(request: ImportRequest):
         """Установить сертификат из каталога в хранилище КриптоПро."""
         folder = certsources.cert_dir().resolve()
         candidate = Path(request.path).resolve()

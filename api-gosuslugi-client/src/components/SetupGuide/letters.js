@@ -167,6 +167,93 @@ HTTP-код и тело ответа: <ответ>
   },
 };
 
+/**
+ * Ответы на письма поддержки.
+ *
+ * Робот ФГИС СЦ пишет прямо: "Просим Вас в течение 3-х календарных дней
+ * ответным письмом подтвердить решение запроса. Если Вы не согласны с
+ * решением, в течение 3-х календарных дней отправьте в ответном письме
+ * причину возобновления работ". Не ответили - запрос закрывается сам.
+ *
+ * Тему ответа менять нельзя: по ней сшивается тикет. Наш текст ставится
+ * выше цитаты, об этом тоже просят в каждом письме.
+ */
+export const REPLIES = {
+  confirm: {
+    id: 'confirm',
+    name: 'Подтвердить решение',
+    body: `Здравствуйте!
+
+Подтверждаем решение запроса <номер запроса>. Вопрос закрыт, претензий нет.
+
+С уважением,
+<ФИО>
+<организация>`,
+  },
+
+  reopen: {
+    id: 'reopen',
+    name: 'Возобновить работы',
+    body: `Здравствуйте!
+
+С решением запроса <номер запроса> согласиться не можем, просим возобновить
+работы.
+
+Причина: <причина>
+
+С уважением,
+<ФИО>
+<организация>`,
+  },
+
+  clarify: {
+    id: 'clarify',
+    name: 'Уточняющий вопрос',
+    body: `Здравствуйте!
+
+По запросу <номер запроса> нужна уточняющая информация.
+
+Вопрос: <вопрос>
+
+С уважением,
+<ФИО>
+<организация>`,
+  },
+
+  files: {
+    id: 'files',
+    name: 'Дослать сведения',
+    body: `Здравствуйте!
+
+По запросу <номер запроса> направляем недостающие сведения.
+
+<что направляем>
+
+С уважением,
+<ФИО>
+<организация>`,
+  },
+};
+
+/** Срок ответа на решённый запрос: три календарных дня от письма. */
+export const REPLY_DEADLINE_DAYS = 3;
+
+export function replyDeadline(receivedAt) {
+  if (!receivedAt) return null;
+  const at = new Date(receivedAt);
+  if (Number.isNaN(at.getTime())) return null;
+  const due = new Date(at.getTime());
+  due.setDate(due.getDate() + REPLY_DEADLINE_DAYS);
+  return due;
+}
+
+/** Сколько суток осталось на ответ. Отрицательное - срок прошёл. */
+export function daysLeft(receivedAt, now = new Date()) {
+  const due = replyDeadline(receivedAt);
+  if (!due) return null;
+  return Math.ceil((due.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+}
+
 /** Сборка письма в текстовый вид - для копирования одной кнопкой. */
 export function letterToText(letter) {
   const lines = [`Кому: ${letter.to}`];
@@ -178,12 +265,34 @@ export function letterToText(letter) {
   return lines.join('\n');
 }
 
-/** Сборка письма в формат .eml - открывается любым почтовым клиентом. */
+/** Тема письма в заголовке: кириллицу кодируем по RFC 2047, иначе почтовый
+ * клиент показывает кракозябры вместо номера запроса. */
+function encodeSubject(value) {
+  const text = String(value || '');
+  if (/^[\x20-\x7e]*$/.test(text)) return text;
+  const bytes = new TextEncoder().encode(text);
+  let binary = '';
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return `=?utf-8?B?${btoa(binary)}?=`;
+}
+
+/** Сборка письма в формат .eml - открывается любым почтовым клиентом.
+ *
+ * Для ответа важны In-Reply-To и References: без них письмо, отправленное из
+ * стороннего клиента, заводит у поддержки отдельный тикет.
+ */
 export function letterToEml(letter) {
   const headers = [
+    `Date: ${new Date().toUTCString()}`,
     `To: ${letter.to}`,
     letter.cc ? `Cc: ${letter.cc}` : null,
-    `Subject: ${letter.subject}`,
+    `Subject: ${encodeSubject(letter.subject)}`,
+    letter.in_reply_to ? `In-Reply-To: ${letter.in_reply_to}` : null,
+    letter.references || letter.in_reply_to
+      ? `References: ${[letter.references, letter.in_reply_to].filter(Boolean).join(' ')}`
+      : null,
     'MIME-Version: 1.0',
     'Content-Type: text/plain; charset=utf-8',
     'Content-Transfer-Encoding: 8bit',
@@ -191,11 +300,24 @@ export function letterToEml(letter) {
   return `${headers.join('\r\n')}\r\n\r\n${letter.body.replace(/\n/g, '\r\n')}\r\n`;
 }
 
-/** mailto-ссылка со всеми заполненными полями. */
+/** mailto-ссылка со всеми заполненными полями.
+ *
+ * Собирается вручную: URLSearchParams кодирует пробел плюсом, а почтовые
+ * клиенты обратно его не разворачивают и показывают текст с плюсами между
+ * всеми словами.
+ */
+/** Голый адрес из строки вида "Имя <box@example.org>": mailto понимает
+ * только адрес, а имя отправителя ломает ссылку. */
+export function addressOnly(value) {
+  const match = /<([^>]+)>/.exec(String(value || ''));
+  return (match ? match[1] : String(value || '')).trim();
+}
+
 export function letterToMailto(letter) {
-  const params = new URLSearchParams();
-  params.set('subject', letter.subject);
-  params.set('body', letter.body);
-  if (letter.cc) params.set('cc', letter.cc);
-  return `mailto:${letter.to}?${params.toString()}`;
+  const parts = [
+    `subject=${encodeURIComponent(letter.subject || '')}`,
+    `body=${encodeURIComponent(letter.body || '')}`,
+  ];
+  if (letter.cc) parts.push(`cc=${encodeURIComponent(letter.cc)}`);
+  return `mailto:${addressOnly(letter.to)}?${parts.join('&')}`;
 }

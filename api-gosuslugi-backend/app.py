@@ -270,10 +270,14 @@ async def lifespan(_application: FastAPI):
     # Планировщик Госпочты крутится всегда, но такт делает только при явно
     # включённом автоматическом режиме: чтение запускает процессуальные сроки.
     geps_worker.start()
+    # Обработка почты тоже крутится всегда: без разрешения оператора такт
+    # только пропускается, зато кнопка "прогнать сейчас" работает сразу.
+    mail_worker_task.start()
     try:
         yield
     finally:
         await geps_worker.stop()
+        await mail_worker_task.stop()
 
 app = FastAPI(
     root_path="/api",
@@ -2250,6 +2254,10 @@ async def _geps_gateway() -> Optional[GepsGateway]:
 
 geps_worker = geps_scheduler.Scheduler(_geps_gateway)
 
+import mail_worker  # noqa: E402  - рядом с задачей, которую он обслуживает
+
+mail_worker_task = mail_worker.Worker()
+
 
 @app.get("/geps/scheduler")
 async def geps_scheduler_state():
@@ -2279,6 +2287,16 @@ async def geps_scheduler_switch(request: GepsScheduleRequest):
 async def geps_scheduler_run():
     """Прогнать один такт прямо сейчас, не дожидаясь расписания."""
     return JSONResponse(content=await geps_worker.run_once())
+
+
+@app.post("/mail/auto/run")
+async def mail_auto_run():
+    """Прогнать обработку почты прямо сейчас.
+
+    Работает и при выключенном автоматическом режиме: разовый прогон по
+    кнопке - это то же явное действие оператора, что и нажатие "проверить".
+    """
+    return JSONResponse(content=await mail_worker_task.run_once())
 
 
 @app.get("/geps/jobs")

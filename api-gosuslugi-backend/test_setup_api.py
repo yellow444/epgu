@@ -280,3 +280,293 @@ def test_saving_one_attachment_honours_the_target(client, modules, monkeypatch):
 def test_unknown_target_is_refused(client, modules, monkeypatch):
     configure_mail(modules, monkeypatch, [LETTER])
     assert client.post("/mail/messages/42/attachments/0/save?target=/etc").status_code == 422
+
+
+# ---------- Имена вложений, ответы, просмотр ----------
+
+
+def test_cyrillic_attachment_keeps_its_extension(modules):
+    _, mailbox, _, _ = modules
+
+    name = mailbox.safe_attachment_name("Инструкция по получению.pdf", 0)
+
+    assert name.endswith(".pdf")
+    assert name.lower().startswith("instrukciya")
+
+
+def test_attachment_name_without_extension_still_has_a_name(modules):
+    _, mailbox, _, _ = modules
+
+    assert mailbox.safe_attachment_name("", 3) == "attachment-3"
+    assert mailbox.safe_attachment_name("...", 1) == "attachment-1"
+
+
+def test_reply_keeps_the_subject_untouched(modules):
+    _, mailbox, _, _ = modules
+
+    subject = "Запрос SCR#6451421 выполнен"
+
+    # Робот просит тему не менять: по ней сшивается тикет.
+    assert mailbox.reply_subject(subject) == subject
+    assert mailbox.reply_subject("Re: " + subject) == "Re: " + subject
+
+
+def test_quote_goes_under_our_text(modules):
+    _, mailbox, _, _ = modules
+
+    quoted = mailbox.quote_original({"from": "sd@sc.digital.gov.ru", "body": "Строка\nВторая"})
+
+    assert quoted.startswith("sd@sc.digital.gov.ru пишет:")
+    assert "> Строка" in quoted and "> Вторая" in quoted
+
+
+def test_noreply_sender_is_replaced_with_support(modules):
+    _, mailbox, _, _ = modules
+
+    assert mailbox.reply_address("", "Центр <noreply@sc.digital.gov.ru>") == mailbox.SUPPORT_ADDRESS
+    assert mailbox.reply_address("sd@sc.digital.gov.ru", "noreply@x") == "sd@sc.digital.gov.ru"
+    assert mailbox.reply_address("", "sd@sc.digital.gov.ru") == "sd@sc.digital.gov.ru"
+
+
+def test_reply_draft_shows_where_the_answer_goes(client, modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    monkeypatch.setattr(
+        mailbox,
+        "fetch_message",
+        lambda config, *, uid: {
+            "uid": uid,
+            "from": "Центр <noreply@sc.digital.gov.ru>",
+            "reply_to": mailbox.SUPPORT_ADDRESS,
+            "reply_to_replaced": True,
+            "subject": "Запрос SCR#6451421 выполнен",
+            "body": "Просим подтвердить решение",
+            "ticket": "6451421",
+            "message_id": "<1@sc>",
+            "received_at": "2026-08-20T17:31:05",
+        },
+    )
+
+    payload = client.get("/mail/messages/42/reply").json()
+
+    assert payload["to"] == mailbox.SUPPORT_ADDRESS
+    assert payload["to_replaced"] is True
+    assert payload["subject"] == "Запрос SCR#6451421 выполнен"
+    assert "Просим подтвердить" in payload["quote"]
+
+
+def test_reply_is_sent_into_the_same_thread(client, modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    sent = {}
+    monkeypatch.setattr(
+        mailbox,
+        "fetch_message",
+        lambda config, *, uid: {
+            "uid": uid,
+            "from": "noreply@sc.digital.gov.ru",
+            "reply_to": mailbox.SUPPORT_ADDRESS,
+            "subject": "Запрос SCR#6451421 выполнен",
+            "body": "Текст робота",
+            "ticket": "6451421",
+            "message_id": "<1@sc>",
+            "references": "<0@sc>",
+            "received_at": "2026-08-20T17:31:05",
+        },
+    )
+
+    def fake_send(config, **kwargs):
+        sent.update(kwargs)
+        return {"sent": True, "recipients": [kwargs["to"]], "subject": kwargs["subject"]}
+
+    monkeypatch.setattr(mailbox, "send_letter", fake_send)
+
+    body = client.post(
+        "/mail/reply", json={"uid": "42", "body": "Подтверждаем решение", "quote": True}
+    ).json()
+
+    assert sent["to"] == mailbox.SUPPORT_ADDRESS
+    assert sent["subject"] == "Запрос SCR#6451421 выполнен"
+    assert sent["in_reply_to"] == "<1@sc>"
+    assert sent["references"] == "<0@sc>"
+    assert "Подтверждаем решение" in sent["body"]
+    assert "> Текст робота" in sent["body"]
+    assert body["ticket"] == "6451421"
+
+
+def test_reply_refuses_a_file_outside_the_folder(client, modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    monkeypatch.setattr(
+        mailbox,
+        "fetch_message",
+        lambda config, *, uid: {
+            "uid": uid, "from": "sd@sc.digital.gov.ru", "reply_to": "sd@sc.digital.gov.ru",
+            "subject": "Тема", "body": "", "ticket": "1", "message_id": "", "references": "",
+            "received_at": "",
+        },
+    )
+    response = client.post(
+        "/mail/reply",
+        json={"uid": "42", "body": "Текст", "attach": ["../../etc/passwd"]},
+    )
+    assert response.status_code == 400
+
+
+def test_attachment_preview_reads_without_saving(client, modules, monkeypatch, tmp_path):
+    _, mailbox, certsources, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    monkeypatch.setattr(
+        mailbox,
+        "read_attachment",
+        lambda config, *, uid, index: {
+            "name": "spisok.zip",
+            "content_type": "application/zip",
+            "data": _zip_bytes(),
+        },
+    )
+
+    payload = client.get("/mail/messages/42/attachments/0/preview").json()
+
+    assert payload["kind"] == "archive"
+    assert [item["name"] for item in payload["entries"]] == ["org.cer"]
+    # Ничего не сохранили: каталог как был.
+    assert not list(certsources.cert_dir().glob("spisok.zip"))
+
+
+def _zip_bytes():
+    import io
+    import zipfile
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("org.cer", "cert")
+    return buffer.getvalue()
+
+
+def test_attachment_raw_is_served_inline(client, modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    monkeypatch.setattr(
+        mailbox,
+        "read_attachment",
+        lambda config, *, uid, index: {
+            "name": "instrukciya.pdf",
+            "content_type": "application/pdf",
+            "data": b"%PDF-1.4 test",
+        },
+    )
+
+    response = client.get("/mail/messages/42/attachments/0/raw")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/pdf")
+    assert response.headers["content-disposition"].startswith("inline")
+
+
+def test_folder_shows_documents_not_only_certificates(client, modules):
+    _, _, certsources, _ = modules
+    folder = certsources.cert_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "instrukciya.pdf").write_bytes(b"%PDF-1.4 hello")
+    (folder / "org.cer").write_bytes(b"cert")
+
+    files = client.get("/certsources").json()["folder"]["files"]
+
+    names = {item["name"]: item["kind"] for item in files}
+    assert names["instrukciya.pdf"] == "pdf"
+    assert "org.cer" in names
+
+
+def test_file_route_refuses_paths_outside_the_folder(client, tmp_path):
+    outsider = tmp_path / "secret.txt"
+    outsider.write_text("нельзя", encoding="utf-8")
+    assert client.get("/certsources/file", params={"path": str(outsider)}).status_code == 400
+
+
+# ---------- Отдача файлов и ручная загрузка ----------
+
+
+def test_html_attachment_is_never_shown_inline(client, modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    monkeypatch.setattr(
+        mailbox,
+        "read_attachment",
+        lambda config, *, uid, index: {
+            "name": "page.html",
+            "content_type": "text/html",
+            "data": b"<script>alert(1)</script>",
+        },
+    )
+
+    response = client.get("/mail/messages/42/attachments/0/raw")
+
+    # Чужая страница не должна исполняться в origin приложения.
+    assert response.headers["content-type"].startswith("application/octet-stream")
+    assert response.headers["content-disposition"].startswith("attachment")
+    assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_pdf_attachment_is_shown_inline(client, modules, monkeypatch):
+    _, mailbox, _, _ = modules
+    configure_mail(modules, monkeypatch, [LETTER])
+    monkeypatch.setattr(
+        mailbox,
+        "read_attachment",
+        lambda config, *, uid, index: {
+            "name": "doc.pdf",
+            "content_type": "application/pdf",
+            "data": b"%PDF-1.4",
+        },
+    )
+
+    response = client.get("/mail/messages/42/attachments/0/raw")
+
+    assert response.headers["content-disposition"].startswith("inline")
+    response = client.get("/mail/messages/42/attachments/0/raw", params={"download": True})
+    assert response.headers["content-disposition"].startswith("attachment")
+
+
+def test_upload_refuses_to_overwrite_settings(client, modules):
+    _, _, certsources, _ = modules
+    certsources.cert_dir().mkdir(parents=True, exist_ok=True)
+    settings = certsources.cert_dir() / "settings.env"
+    settings.write_text("MAIL_PASSWORD=секрет", encoding="utf-8")
+
+    response = client.post(
+        "/certsources/upload",
+        files={"files": ("settings.env", "подмена".encode(), "text/plain")},
+        data={"target": "certs"},
+    )
+
+    assert response.status_code == 400
+    assert settings.read_text(encoding="utf-8") == "MAIL_PASSWORD=секрет"
+
+
+def test_upload_does_not_overwrite_an_existing_file(client, modules):
+    _, _, certsources, _ = modules
+    certsources.cert_dir().mkdir(parents=True, exist_ok=True)
+    existing = certsources.cert_dir() / "org.cer"
+    existing.write_bytes("первый".encode())
+
+    response = client.post(
+        "/certsources/upload",
+        files={"files": ("org.cer", "второй".encode(), "application/x-x509-ca-cert")},
+        data={"target": "certs"},
+    )
+
+    assert response.status_code == 200
+    assert existing.read_bytes() == "первый".encode()
+    assert (certsources.cert_dir() / "org-1.cer").read_bytes() == "второй".encode()
+
+
+def test_partial_settings_do_not_reset_the_rest(client, modules):
+    _, _, _, setup_api = modules
+    client.post("/mail/auto", json={"enabled": True, "collect": True})
+
+    client.post("/mail/auto", json={"confirm": True})
+
+    state = client.get("/mail/auto").json()
+    assert state["enabled"] is True
+    assert state["confirm"] is True

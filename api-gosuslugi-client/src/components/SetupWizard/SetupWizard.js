@@ -6,9 +6,12 @@ import {
   Card,
   Checkbox,
   Col,
+  Collapse,
   Descriptions,
+  Drawer,
   Empty,
   Input,
+  message,
   Upload,
   Modal,
   Result,
@@ -29,6 +32,7 @@ import {
   CloseCircleOutlined,
   CopyOutlined,
   DownloadOutlined,
+  EyeOutlined,
   ExclamationCircleOutlined,
   FolderOpenOutlined,
   FormOutlined,
@@ -43,10 +47,19 @@ import {
   SearchOutlined,
   SaveOutlined,
   SendOutlined,
+  ThunderboltOutlined,
   UsbOutlined,
 } from '@ant-design/icons';
 import axios from 'axios';
-import { LETTERS, SENDER_HINT, letterToEml, letterToText } from '../SetupGuide/letters';
+import {
+  LETTERS,
+  REPLIES,
+  SENDER_HINT,
+  daysLeft,
+  letterToEml,
+  letterToMailto,
+  letterToText,
+} from '../SetupGuide/letters';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -192,6 +205,30 @@ function errorText(error, fallback) {
   return fallback;
 }
 
+function formatMoment(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  const today = new Date();
+  const sameDay = parsed.toDateString() === today.toDateString();
+  const time = parsed.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  if (sameDay) return `сегодня ${time}`;
+  return `${parsed.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })} ${time}`;
+}
+
+// Как называть действия автоматики в журнале.
+const AUTO_KIND = {
+  collect: 'забран файл',
+  confirm: 'ответ отправлен',
+  error: 'ошибка',
+};
+
+const AUTO_KIND_COLOR = {
+  collect: 'processing',
+  confirm: 'success',
+  error: 'error',
+};
+
 function formatBytes(size) {
   if (!size && size !== 0) return '';
   if (size < 1024) return `${size} Б`;
@@ -205,7 +242,9 @@ export default function SetupWizard() {
     []
   );
   const [step, setStep] = useState(() => Number(localStorage.getItem(STEP_KEY) || 0));
-  const [busy, setBusy] = useState('');
+  // Занятость считается по ключам: параллельные загрузки не должны гасить
+  // чужие индикаторы, а вложенный вызов - индикатор внешнего.
+  const [busy, setBusy] = useState({});
   const [notice, setNotice] = useState(null);
 
   // Шаг 1: контур
@@ -244,11 +283,27 @@ export default function SetupWizard() {
   const [showLetters, setShowLetters] = useState(true);
   const [threads, setThreads] = useState([]);
   const [threadsAt, setThreadsAt] = useState('');
+  const [threadsError, setThreadsError] = useState('');
   const [threadsTotal, setThreadsTotal] = useState(0);
   const [threadsOffset, setThreadsOffset] = useState(0);
   const [threadCounts, setThreadCounts] = useState({});
   const [threadState, setThreadState] = useState('attention');
   const [ticketFilter, setTicketFilter] = useState('');
+  // Какому запросу принадлежит показанная страница писем. Нужен, чтобы
+  // ответ медленного нефильтрованного запроса не подменял выбранный.
+  const [messagesTicket, setMessagesTicket] = useState('');
+  const [messagesError, setMessagesError] = useState('');
+  const [expandedThreads, setExpandedThreads] = useState([]);
+  const [expandedLetters, setExpandedLetters] = useState([]);
+  const [threadLetters, setThreadLetters] = useState({});
+  const [onlyWatched, setOnlyWatched] = useState(true);
+  // Просмотр вложения: что нашли внутри, без сохранения на диск.
+  const [preview, setPreview] = useState(null);
+  // Ответ на письмо поддержки.
+  const [reply, setReply] = useState(null);
+  // Автоматическая обработка почты и её журнал.
+  const [autoState, setAutoState] = useState(null);
+  const [deadlines, setDeadlines] = useState([]);
   const [letterId, setLetterId] = useState('testCert');
   const [letter, setLetter] = useState(LETTERS.testCert);
   // Реквизиты организации: одни и те же во всех письмах Оператору.
@@ -261,18 +316,32 @@ export default function SetupWizard() {
     localStorage.setItem(STEP_KEY, String(step));
   }, [step]);
 
+  // Сообщения показываем плавающим тостом. Alert в шапке карточки остаётся,
+  // но шаг почты длиннее экрана, и до шапки оператор не доскроллит.
+  useEffect(() => {
+    if (!notice || !notice.text) return;
+    const kind = ['error', 'warning', 'info'].includes(notice.type) ? notice.type : 'success';
+    message[kind](notice.text, kind === 'error' ? 8 : 4);
+  }, [notice]);
+
   const run = useCallback(
     async (name, action) => {
-      setBusy(name);
-      setNotice(null);
+      setBusy((prev) => ({ ...prev, [name]: (prev[name] || 0) + 1 }));
       try {
         return await action();
       } finally {
-        setBusy('');
+        setBusy((prev) => {
+          const left = (prev[name] || 1) - 1;
+          const next = { ...prev };
+          if (left > 0) next[name] = left;
+          else delete next[name];
+          return next;
+        });
       }
     },
     []
   );
+
 
   const loadEnvironment = useCallback(
     () =>
@@ -367,6 +436,9 @@ export default function SetupWizard() {
   }, [loadEnvironment, loadCertificates, loadMail, loadProfile]);
 
   const autoLoadedRef = useRef(false);
+  // Блок писем лежит ниже таблицы запросов на целый экран: без прокрутки
+  // нажатие "Письма" выглядело как будто ничего не произошло.
+  const lettersRef = useRef(null);
 
   // ---------- Состояния шагов ----------
 
@@ -665,14 +737,18 @@ export default function SetupWizard() {
           setThreadsOffset(res.data.offset || 0);
           setThreadCounts(res.data.counts || {});
           setThreadsAt(res.data.checked_at || '');
+          setThreadsError('');
         } catch (error) {
           if (error.response && error.response.status === 400) {
             // Почта не настроена: это не ошибка, просто нечего показывать.
             setThreads([]);
             setThreadsTotal(0);
+            setThreadsError('');
             return;
           }
-          setNotice({ type: 'error', text: errorText(error, 'Прочитать ящик не удалось.') });
+          const text = errorText(error, 'Прочитать ящик не удалось.');
+          setThreadsError(text);
+          setNotice({ type: 'error', text });
         }
       });
     },
@@ -680,10 +756,21 @@ export default function SetupWizard() {
   );
 
   const markThreads = async (tickets, read) => {
-    await run('mark', async () => {
+    const key = tickets.length === 1 ? `mark:${tickets[0]}` : 'mark';
+    await run(key, async () => {
       try {
-        await api.post(read ? '/mail/threads/read' : '/mail/threads/unread', { tickets });
+        const res = await api.post(
+          read ? '/mail/threads/read' : '/mail/threads/unread',
+          { tickets }
+        );
         await loadThreads({});
+        const marked = res.data && res.data.marked;
+        setNotice({
+          type: 'success',
+          text: read
+            ? `Отмечено прочитанными: ${marked ?? tickets.length}.`
+            : `Возвращено в непрочитанные: ${marked ?? tickets.length}.`,
+        });
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Отметить не удалось.') });
       }
@@ -788,22 +875,57 @@ export default function SetupWizard() {
     });
   };
 
+  const messagesSeq = useRef(0);
+
   const loadMessages = useCallback(
-    async (offset = 0, ticket = '') => {
+    async (offset = 0, ticket = '', watchedOnly = true) => {
+      // Ответы приходят не в том порядке, в каком уходили запросы: список
+      // писем тянется из IMAP секундами, и медленный нефильтрованный ответ
+      // затирал выбранный запрос. Считаем поколения и берём только своё.
+      const seq = (messagesSeq.current += 1);
+      setMessagesOffset(offset);
+      setMessagesTicket(ticket || '');
       await run('messages', async () => {
         try {
           const res = await api.get('/mail/messages', {
-            params: { limit: PAGE_SIZE, offset, ticket: ticket || '' },
+            params: {
+              limit: PAGE_SIZE,
+              offset,
+              ticket: ticket || '',
+              only_watched: ticket ? false : watchedOnly,
+            },
           });
+          if (seq !== messagesSeq.current) return;
           setMessages(res.data.messages || []);
           setMessagesTotal(res.data.total || 0);
           setMessagesOffset(res.data.offset || 0);
+          setMessagesError('');
         } catch (error) {
-          setNotice({ type: 'error', text: errorText(error, 'Прочитать письма не удалось.') });
+          if (seq !== messagesSeq.current) return;
+          const text = errorText(error, 'Прочитать письма не удалось.');
+          setMessages([]);
+          setMessagesTotal(0);
+          setMessagesError(text);
+          setNotice({ type: 'error', text });
         }
       });
     },
     [api, run]
+  );
+
+  // Открыть переписку по запросу: раскрыть строку, показать письма и
+  // прокрутить к ним. Одна точка для кнопки, клика по строке и сброса тега.
+  const showLettersFor = useCallback(
+    (ticket) => {
+      setTicketFilter(ticket || '');
+      setShowLetters(true);
+      setExpandedLetters([]);
+      loadMessages(0, ticket || '', onlyWatched);
+      if (lettersRef.current) {
+        lettersRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    },
+    [loadMessages, onlyWatched]
   );
 
   const sendLetter = () => {
@@ -840,21 +962,19 @@ export default function SetupWizard() {
   };
 
   const saveAttachment = async (uid, index, target = 'certs') => {
-    await run(`attachment:${uid}:${index}`, async () => {
+    await run(`attachment:${uid}:${index}:${target}`, async () => {
       try {
         const res = await api.post(
           `/mail/messages/${uid}/attachments/${index}/save`,
           null,
           { params: { target } }
         );
-        setNotice({
-          type: 'success',
-          text: `Сохранено: ${res.data.name}. Файл лежит в ${
-            target === 'keys' ? 'каталоге ключей' : 'папке сертификатов'
-          }.`,
-        });
         await loadCertificates();
         await loadMailFiles();
+        setNotice({
+          type: 'success',
+          text: `Файл ${res.data.name} лежит на стенде: ${res.data.path}`,
+        });
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Сохранить вложение не удалось.') });
       }
@@ -921,20 +1041,230 @@ export default function SetupWizard() {
     });
   };
 
-  // Запросы, письма и вложения подтягиваются сами при открытии: ответ
-  // поддержки не должен ждать, пока оператор вспомнит нажать кнопку. Backend
-  // отдаёт запросы из кэша, поэтому лишнего похода в IMAP не будет. Эффект
-  // стоит ниже колбэков намеренно: они объявлены через const и до объявления
-  // недоступны.
-  useEffect(() => {
-    if (!autoLoadedRef.current && mailConfig && mailConfig.configured) {
-      autoLoadedRef.current = true;
-      loadThreads({ offset: 0 });
-      // Письма и вложения подтягиваем сразу: оператор пришёл именно за ними.
-      loadMessages(0, '');
-      loadMailFiles();
-    }
-  }, [mailConfig, loadThreads, loadMessages, loadMailFiles]);
+  // ---------- Вложения: посмотреть, забрать, скачать ----------
+
+  const attachmentUrl = (uid, index, download) =>
+    `${BACKEND_URL}/mail/messages/${uid}/attachments/${index}/raw${download ? '?download=1' : ''}`;
+
+  const previewAttachment = async (record, item) => {
+    await run(`preview:${record.uid}:${item.index}`, async () => {
+      try {
+        const res = await api.get(`/mail/messages/${record.uid}/attachments/${item.index}/preview`);
+        setPreview({
+          ...res.data,
+          uid: record.uid,
+          index: item.index,
+          ticket: record.ticket || '',
+          source: 'mail',
+        });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Посмотреть вложение не удалось.') });
+      }
+    });
+  };
+
+  const previewSaved = async (path, name) => {
+    await run(`preview:${path}`, async () => {
+      try {
+        const res = await api.get('/certsources/inspect', { params: { path } });
+        setPreview({ ...res.data, name: name || res.data.name, source: 'folder', path });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Разобрать файл не удалось.') });
+      }
+    });
+  };
+
+  // ---------- Ответ на письмо ----------
+
+  const fillReply = (body, ticket) => {
+    const values = {
+      '<номер запроса>': ticket ? `SCR#${ticket}` : '<номер запроса>',
+      '<ФИО>': profile.contact_name || '<ФИО>',
+      '<организация>': profile.org_short_name || profile.org_full_name || '<организация>',
+    };
+    return Object.entries(values).reduce(
+      (text, [key, value]) => text.split(key).join(value),
+      body
+    );
+  };
+
+  const openReply = async (uid, ticket, kind) => {
+    await run(`reply:${uid}`, async () => {
+      try {
+        const res = await api.get(`/mail/messages/${uid}/reply`);
+        // По запросу уточнения подтверждать нечего: там ждут ответа по существу.
+        const template = kind === 'action' ? REPLIES.clarify : REPLIES.confirm;
+        setReply({
+          uid,
+          ticket: res.data.ticket || ticket || '',
+          to: res.data.to,
+          toReplaced: res.data.to_replaced,
+          from: res.data.from,
+          subject: res.data.subject,
+          quoteText: res.data.quote || '',
+          receivedAt: res.data.received_at || '',
+          files: res.data.files || [],
+          attach: [],
+          templateId: template.id,
+          quote: true,
+          body: fillReply(template.body, res.data.ticket || ticket || ''),
+        });
+      } catch (error) {
+        setNotice({
+          type: 'error',
+          text: errorText(error, 'Заготовку ответа получить не удалось.'),
+        });
+      }
+    });
+  };
+
+  const sendReply = () => {
+    if (!reply) return;
+    Modal.confirm({
+      title: 'Отправить ответ?',
+      icon: <SendOutlined />,
+      content: (
+        <Space direction="vertical" size={4}>
+          <Text>Кому: {reply.to}</Text>
+          <Text>Тема: {reply.subject}</Text>
+          <Text type="secondary">
+            Тему менять нельзя: по ней поддержка сшивает переписку в один запрос.
+          </Text>
+          {reply.attach.length ? (
+            <Text type="secondary">Вложения: {reply.attach.join(', ')}</Text>
+          ) : null}
+        </Space>
+      ),
+      okText: 'Отправить',
+      cancelText: 'Отмена',
+      onOk: async () => {
+        await run('sendreply', async () => {
+          try {
+            const res = await api.post('/mail/reply', {
+              uid: reply.uid,
+              body: reply.body,
+              quote: reply.quote,
+              attach: reply.attach,
+            });
+            setReply(null);
+            setNotice({
+              type: 'success',
+              text: `Ответ ушёл на ${(res.data.recipients || []).join(', ')}.`,
+            });
+            await loadThreads({ offset: 0, refresh: true });
+            await loadMessages(0, ticketFilter, onlyWatched);
+            await loadAuto();
+          } catch (error) {
+            setNotice({ type: 'error', text: errorText(error, 'Отправить ответ не удалось.') });
+          }
+        });
+      },
+    });
+  };
+
+  const replyLetter = () =>
+    reply
+      ? {
+          id: `reply-${reply.ticket || reply.uid}`,
+          to: reply.to,
+          cc: '',
+          subject: reply.subject,
+          // Заголовки ветки: ответ из стороннего клиента должен попасть в тот
+          // же тикет, а не завести новый.
+          in_reply_to: reply.messageId,
+          references: reply.references,
+          body: reply.quote ? `${reply.body}\n\n${reply.quoteText}` : reply.body,
+        }
+      : null;
+
+  // ---------- Автоматическая обработка почты ----------
+
+  const loadAuto = useCallback(
+    () =>
+      run('auto', async () => {
+        try {
+          const res = await api.get('/mail/auto');
+          setAutoState(res.data);
+        } catch (error) {
+          setAutoState(null);
+        }
+        try {
+          const res = await api.get('/mail/deadlines');
+          setDeadlines(res.data.waiting || []);
+        } catch (error) {
+          setDeadlines([]);
+        }
+      }),
+    [api, run]
+  );
+
+  const saveAuto = async (patch) => {
+    const current = autoState || {};
+    const next = {
+      enabled: current.enabled || false,
+      collect: current.collect !== false,
+      confirm: current.confirm || false,
+      confirm_after_hours: current.confirm_after_hours || 48,
+      ...patch,
+    };
+    await run('autosave', async () => {
+      try {
+        const res = await api.post('/mail/auto', next);
+        setAutoState(res.data);
+        setNotice({
+          type: 'success',
+          text: next.enabled
+            ? 'Автоматическая обработка почты включена.'
+            : 'Автоматическая обработка почты выключена.',
+        });
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Сохранить настройку не удалось.') });
+      }
+    });
+  };
+
+  const runAuto = () => {
+    Modal.confirm({
+      title: 'Обработать почту сейчас?',
+      icon: <ReloadOutlined />,
+      width: 560,
+      content: (
+        <Space direction="vertical" size={4}>
+          <Text>
+            Стенд перечитает ящик, разложит вложения по каталогам и посчитает сроки ответа.
+          </Text>
+          <Text type="secondary">
+            {autoState && autoState.confirm
+              ? 'Подтверждение решений включено: по запросам, у которых подошёл срок, уйдёт письмо в поддержку.'
+              : 'Письма наружу не уйдут: подтверждение решений выключено.'}
+          </Text>
+        </Space>
+      ),
+      okText: 'Обработать',
+      cancelText: 'Отмена',
+      onOk: async () => {
+        await run('autorun', async () => {
+          try {
+            const res = await api.post('/mail/auto/run');
+            const report = res.data || {};
+            setNotice({
+              type: 'success',
+              text:
+                `Запросов: ${report.threads || 0}. ` +
+                `Забрано файлов: ${(report.collected || []).length}. ` +
+                `Ждут ответа: ${(report.waiting || []).length}. ` +
+                `Подтверждений отправлено: ${(report.confirmed || []).length}.`,
+            });
+            await loadAuto();
+            await loadThreads({ offset: 0, refresh: true });
+            await loadCertificates();
+          } catch (error) {
+            setNotice({ type: 'error', text: errorText(error, 'Обработать почту не удалось.') });
+          }
+        });
+      },
+    });
+  };
 
   const runFinalCheck = async () => {
     await run('final', async () => {
@@ -978,7 +1308,7 @@ export default function SetupWizard() {
       ) : (
         <Empty description="Backend не ответил. Поднимите стенд: docker compose up -d." />
       )}
-      <Button icon={<ReloadOutlined />} onClick={loadEnvironment} loading={busy === 'env'}>
+      <Button icon={<ReloadOutlined />} onClick={loadEnvironment} loading={Boolean(busy['env'])}>
         Проверить заново
       </Button>
     </Space>
@@ -1017,7 +1347,7 @@ export default function SetupWizard() {
                         size="small"
                         danger
                         icon={<DeleteOutlined />}
-                        loading={busy === `delete:${record.id}`}
+                        loading={Boolean(busy[`delete:${record.id}`])}
                         onClick={() => deleteCertificate(record)}
                       >
                         Удалить
@@ -1051,7 +1381,7 @@ export default function SetupWizard() {
             <Button
               type="primary"
               icon={<DownloadOutlined />}
-              loading={busy === 'collect'}
+              loading={Boolean(busy['collect'])}
               disabled={!mailConfig || !mailConfig.configured}
               onClick={collectMailFiles}
             >
@@ -1059,7 +1389,7 @@ export default function SetupWizard() {
             </Button>
             <Button
               icon={<ReloadOutlined />}
-              loading={busy === 'mailfiles'}
+              loading={Boolean(busy['mailfiles'])}
               disabled={!mailConfig || !mailConfig.configured}
               onClick={loadMailFiles}
             >
@@ -1074,7 +1404,7 @@ export default function SetupWizard() {
               rowKey={(record) => `${record.uid}:${record.index}`}
               size="small"
               pagination={false}
-              loading={busy === 'mailfiles' || busy === 'collect'}
+              loading={Boolean(busy['mailfiles']) || Boolean(busy['collect'])}
               dataSource={mailFiles || []}
               locale={{
                 emptyText: 'Вложений в последних письмах нет',
@@ -1102,27 +1432,11 @@ export default function SetupWizard() {
                 },
                 {
                   title: '',
-                  width: 250,
+                  width: 470,
                   render: (_, record) => (
-                    <Space size={4}>
+                    <Space size={4} wrap>
                       {record.saved ? <Tag color="success">забрано</Tag> : null}
-                      <Button
-                        size="small"
-                        icon={<DownloadOutlined />}
-                        disabled={record.too_large}
-                        loading={busy === `attachment:${record.uid}:${record.index}`}
-                        onClick={() => saveAttachment(record.uid, record.index)}
-                      >
-                        Забрать
-                      </Button>
-                      <Button
-                        size="small"
-                        icon={<KeyOutlined />}
-                        disabled={record.too_large}
-                        onClick={() => saveAttachment(record.uid, record.index, 'keys')}
-                      >
-                        В ключи
-                      </Button>
+                      {attachmentActions({ uid: record.uid, ticket: record.ticket }, record)}
                     </Space>
                   ),
                 },
@@ -1171,32 +1485,58 @@ export default function SetupWizard() {
                 dataSource={folder.files || []}
                 locale={{ emptyText: 'В папке пока пусто' }}
                 columns={[
-                  { title: 'Файл', dataIndex: 'name' },
+                  { title: 'Файл', dataIndex: 'name', ellipsis: true },
+                  {
+                    title: 'Что это',
+                    dataIndex: 'kind',
+                    width: 120,
+                    render: (value) => <Tag>{ATTACHMENT_KIND[value] || value || 'файл'}</Tag>,
+                  },
                   { title: 'Владелец', dataIndex: 'subject', ellipsis: true },
                   { title: 'Действует до', dataIndex: 'valid_to', width: 170 },
                   {
                     title: '',
-                    width: 230,
+                    width: 320,
                     render: (_, record) => (
-                      <Space size={4}>
+                      <Space size={4} wrap>
                         {record.kind === 'certificate' ? (
                           <Button
                             size="small"
                             type="primary"
-                            loading={busy === 'import'}
+                            loading={Boolean(busy['import'])}
                             onClick={() => importCertificate(record.path)}
                           >
                             Установить
                           </Button>
                         ) : null}
-                        <Button
-                          size="small"
-                          icon={<FileTextOutlined />}
-                          loading={busy === `inspect:${record.path}`}
-                          onClick={() => inspectFile(record.path)}
-                        >
-                          Разобрать
-                        </Button>
+                        {['pdf', 'docx', 'archive'].includes(record.kind) ? (
+                          <Button
+                            size="small"
+                            icon={<EyeOutlined />}
+                            loading={Boolean(busy[`preview:${record.path}`])}
+                            onClick={() => previewSaved(record.path, record.name)}
+                          >
+                            Посмотреть
+                          </Button>
+                        ) : (
+                          <Button
+                            size="small"
+                            icon={<FileTextOutlined />}
+                            loading={Boolean(busy[`inspect:${record.path}`])}
+                            onClick={() => inspectFile(record.path)}
+                          >
+                            Свойства
+                          </Button>
+                        )}
+                        <Tooltip title="Скачать файл себе в браузер">
+                          <Button
+                            size="small"
+                            icon={<DownloadOutlined />}
+                            href={`${BACKEND_URL}/certsources/file?path=${encodeURIComponent(record.path)}&download=1`}
+                            target="_blank"
+                            rel="noreferrer"
+                          />
+                        </Tooltip>
                       </Space>
                     ),
                   },
@@ -1227,7 +1567,7 @@ export default function SetupWizard() {
                 return false;
               }}
             >
-              <Button icon={<UploadOutlined />} loading={busy === 'upload'}>
+              <Button icon={<UploadOutlined />} loading={Boolean(busy['upload'])}>
                 Загрузить документы и сертификаты
               </Button>
             </Upload>
@@ -1239,7 +1579,7 @@ export default function SetupWizard() {
                 return false;
               }}
             >
-              <Button icon={<KeyOutlined />} loading={busy === 'upload'}>
+              <Button icon={<KeyOutlined />} loading={Boolean(busy['upload'])}>
                 Загрузить ключевой контейнер
               </Button>
             </Upload>
@@ -1280,7 +1620,7 @@ export default function SetupWizard() {
                       <Text strong>Вложенные файлы</Text>
                       <Button
                         size="small"
-                        loading={busy === 'extract'}
+                        loading={Boolean(busy['extract'])}
                         onClick={() => extractFile(inspected.path)}
                       >
                         Извлечь все
@@ -1352,7 +1692,7 @@ export default function SetupWizard() {
                     <Button
                       size="small"
                       icon={<ReloadOutlined />}
-                      loading={busy === `restore:${record.name}`}
+                      loading={Boolean(busy[`restore:${record.name}`])}
                       onClick={() => restoreKeys(record.name)}
                     >
                       Восстановить
@@ -1419,7 +1759,7 @@ export default function SetupWizard() {
           placeholder="00000000-0000-0000-0000-000000000000"
           aria-label="API-Key организации"
         />
-        <Button type="primary" onClick={checkApiKey} loading={busy === 'apikey'}>
+        <Button type="primary" onClick={checkApiKey} loading={Boolean(busy['apikey'])}>
           Проверить
         </Button>
       </Space.Compact>
@@ -1441,8 +1781,7 @@ export default function SetupWizard() {
     </Space>
   );
 
-  const renderMail = () => (
-    <Space direction="vertical" size={20} style={{ width: '100%' }}>
+  const renderMailbox = () => (
       <div>
         <Title level={5}>Ящик</Title>
         {mailConfig ? (
@@ -1529,7 +1868,7 @@ export default function SetupWizard() {
             <Button
               icon={<SearchOutlined />}
               onClick={discoverMail}
-              loading={busy === 'discover'}
+              loading={Boolean(busy['discover'])}
             >
               Определить серверы по адресу
             </Button>
@@ -1551,14 +1890,14 @@ export default function SetupWizard() {
             type="primary"
             icon={<SaveOutlined />}
             onClick={saveMailSettings}
-            loading={busy === 'mailsave'}
+            loading={Boolean(busy['mailsave'])}
           >
             Сохранить
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={loadMail} loading={busy === 'mail'}>
+          <Button icon={<ReloadOutlined />} onClick={loadMail} loading={Boolean(busy['mail'])}>
             Обновить
           </Button>
-          <Button onClick={checkMail} loading={busy === 'mailcheck'}>
+          <Button onClick={checkMail} loading={Boolean(busy['mailcheck'])}>
             Проверить связь
           </Button>
         </Space>
@@ -1592,7 +1931,7 @@ export default function SetupWizard() {
             description="Заполните MAIL_IMAP_HOST, MAIL_SMTP_HOST, MAIL_USER и MAIL_PASSWORD в .env и перезапустите контейнер api. Пароль нужен от приложения, а не основной пароль аккаунта."
           />
         ) : null}
-        {busy === 'mailcheck' ? (
+        {busy['mailcheck'] ? (
           <Alert style={{ marginTop: 12 }} type="info" message="Проверяю связь..." />
         ) : null}
         {mailCheck ? (
@@ -1646,7 +1985,9 @@ export default function SetupWizard() {
           </div>
         ) : null}
       </div>
+  );
 
+  const renderProfileBlock = () => (
       <div>
         <Title level={5}>Реквизиты организации</Title>
         <Paragraph type="secondary" style={{ marginBottom: 12 }}>
@@ -1673,16 +2014,18 @@ export default function SetupWizard() {
             type="primary"
             icon={<SaveOutlined />}
             onClick={saveProfile}
-            loading={busy === 'profilesave'}
+            loading={Boolean(busy['profilesave'])}
           >
             Сохранить реквизиты
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={loadProfile} loading={busy === 'profile'}>
+          <Button icon={<ReloadOutlined />} onClick={loadProfile} loading={Boolean(busy['profile'])}>
             Обновить
           </Button>
         </Space>
       </div>
+  );
 
+  const renderComposer = () => (
       <div>
         <Title level={5}>Письмо в поддержку</Title>
         <Paragraph type="secondary">
@@ -1763,282 +2106,1010 @@ export default function SetupWizard() {
           ) : null}
         </Space>
       </div>
+  );
 
-      <div>
-        <Title level={5}>Запросы в поддержку</Title>
-        <Paragraph type="secondary" style={{ marginBottom: 12 }}>
-          Поддержка ведёт переписку тикетами: номер SCR стоит в теме каждого
-          письма, статус написан там же. Письма сцепляются по номеру, поэтому
-          состояние видно списком, без открытия.
-        </Paragraph>
-        <Space style={{ marginBottom: 12 }} wrap>
-          <Segmented
-            value={threadState}
-            onChange={(value) => {
-              setThreadState(value);
-              setThreadsOffset(0);
-              loadThreads({ state: value, offset: 0 });
-            }}
-            options={[
-              { label: `Требуют внимания ${threadCounts.attention ?? 0}`, value: 'attention' },
-              { label: `Активные ${threadCounts.active ?? 0}`, value: 'active' },
-              { label: `Непрочитанные ${threadCounts.unread ?? 0}`, value: 'unread' },
-              { label: `Все ${threadCounts.all ?? 0}`, value: 'all' },
-            ]}
-          />
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => loadThreads({ offset: 0, refresh: true })}
-            loading={busy === 'threads'}
-          >
-            Проверить почту
-          </Button>
-          <Button
-            onClick={() => markThreads([], true)}
-            loading={busy === 'mark'}
-            disabled={!threadCounts.unread}
-          >
-            Отметить все прочитанными
-          </Button>
-          {threadsAt ? (
-            <Text type="secondary">Проверено {formatTime(threadsAt)}</Text>
-          ) : null}
-        </Space>
-        <Table
-          rowKey="ticket"
+  // Запросы, письма и вложения подтягиваются сами при открытии: ответ
+  // поддержки не должен ждать, пока оператор вспомнит нажать кнопку. Backend
+  // отдаёт запросы из кэша, поэтому лишнего похода в IMAP не будет. Эффект
+  // стоит ниже колбэков намеренно: они объявлены через const и до объявления
+  // недоступны.
+  useEffect(() => {
+    if (!autoLoadedRef.current && mailConfig && mailConfig.configured) {
+      autoLoadedRef.current = true;
+      loadThreads({ offset: 0 });
+      // Письма и вложения подтягиваем сразу: оператор пришёл именно за ними.
+      loadMessages(0, '', true);
+      loadMailFiles();
+      loadAuto();
+    }
+  }, [mailConfig, loadThreads, loadMessages, loadMailFiles, loadAuto]);
+
+  // ---------- Почта: запросы, письма, вложения ----------
+
+  const loadThreadLetters = async (ticket) => {
+    await run(`letters:${ticket}`, async () => {
+      try {
+        const res = await api.get('/mail/messages', {
+          params: { limit: 50, offset: 0, ticket, only_watched: false },
+        });
+        setThreadLetters((prev) => ({ ...prev, [ticket]: res.data.messages || [] }));
+      } catch (error) {
+        setThreadLetters((prev) => ({ ...prev, [ticket]: [] }));
+        setNotice({
+          type: 'error',
+          text: errorText(error, `Переписку по SCR#${ticket} прочитать не удалось.`),
+        });
+      }
+    });
+  };
+
+  const toggleThread = (ticket) => {
+    setExpandedThreads((keys) => {
+      if (keys.includes(ticket)) return keys.filter((key) => key !== ticket);
+      if (!threadLetters[ticket]) loadThreadLetters(ticket);
+      return [...keys, ticket];
+    });
+  };
+
+  // Действия у вложения зависят от того, что это за файл: класть инструкцию
+  // в каталог ключей КриптоПро незачем, а забирать её на стенд - наоборот.
+  const attachmentActions = (record, item) => {
+    const kind = item.kind || 'unknown';
+    const keyLike = kind === 'key' || kind === 'archive';
+    return (
+      <Space size={4} wrap>
+        <Button
           size="small"
-          dataSource={threads}
-          loading={busy === 'threads'}
-          pagination={{
-            current: Math.floor(threadsOffset / PAGE_SIZE) + 1,
-            pageSize: PAGE_SIZE,
-            total: threadsTotal,
-            showSizeChanger: false,
-            size: 'small',
-            onChange: (page) => loadThreads({ offset: (page - 1) * PAGE_SIZE }),
+          icon={<EyeOutlined />}
+          loading={Boolean(busy[`preview:${record.uid}:${item.index}`])}
+          onClick={(event) => {
+            event.stopPropagation();
+            previewAttachment(record, item);
           }}
-          locale={{
-            emptyText:
-              threadState === 'attention'
-                ? 'Ничего не ждёт внимания. Закрытые запросы смотрите в "Все".'
-                : 'Запросов нет',
-          }}
-          rowClassName={(record) => (record.needs_action ? 'ant-table-row-selected' : '')}
+        >
+          Посмотреть
+        </Button>
+        <Tooltip title={item.too_large ? 'Файл больше допустимого размера, заберите его почтовым клиентом' : 'Файл ляжет в папку на стенде, а не в загрузки браузера'}>
+          <Button
+            size="small"
+            icon={<FolderOpenOutlined />}
+            disabled={item.too_large}
+            loading={Boolean(busy[`attachment:${record.uid}:${item.index}:certs`])}
+            onClick={(event) => {
+              event.stopPropagation();
+              saveAttachment(record.uid, item.index);
+            }}
+          >
+            Забрать на стенд
+          </Button>
+        </Tooltip>
+        {keyLike ? (
+          <Tooltip title="Положить в каталог ключевых контейнеров КриптоПро">
+            <Button
+              size="small"
+              icon={<KeyOutlined />}
+              disabled={item.too_large}
+              loading={Boolean(busy[`attachment:${record.uid}:${item.index}:keys`])}
+              onClick={(event) => {
+                event.stopPropagation();
+                saveAttachment(record.uid, item.index, 'keys');
+              }}
+            >
+              В ключи
+            </Button>
+          </Tooltip>
+        ) : null}
+        <Tooltip title="Скачать себе в браузер">
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            disabled={item.too_large}
+            href={attachmentUrl(record.uid, item.index, true)}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </Tooltip>
+      </Space>
+    );
+  };
+
+  const letterCard = (record) => (
+    <Space direction="vertical" size={12} style={{ width: '100%' }}>
+      <Space wrap>
+        <Button
+          size="small"
+          type="primary"
+          icon={<SendOutlined />}
+          loading={Boolean(busy[`reply:${record.uid}`])}
+          onClick={() => openReply(record.uid, record.ticket)}
+        >
+          Ответить
+        </Button>
+        <CopyButton value={record.body || ''} title="Скопировать текст письма" />
+        <Text type="secondary">
+          Кому: {record.to || 'нам'} | От: {record.from}
+        </Text>
+      </Space>
+
+      {record.attachments && record.attachments.length ? (
+        <Table
+          rowKey="index"
+          size="small"
+          pagination={false}
+          dataSource={record.attachments}
           columns={[
+            { title: 'Файл', dataIndex: 'name', ellipsis: true },
             {
-              title: 'Запрос',
-              dataIndex: 'ticket',
-              width: 150,
-              render: (value, record) => (
-                <Space size={4}>
-                  {record.unread ? <Badge status="processing" /> : null}
-                  <Text code strong={record.unread}>
-                    SCR#{value}
-                  </Text>
-                </Space>
-              ),
-            },
-            { title: 'Тема', dataIndex: 'topic', ellipsis: true },
-            {
-              title: 'Статус',
-              dataIndex: 'status',
-              width: 190,
-              render: (value, record) => (
-                <Tag color={THREAD_STATUS_COLOR[record.status_kind] || 'default'}>{value}</Tag>
-              ),
+              title: 'Что это',
+              dataIndex: 'kind',
+              width: 120,
+              render: (value) => <Tag>{ATTACHMENT_KIND[value] || value || 'файл'}</Tag>,
             },
             {
-              title: 'Последнее движение',
-              width: 230,
-              render: (_, record) => (
-                <Space direction="vertical" size={0}>
-                  <Text>{record.last_event}</Text>
-                  <Text type="secondary">{formatTime(record.last_at)}</Text>
-                </Space>
-              ),
-            },
-            {
-              title: 'Писем',
-              dataIndex: 'messages',
-              width: 90,
-              render: (value, record) => (
-                <Space size={4}>
-                  <Text>{value}</Text>
-                  {record.has_files ? <Tag color="warning">файл</Tag> : null}
-                </Space>
-              ),
+              title: 'Размер',
+              dataIndex: 'size',
+              width: 100,
+              render: (value) => formatBytes(value),
             },
             {
               title: '',
-              width: 220,
-              render: (_, record) => (
-                <Space size={4}>
-                  <Button
-                    size="small"
-                    onClick={() => {
-                      setTicketFilter(record.ticket);
-                      setShowLetters(true);
-                      loadMessages(0, record.ticket);
-                    }}
-                  >
-                    Письма
-                  </Button>
-                  <Button
-                    size="small"
-                    type={record.unread ? 'primary' : 'default'}
-                    loading={busy === 'mark'}
-                    onClick={() => markThreads([record.ticket], record.unread)}
-                  >
-                    {record.unread ? 'Прочитано' : 'В непрочитанные'}
-                  </Button>
-                </Space>
-              ),
+              width: 430,
+              render: (_, item) => attachmentActions(record, item),
             },
           ]}
         />
-      </div>
+      ) : (
+        <Text type="secondary">Вложений нет</Text>
+      )}
 
-      <div>
-        <Space style={{ marginBottom: 12 }} wrap>
-          <Title level={5} style={{ margin: 0 }}>
-            Письма
-          </Title>
-          <Button
-            icon={showLetters ? <MinusCircleOutlined /> : <MailOutlined />}
-            onClick={() => {
-              const next = !showLetters;
-              setShowLetters(next);
-              if (next && !messages.length) loadMessages(0, ticketFilter);
-            }}
-          >
-            {showLetters ? 'Скрыть письма' : 'Показать письма'}
-          </Button>
-          {ticketFilter ? (
-            <Tag
-              closable
-              onClose={() => {
-                setTicketFilter('');
-                loadMessages(0, '');
-              }}
-            >
-              только SCR#{ticketFilter}
-            </Tag>
-          ) : null}
-          <Text type="secondary">
-            Адреса ведомств: {(mailConfig && mailConfig.watched ? mailConfig.watched : []).join(', ')}
-          </Text>
-        </Space>
-        {!showLetters ? null : (
-        <Table
-          rowKey="uid"
-          size="small"
-          dataSource={messages}
-          loading={busy === 'messages'}
-          pagination={{
-            current: Math.floor(messagesOffset / PAGE_SIZE) + 1,
-            pageSize: PAGE_SIZE,
-            total: messagesTotal,
-            showSizeChanger: false,
-            size: 'small',
-            // Страницы приходят с сервера: в ящике поддержки писем много, и
-            // тянуть их все ради десятка на экране незачем.
-            onChange: (page) => loadMessages((page - 1) * PAGE_SIZE, ticketFilter),
+      {record.body ? (
+        <div
+          style={{
+            background: 'rgba(0, 0, 0, 0.03)',
+            padding: 12,
+            borderRadius: 6,
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'anywhere',
+            lineHeight: 1.6,
+            maxWidth: '72em',
           }}
-          locale={{ emptyText: 'Писем нет' }}
-          columns={[
-            {
-              title: 'Запрос',
-              dataIndex: 'ticket',
-              width: 120,
-              render: (value) => (value ? <Text code>SCR#{value}</Text> : ''),
-            },
-            { title: 'От', dataIndex: 'from', ellipsis: true },
-            { title: 'Тема', dataIndex: 'subject', ellipsis: true },
-            {
-              title: 'Получено',
-              dataIndex: 'received_at',
-              width: 190,
-              render: (value) => formatTime(value),
-            },
-            {
-              title: 'Вложения',
-              width: 110,
-              render: (_, record) => record.attachments.length || '',
-            },
-          ]}
-          expandable={{
-            expandedRowRender: (record) => (
-              <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                {record.attachments.length ? (
-                  <Table
-                    rowKey="index"
-                    size="small"
-                    pagination={false}
-                    dataSource={record.attachments}
-                    columns={[
-                      { title: 'Файл', dataIndex: 'name' },
-                      { title: 'Тип', dataIndex: 'content_type', width: 200 },
-                      {
-                        title: '',
-                        width: 260,
-                        render: (_, item) => (
-                          <Space size={4}>
-                            <Button
-                              size="small"
-                              icon={<DownloadOutlined />}
-                              disabled={item.too_large}
-                              loading={busy === `attachment:${record.uid}:${item.index}`}
-                              onClick={() => saveAttachment(record.uid, item.index)}
-                            >
-                              Сохранить
-                            </Button>
-                            <Button
-                              size="small"
-                              icon={<KeyOutlined />}
-                              disabled={item.too_large}
-                              onClick={() => saveAttachment(record.uid, item.index, 'keys')}
-                            >
-                              В ключи
-                            </Button>
-                            <Button
-                              size="small"
-                              icon={<SafetyCertificateOutlined />}
-                              onClick={() => setStep(1)}
-                            >
-                              К установке
-                            </Button>
-                          </Space>
-                        ),
-                      },
-                    ]}
-                  />
-                ) : (
-                  <Text type="secondary">Вложений нет</Text>
-                )}
-                <pre
-                  style={{
-                    background: '#f8f9fa',
-                    padding: 12,
-                    borderRadius: 6,
-                    maxHeight: 280,
-                    overflow: 'auto',
-                    margin: 0,
-                  }}
-                >
-                  {record.body}
-                </pre>
-              </Space>
-            ),
-          }}
+        >
+          {record.body}
+        </div>
+      ) : (
+        <Alert
+          type="info"
+          showIcon
+          message="Текстовой части в письме нет"
+          description="Письмо пришло только в HTML. Вложения выше доступны, текст откройте в почтовом клиенте."
         />
-        )}
-      </div>
+      )}
     </Space>
   );
 
+  const letterColumns = [
+    {
+      title: 'Запрос',
+      dataIndex: 'ticket',
+      width: 110,
+      render: (value) => (value ? <Text code>SCR#{value}</Text> : ''),
+    },
+    { title: 'От', dataIndex: 'from', ellipsis: true, width: 220 },
+    { title: 'Тема', dataIndex: 'subject', ellipsis: true },
+    {
+      title: 'О чём',
+      dataIndex: 'body',
+      ellipsis: true,
+      render: (value) => (
+        <Text type="secondary">{(value || '').replace(/\s+/g, ' ').slice(0, 120)}</Text>
+      ),
+    },
+    {
+      title: 'Получено',
+      dataIndex: 'received_at',
+      width: 160,
+      render: (value) => formatMoment(value),
+    },
+    {
+      title: 'Вложения',
+      width: 90,
+      render: (_, record) => (record.attachments || []).length || '',
+    },
+    {
+      title: '',
+      width: 120,
+      render: (_, record) => (
+        <Button
+          size="small"
+          icon={<SendOutlined />}
+          loading={Boolean(busy[`reply:${record.uid}`])}
+          onClick={(event) => {
+            event.stopPropagation();
+            openReply(record.uid, record.ticket);
+          }}
+        >
+          Ответить
+        </Button>
+      ),
+    },
+  ];
+
+  const lettersTable = (records, options = {}) => (
+    <Table
+      rowKey="uid"
+      size="small"
+      dataSource={records}
+      loading={options.loading}
+      pagination={options.pagination || false}
+      locale={{ emptyText: options.emptyText || 'Писем нет' }}
+      columns={letterColumns}
+      onRow={(record) => ({
+        style: { cursor: 'pointer' },
+        onClick: () =>
+          setExpandedLetters((keys) =>
+            keys.includes(record.uid)
+              ? keys.filter((key) => key !== record.uid)
+              : [...keys, record.uid]
+          ),
+      })}
+      expandable={{
+        expandedRowKeys: expandedLetters,
+        onExpandedRowsChange: (keys) => setExpandedLetters([...keys]),
+        expandedRowRender: (record) => letterCard(record),
+      }}
+    />
+  );
+
+  const renderThreads = () => (
+    <div>
+      <Title level={5}>Запросы в поддержку</Title>
+      <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+        Поддержка ведёт переписку тикетами: номер SCR стоит в теме каждого
+        письма, статус написан там же. Нажмите на строку - переписка по запросу
+        раскроется прямо под ней, с вложениями и кнопкой ответа.
+      </Paragraph>
+      <Space style={{ marginBottom: 12 }} wrap>
+        <Segmented
+          value={threadState}
+          onChange={(value) => {
+            setThreadState(value);
+            setThreadsOffset(0);
+            loadThreads({ state: value, offset: 0 });
+          }}
+          options={[
+            { label: `Требуют внимания ${threadCounts.attention ?? 0}`, value: 'attention' },
+            { label: `Активные ${threadCounts.active ?? 0}`, value: 'active' },
+            { label: `Непрочитанные ${threadCounts.unread ?? 0}`, value: 'unread' },
+            { label: `Все ${threadCounts.all ?? 0}`, value: 'all' },
+          ]}
+        />
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={() => loadThreads({ offset: 0, refresh: true })}
+          loading={Boolean(busy.threads)}
+        >
+          Проверить почту
+        </Button>
+        <Button
+          onClick={() =>
+            Modal.confirm({
+              title: 'Отметить все прочитанными?',
+              icon: <ExclamationCircleOutlined />,
+              content: `Из списка "Требуют внимания" уйдёт запросов: ${threadCounts.unread ?? 0}. Вернуть отметку можно во вкладке "Все".`,
+              okText: 'Отметить',
+              cancelText: 'Отмена',
+              onOk: () => markThreads([], true),
+            })
+          }
+          loading={Boolean(busy.mark)}
+          disabled={!threadCounts.unread}
+        >
+          Отметить все прочитанными
+        </Button>
+        {threadsAt ? <Text type="secondary">Проверено {formatTime(threadsAt)}</Text> : null}
+      </Space>
+      {threadsError ? (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message={threadsError}
+          action={
+            <Button size="small" onClick={() => loadThreads({ offset: 0, refresh: true })}>
+              Повторить
+            </Button>
+          }
+        />
+      ) : null}
+      <Table
+        rowKey="ticket"
+        size="small"
+        dataSource={threads}
+        loading={Boolean(busy.threads)}
+        pagination={{
+          current: Math.floor(threadsOffset / PAGE_SIZE) + 1,
+          pageSize: PAGE_SIZE,
+          total: threadsTotal,
+          showSizeChanger: false,
+          size: 'small',
+          onChange: (page) => loadThreads({ offset: (page - 1) * PAGE_SIZE }),
+        }}
+        locale={{
+          emptyText:
+            mailConfig && mailConfig.configured
+              ? threadState === 'attention'
+                ? 'Ничего не ждёт внимания. Закрытые запросы смотрите в "Все".'
+                : 'Запросов нет'
+              : 'Почта не настроена: заполните ящик в блоке ниже.',
+        }}
+        rowClassName={(record) =>
+          record.ticket === ticketFilter ? 'ant-table-row-selected' : ''
+        }
+        onRow={(record) => ({
+          style: { cursor: 'pointer' },
+          onClick: () => toggleThread(record.ticket),
+        })}
+        expandable={{
+          expandedRowKeys: expandedThreads,
+          onExpandedRowsChange: (keys) => {
+            const next = [...keys];
+            next.forEach((ticket) => {
+              if (!threadLetters[ticket]) loadThreadLetters(ticket);
+            });
+            setExpandedThreads(next);
+          },
+          expandedRowRender: (record) => (
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+              <Space wrap>
+                <Text strong>Переписка по SCR#{record.ticket}</Text>
+                <Button
+                  size="small"
+                  icon={<ReloadOutlined />}
+                  loading={Boolean(busy[`letters:${record.ticket}`])}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    loadThreadLetters(record.ticket);
+                  }}
+                >
+                  Обновить
+                </Button>
+                <Text type="secondary">Нажмите на письмо, чтобы прочитать его целиком</Text>
+              </Space>
+              {lettersTable(threadLetters[record.ticket] || [], {
+                loading: Boolean(busy[`letters:${record.ticket}`]),
+                emptyText: 'Писем по этому запросу не нашлось',
+              })}
+            </Space>
+          ),
+        }}
+        columns={[
+          {
+            title: 'Запрос',
+            dataIndex: 'ticket',
+            width: 130,
+            render: (value, record) => (
+              <Space size={4}>
+                {record.unread ? <Badge status="processing" /> : null}
+                <Text code>SCR#{value}</Text>
+              </Space>
+            ),
+          },
+          { title: 'Тема', dataIndex: 'topic', ellipsis: true },
+          {
+            title: 'Статус',
+            dataIndex: 'status',
+            width: 170,
+            render: (value, record) => (
+              <Tag color={THREAD_STATUS_COLOR[record.status_kind] || 'default'}>{value}</Tag>
+            ),
+          },
+          {
+            title: 'Последнее движение',
+            width: 200,
+            render: (_, record) => (
+              <Space direction="vertical" size={0}>
+                <Text>{record.last_event}</Text>
+                <Text type="secondary">{formatMoment(record.last_at)}</Text>
+              </Space>
+            ),
+          },
+          {
+            title: 'Ответить до',
+            width: 170,
+            render: (_, record) => {
+              if (record.status !== 'Выполнен') return '';
+              const left = daysLeft(record.status_at);
+              if (left === null) return '';
+              if (left < 0) return <Tag color="error">срок прошёл</Tag>;
+              return (
+                <Tag color={left <= 1 ? 'warning' : 'default'}>
+                  {left === 0 ? 'последний день' : `осталось ${left} дн.`}
+                </Tag>
+              );
+            },
+          },
+          {
+            title: 'Писем',
+            dataIndex: 'messages',
+            width: 90,
+            render: (value, record) => (
+              <Space size={4}>
+                <Text>{value}</Text>
+                {record.has_files ? <Tag color="warning">файл</Tag> : null}
+              </Space>
+            ),
+          },
+          {
+            title: '',
+            width: 260,
+            render: (_, record) => (
+              <Space size={4}>
+                <Button
+                  size="small"
+                  type={expandedThreads.includes(record.ticket) ? 'primary' : 'default'}
+                  loading={Boolean(busy[`letters:${record.ticket}`])}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toggleThread(record.ticket);
+                  }}
+                >
+                  Письма
+                </Button>
+                <Button
+                  size="small"
+                  icon={<SendOutlined />}
+                  loading={Boolean(busy[`reply:${(record.uids || []).slice(-1)[0]}`])}
+                  disabled={!(record.uids || []).length}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openReply(
+                      record.status_uid || (record.uids || []).slice(-1)[0],
+                      record.ticket,
+                      record.status_kind
+                    );
+                  }}
+                >
+                  Ответить
+                </Button>
+                <Button
+                  size="small"
+                  type={record.unread ? 'primary' : 'default'}
+                  loading={Boolean(busy[`mark:${record.ticket}`])}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    markThreads([record.ticket], record.unread);
+                  }}
+                >
+                  {record.unread ? 'Прочитано' : 'В непрочитанные'}
+                </Button>
+              </Space>
+            ),
+          },
+        ]}
+      />
+    </div>
+  );
+
+  const renderLetters = () => (
+    <div ref={lettersRef}>
+      <Space style={{ marginBottom: 12 }} wrap>
+        <Title level={5} style={{ margin: 0 }}>
+          {ticketFilter ? `Письма запроса SCR#${ticketFilter}` : 'Весь ящик'}
+        </Title>
+        <Button
+          icon={showLetters ? <MinusCircleOutlined /> : <MailOutlined />}
+          onClick={() => {
+            const next = !showLetters;
+            setShowLetters(next);
+            if (next && (!messages.length || messagesTicket !== ticketFilter)) {
+              loadMessages(0, ticketFilter, onlyWatched);
+            }
+          }}
+        >
+          {showLetters ? 'Скрыть письма' : 'Показать письма'}
+        </Button>
+        {ticketFilter ? (
+          <Tag closable onClose={() => showLettersFor('')}>
+            только SCR#{ticketFilter}
+          </Tag>
+        ) : null}
+        <Checkbox
+          checked={onlyWatched}
+          onChange={(event) => {
+            setOnlyWatched(event.target.checked);
+            loadMessages(0, ticketFilter, event.target.checked);
+          }}
+        >
+          Только письма ведомств
+        </Checkbox>
+        <Tooltip title={(mailConfig && mailConfig.watched ? mailConfig.watched : []).join(', ')}>
+          <Text type="secondary">какие адреса считаются ведомственными</Text>
+        </Tooltip>
+      </Space>
+      {messagesError ? (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message={messagesError}
+          action={
+            <Button size="small" onClick={() => loadMessages(0, ticketFilter, onlyWatched)}>
+              Повторить
+            </Button>
+          }
+        />
+      ) : null}
+      {!showLetters
+        ? null
+        : lettersTable(messages, {
+            loading: Boolean(busy.messages),
+            emptyText: ticketFilter
+              ? `По запросу SCR#${ticketFilter} писем не нашлось. Снимите фильтр, чтобы увидеть весь ящик.`
+              : onlyWatched
+              ? 'Писем от ведомственных адресов нет. Снимите галочку, чтобы увидеть весь ящик.'
+              : 'Писем нет',
+            pagination: {
+              current: Math.floor(messagesOffset / PAGE_SIZE) + 1,
+              pageSize: PAGE_SIZE,
+              total: messagesTotal,
+              showSizeChanger: false,
+              size: 'small',
+              onChange: (page) =>
+                loadMessages((page - 1) * PAGE_SIZE, ticketFilter, onlyWatched),
+            },
+          })}
+    </div>
+  );
+
+  const renderAutoCard = () => {
+    const state = autoState || {};
+    const log = state.log || [];
+    return (
+      <Card
+        size="small"
+        title={
+          <Space>
+            <ThunderboltOutlined />
+            <Text strong>Автоматическая обработка почты</Text>
+            {state.enabled ? <Tag color="success">включена</Tag> : <Tag>выключена</Tag>}
+          </Space>
+        }
+        extra={
+          <Space>
+            <Button
+              type="primary"
+              icon={<ReloadOutlined />}
+              loading={Boolean(busy.autorun)}
+              disabled={!mailConfig || !mailConfig.configured}
+              onClick={runAuto}
+            >
+              Обработать сейчас
+            </Button>
+            <Button icon={<ReloadOutlined />} loading={Boolean(busy.auto)} onClick={loadAuto}>
+              Обновить
+            </Button>
+          </Space>
+        }
+      >
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Paragraph type="secondary" style={{ margin: 0 }}>
+            Такт перечитывает ящик, раскладывает вложения по каталогам и считает
+            срок ответа: робот поддержки просит подтвердить решение запроса в
+            течение трёх календарных дней, иначе закрывает его сам. Устанавливать
+            сертификаты и удалять письма автоматика не умеет.
+          </Paragraph>
+
+          <Space wrap size={24}>
+            <Space>
+              <Switch
+                checked={Boolean(state.enabled)}
+                loading={Boolean(busy.autosave)}
+                onChange={(value) => saveAuto({ enabled: value })}
+              />
+              <Text>Работать по расписанию</Text>
+              <Text type="secondary">
+                раз в {Math.round((state.interval_seconds || 900) / 60)} мин
+              </Text>
+            </Space>
+            <Space>
+              <Switch
+                checked={state.collect !== false}
+                loading={Boolean(busy.autosave)}
+                onChange={(value) => saveAuto({ collect: value })}
+              />
+              <Text>Забирать вложения</Text>
+            </Space>
+            <Space>
+              <Switch
+                checked={Boolean(state.confirm)}
+                loading={Boolean(busy.autosave)}
+                onChange={(value) => saveAuto({ confirm: value })}
+              />
+              <Tooltip title="Письмо уйдёт наружу от имени организации. Подтверждение означает согласие с решением поддержки.">
+                <Text>Подтверждать решения письмом</Text>
+              </Tooltip>
+            </Space>
+          </Space>
+
+          {state.confirm ? (
+            <Alert
+              type="warning"
+              showIcon
+              message="Автоматика будет отправлять письма в поддержку"
+              description={`Подтверждение уходит через ${state.confirm_after_hours || 48} ч после письма о решении и только по запросам, которые действительно выполнены. Каждое отправленное письмо попадает в журнал ниже.`}
+            />
+          ) : null}
+
+          {deadlines.length ? (
+            <div>
+              <Text strong>Ждут нашего подтверждения</Text>
+              <Table
+                style={{ marginTop: 8 }}
+                rowKey="ticket"
+                size="small"
+                pagination={false}
+                dataSource={deadlines}
+                columns={[
+                  {
+                    title: 'Запрос',
+                    dataIndex: 'ticket',
+                    width: 130,
+                    render: (value) => <Text code>SCR#{value}</Text>,
+                  },
+                  { title: 'Тема', dataIndex: 'topic', ellipsis: true },
+                  {
+                    title: 'Чего ждут',
+                    dataIndex: 'status_label',
+                    width: 190,
+                    render: (value, record) => (
+                      <Tag color={record.kind === 'action' ? 'error' : 'default'}>{value}</Tag>
+                    ),
+                  },
+                  {
+                    title: 'Срок',
+                    width: 200,
+                    render: (_, record) =>
+                      record.overdue ? (
+                        <Tag color="error">срок прошёл</Tag>
+                      ) : (
+                        <Tag color={record.hours_left < 24 ? 'warning' : 'default'}>
+                          осталось {Math.max(0, Math.round(record.hours_left))} ч
+                        </Tag>
+                      ),
+                  },
+                  {
+                    title: '',
+                    width: 200,
+                    render: (_, record) =>
+                      record.answered ? (
+                        <Tag color="success">ответили</Tag>
+                      ) : (
+                        <Button
+                          size="small"
+                          icon={<SendOutlined />}
+                          loading={Boolean(busy[`reply:${record.uid}`])}
+                          disabled={!record.uid}
+                          onClick={() => openReply(record.uid, record.ticket, record.kind)}
+                        >
+                          Ответить
+                        </Button>
+                      ),
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
+
+          <div>
+            <Text strong>Что сделала автоматика</Text>
+            <Table
+              style={{ marginTop: 8 }}
+              rowKey={(record) => `${record.at}:${record.text}`}
+              size="small"
+              pagination={{ pageSize: 5, size: 'small', showSizeChanger: false }}
+              dataSource={log}
+              locale={{
+                emptyText: 'Автоматика ещё ничего не делала. Нажмите "Обработать сейчас".',
+              }}
+              columns={[
+                {
+                  title: 'Когда',
+                  dataIndex: 'at',
+                  width: 170,
+                  render: (value) => formatMoment(value),
+                },
+                {
+                  title: 'Что',
+                  dataIndex: 'kind',
+                  width: 140,
+                  render: (value) => <Tag color={AUTO_KIND_COLOR[value] || 'default'}>{AUTO_KIND[value] || value}</Tag>,
+                },
+                {
+                  title: 'Запрос',
+                  dataIndex: 'ticket',
+                  width: 130,
+                  render: (value) => (value ? <Text code>SCR#{value}</Text> : ''),
+                },
+                { title: 'Подробности', dataIndex: 'text', ellipsis: true },
+              ]}
+            />
+            {state.last_run ? (
+              <Text type="secondary">Последний такт: {formatMoment(state.last_run)}</Text>
+            ) : null}
+          </div>
+        </Space>
+      </Card>
+    );
+  };
+
+  const renderPreview = () => (
+    <Drawer
+      open={Boolean(preview)}
+      onClose={() => setPreview(null)}
+      width={720}
+      title={preview ? preview.name : ''}
+      extra={
+        preview && preview.source === 'mail' ? (
+          <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              href={attachmentUrl(preview.uid, preview.index, true)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Скачать себе
+            </Button>
+            <Button
+              type="primary"
+              icon={<FolderOpenOutlined />}
+              loading={Boolean(busy[`attachment:${preview.uid}:${preview.index}:certs`])}
+              onClick={() => saveAttachment(preview.uid, preview.index)}
+            >
+              Забрать на стенд
+            </Button>
+          </Space>
+        ) : null
+      }
+    >
+      {preview ? (
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Space wrap>
+            <Tag>{ATTACHMENT_KIND[preview.kind] || preview.kind}</Tag>
+            {preview.pages ? <Tag>страниц: {preview.pages}</Tag> : null}
+            <Text type="secondary">{formatBytes(preview.size)}</Text>
+            {preview.ticket ? <Text code>SCR#{preview.ticket}</Text> : null}
+          </Space>
+
+          {(preview.hints || []).map((hint) => (
+            <Alert key={hint} type="info" showIcon message={hint} />
+          ))}
+
+          {preview.kind === 'pdf' && preview.source === 'mail' ? (
+            <iframe
+              title={preview.name}
+              src={attachmentUrl(preview.uid, preview.index, false)}
+              style={{ width: '100%', height: 420, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 6 }}
+            />
+          ) : null}
+          {preview.kind === 'pdf' && preview.source === 'folder' ? (
+            <iframe
+              title={preview.name}
+              src={`${BACKEND_URL}/certsources/file?path=${encodeURIComponent(preview.path)}`}
+              style={{ width: '100%', height: 420, border: '1px solid rgba(0,0,0,0.1)', borderRadius: 6 }}
+            />
+          ) : null}
+
+          {preview.links && preview.links.length ? (
+            <div>
+              <Text strong>Ссылки из документа</Text>
+              <Space direction="vertical" size={2} style={{ width: '100%', marginTop: 6 }}>
+                {preview.links.map((link) => (
+                  <Space key={link}>
+                    <a href={link} target="_blank" rel="noreferrer">
+                      {link}
+                    </a>
+                    <CopyButton value={link} title="Скопировать ссылку" />
+                  </Space>
+                ))}
+              </Space>
+            </div>
+          ) : null}
+
+          {preview.entries && preview.entries.length ? (
+            <div>
+              <Space style={{ marginBottom: 6 }}>
+                <Text strong>Вложенные файлы</Text>
+                {preview.source === 'folder' ? (
+                  <Button
+                    size="small"
+                    loading={Boolean(busy.extract)}
+                    onClick={() => extractFile(preview.path)}
+                  >
+                    Извлечь все
+                  </Button>
+                ) : (
+                  <Text type="secondary">
+                    Чтобы извлечь, сначала заберите файл на стенд
+                  </Text>
+                )}
+              </Space>
+              <Table
+                rowKey="name"
+                size="small"
+                pagination={false}
+                dataSource={preview.entries}
+                columns={[
+                  { title: 'Имя', dataIndex: 'name', ellipsis: true },
+                  {
+                    title: 'Размер',
+                    dataIndex: 'size',
+                    width: 110,
+                    render: (value) => formatBytes(value),
+                  },
+                ]}
+              />
+            </div>
+          ) : null}
+
+          {preview.text ? (
+            <div>
+              <Space style={{ marginBottom: 6 }}>
+                <Text strong>Текст документа</Text>
+                <CopyButton value={preview.text} title="Скопировать текст" />
+              </Space>
+              <Input.TextArea
+                readOnly
+                value={preview.text}
+                autoSize={{ minRows: 8, maxRows: 24 }}
+                style={{ fontSize: 13 }}
+              />
+            </div>
+          ) : preview.kind === 'pdf' ? null : (
+            <Alert
+              type="info"
+              showIcon
+              message="Текст из файла не извлекается"
+              description="Скорее всего это скан или картинка. Скачайте файл и откройте его на своей машине."
+            />
+          )}
+        </Space>
+      ) : null}
+    </Drawer>
+  );
+
+  const renderReply = () => (
+    <Modal
+      open={Boolean(reply)}
+      onCancel={() => setReply(null)}
+      width={760}
+      title={reply ? `Ответ по запросу SCR#${reply.ticket}` : 'Ответ'}
+      footer={null}
+    >
+      {reply ? (
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          {reply.toReplaced ? (
+            <Alert
+              type="info"
+              showIcon
+              message={`Письмо пришло с адреса ${reply.from}, отвечать туда бесполезно`}
+              description={`Ответ уйдёт на адрес поддержки ${reply.to}.`}
+            />
+          ) : null}
+          <Descriptions size="small" column={1} bordered>
+            <Descriptions.Item label="Кому">{reply.to}</Descriptions.Item>
+            <Descriptions.Item label="Тема">
+              <Space direction="vertical" size={0}>
+                <Text>{reply.subject}</Text>
+                <Text type="secondary">
+                  Тему не меняем: по ней поддержка сшивает переписку в один запрос.
+                </Text>
+              </Space>
+            </Descriptions.Item>
+          </Descriptions>
+
+          <Space wrap size={8}>
+            {Object.values(REPLIES).map((item) => (
+              <Button
+                key={item.id}
+                size="small"
+                type={item.id === reply.templateId ? 'primary' : 'default'}
+                onClick={() =>
+                  setReply({
+                    ...reply,
+                    templateId: item.id,
+                    body: fillReply(item.body, reply.ticket),
+                  })
+                }
+              >
+                {item.name}
+              </Button>
+            ))}
+          </Space>
+
+          <TextArea
+            rows={10}
+            value={reply.body}
+            onChange={(event) => setReply({ ...reply, body: event.target.value })}
+          />
+
+          <Checkbox
+            checked={reply.quote}
+            onChange={(event) => setReply({ ...reply, quote: event.target.checked })}
+          >
+            Процитировать письмо ниже ответа (робот просит писать ответ выше цитаты)
+          </Checkbox>
+
+          {reply.files && reply.files.length ? (
+            <div>
+              <Text strong>Приложить файлы из папки вложений</Text>
+              <Select
+                mode="multiple"
+                allowClear
+                style={{ width: '100%', marginTop: 6 }}
+                placeholder="Например, подписанное заявление"
+                value={reply.attach}
+                onChange={(value) => setReply({ ...reply, attach: value })}
+                options={reply.files.map((name) => ({ value: name, label: name }))}
+              />
+            </div>
+          ) : null}
+
+          {remainingPlaceholders(reply.body).length ? (
+            <Alert
+              type="warning"
+              showIcon
+              message="В тексте остались подстановки"
+              description={remainingPlaceholders(reply.body).join(', ')}
+            />
+          ) : null}
+
+          <Space wrap>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              loading={Boolean(busy.sendreply)}
+              disabled={!mailConfig || !mailConfig.configured}
+              onClick={sendReply}
+            >
+              Отправить ответ
+            </Button>
+            <CopyButton value={letterToText(replyLetter())} title="Скопировать письмо целиком" />
+            <Button icon={<DownloadOutlined />} onClick={() => downloadLetter(replyLetter())}>
+              Скачать .eml
+            </Button>
+            <Button href={letterToMailto(replyLetter())}>Открыть в почтовом клиенте</Button>
+          </Space>
+          <Text type="secondary">
+            Если отвечаете из другого клиента, не меняйте тему и поместите текст выше цитаты.
+          </Text>
+        </Space>
+      ) : null}
+    </Modal>
+  );
+
+  const renderMail = () => (
+    <Space direction="vertical" size={20} style={{ width: '100%' }}>
+      {renderAutoCard()}
+      {renderThreads()}
+      {renderLetters()}
+      <Collapse
+        defaultActiveKey={mailConfig && mailConfig.configured ? [] : ['box']}
+        items={[
+          { key: 'box', label: 'Настройка ящика', children: renderMailbox() },
+          { key: 'profile', label: 'Реквизиты организации', children: renderProfileBlock() },
+          { key: 'letter', label: 'Новое письмо в поддержку', children: renderComposer() },
+        ]}
+      />
+      {renderPreview()}
+      {renderReply()}
+    </Space>
+  );
+
+
   const renderFinal = () => (
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
-      <Button type="primary" onClick={runFinalCheck} loading={busy === 'final'}>
+      <Button type="primary" onClick={runFinalCheck} loading={Boolean(busy['final'])}>
         Проверить всё
       </Button>
       <Descriptions size="small" bordered column={1}>
@@ -2111,7 +3182,7 @@ export default function SetupWizard() {
             danger
             icon={<ClearOutlined />}
             onClick={confirmReset}
-            loading={busy === 'reset'}
+            loading={Boolean(busy['reset'])}
           >
             Сбросить всё
           </Button>

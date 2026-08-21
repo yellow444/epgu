@@ -51,6 +51,7 @@
 | POST | `/certificates/restore-keys` | Вернуть ключевой контейнер из копии (`name`) |
 | POST | `/certificates/request` | Собрать запрос PKCS#10 для удостоверяющего центра |
 | POST | `/certificates/trust-test-ca` | Поставить корни тестового удостоверяющего центра |
+| POST | `/inbound/check-public` | Проверить, что внешний адрес ИС ведёт на наш приёмник (`url`) |
 | GET | `/mail/attachments` | Вложения последних писем одним списком |
 | POST | `/mail/attachments/collect` | Забрать из писем сертификаты, ключи, архивы и документы |
 | POST | `/mail/messages/{uid}/attachments/{index}/save` | Сохранить одно вложение (`target`: `certs` или `keys`) |

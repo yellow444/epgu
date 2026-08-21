@@ -154,6 +154,7 @@ const PROFILE_FIELDS = [
   { key: 'IS_MNEMONIC', label: 'Мнемоника ИС', placeholder: 'из техпортала ЕСИА' },
   { key: 'CONTACT_NAME', label: 'ФИО ответственного', placeholder: 'Иванов Иван Иванович' },
   { key: 'CONTACT_ROLE', label: 'Должность', placeholder: 'руководитель проекта' },
+  { key: 'CONTACT_SNILS', label: 'СНИЛС', placeholder: 'нужен в запросе на сертификат' },
   { key: 'CONTACT_PHONE', label: 'Телефон', placeholder: '+7 900 000-00-00' },
   { key: 'CONTACT_EMAIL', label: 'Почта организации', placeholder: 'smev@домен' },
 ];
@@ -203,13 +204,6 @@ function errorText(error, fallback) {
     return `Backend ответил ${error.response.status}.`;
   }
   return fallback;
-}
-
-// Ключи реквизитов: backend отдаёт CONTACT_NAME, форма ждёт contact_name.
-function lowerKeys(source) {
-  return Object.fromEntries(
-    Object.entries(source || {}).map(([key, value]) => [key.toLowerCase(), value])
-  );
 }
 
 function formatMoment(value) {
@@ -264,6 +258,9 @@ export default function SetupWizard() {
   const [inspected, setInspected] = useState(null);
   // Вложения из писем плоским списком: что прислали и что из этого забрано.
   const [mailFiles, setMailFiles] = useState(null);
+  // Запрос на сертификат для удостоверяющего центра: имя владельца и результат.
+  const [certRdn, setCertRdn] = useState('');
+  const [certRequest, setCertRequest] = useState(null);
   const [linkContainer, setLinkContainer] = useState('');
   // Шаг 3: API-Key
   const [apiKey, setApiKey] = useState('');
@@ -429,10 +426,7 @@ export default function SetupWizard() {
       run('profile', async () => {
         try {
           const res = await api.get('/setup/profile');
-          // Backend отдаёт ключи заглавными (CONTACT_NAME), форма работает
-          // со строчными. Без приведения сохранённые реквизиты не
-          // показывались в полях и не подставлялись в письма.
-          setProfile({ ...EMPTY_PROFILE, ...lowerKeys(res.data.profile) });
+          setProfile({ ...EMPTY_PROFILE, ...(res.data.profile || {}) });
           setPlaceholders(res.data.placeholders || {});
         } catch (error) {
           setPlaceholders({});
@@ -483,6 +477,45 @@ export default function SetupWizard() {
         setNotice({ type: 'success', text: 'Сертификат выбран текущим.' });
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Выбрать сертификат не удалось.') });
+      }
+    });
+  };
+
+  // Имя владельца для запроса собирается из реквизитов организации: те же
+  // поля, что и в письмах Оператору, вводить их второй раз незачем.
+  const buildRdn = () => {
+    const org = profile.ORG_FULL_NAME || profile.ORG_SHORT_NAME || '';
+    const person = (profile.CONTACT_NAME || '').trim().split(/\s+/).filter(Boolean);
+    const parts = [];
+    if (org) parts.push(`CN=${org}`, `O=${org}`);
+    if (profile.CONTACT_ROLE) parts.push(`T=${profile.CONTACT_ROLE}`);
+    if (profile.CONTACT_EMAIL) parts.push(`E=${profile.CONTACT_EMAIL}`);
+    if (profile.ORG_INN) parts.push(`INN=${profile.ORG_INN}`);
+    if (profile.ORG_OGRN) parts.push(`OGRN=${profile.ORG_OGRN}`);
+    if (profile.CONTACT_SNILS) parts.push(`SNILS=${profile.CONTACT_SNILS}`);
+    if (person.length) parts.push(`SN=${person[0]}`);
+    if (person.length > 1) parts.push(`G=${person.slice(1).join(' ')}`);
+    parts.push('C=RU');
+    return parts.join(',');
+  };
+
+  const createCertificateRequest = async () => {
+    await run('request', async () => {
+      try {
+        const res = await api.post(
+          '/certificates/request',
+          { rdn: certRdn || buildRdn() },
+          { timeout: 420000 }
+        );
+        setCertRequest(res.data);
+        setCertRdn(res.data.rdn || certRdn);
+        setNotice({
+          type: 'success',
+          text: `Запрос готов: ${res.data.name}. Ключ лежит в контейнере ${res.data.container}.`,
+        });
+        await loadCertificates();
+      } catch (error) {
+        setNotice({ type: 'error', text: errorText(error, 'Собрать запрос не удалось.') });
       }
     });
   };
@@ -566,7 +599,7 @@ export default function SetupWizard() {
       });
       try {
         const res = await api.post('/setup/profile', payload);
-        setProfile({ ...EMPTY_PROFILE, ...lowerKeys(res.data.profile) });
+        setProfile({ ...EMPTY_PROFILE, ...(res.data.profile || {}) });
         setNotice({ type: 'success', text: 'Реквизиты сохранены.' });
       } catch (error) {
         setNotice({ type: 'error', text: errorText(error, 'Сохранить реквизиты не удалось.') });
@@ -1092,8 +1125,8 @@ export default function SetupWizard() {
   const fillReply = (body, ticket) => {
     const values = {
       '<номер запроса>': ticket ? `SCR#${ticket}` : '<номер запроса>',
-      '<ФИО>': profile.contact_name || '<ФИО>',
-      '<организация>': profile.org_short_name || profile.org_full_name || '<организация>',
+      '<ФИО>': profile.CONTACT_NAME || '<ФИО>',
+      '<организация>': profile.ORG_SHORT_NAME || profile.ORG_FULL_NAME || '<организация>',
     };
     return Object.entries(values).reduce(
       (text, [key, value]) => text.split(key).join(value),
@@ -1108,8 +1141,8 @@ export default function SetupWizard() {
         // По запросу уточнения подтверждать нечего: там ждут ответа по существу.
         const template = kind === 'action' ? REPLIES.clarify : REPLIES.confirm;
         setSignature({
-          name: profile.contact_name || '',
-          org: profile.org_short_name || profile.org_full_name || '',
+          name: profile.CONTACT_NAME || '',
+          org: profile.ORG_SHORT_NAME || profile.ORG_FULL_NAME || '',
         });
         setReply({
           uid,
@@ -1140,8 +1173,8 @@ export default function SetupWizard() {
   const applyProfileToReply = (next) => {
     const values = next || profile;
     const filled = {
-      '<ФИО>': values.contact_name || '<ФИО>',
-      '<организация>': values.org_short_name || values.org_full_name || '<организация>',
+      '<ФИО>': values.CONTACT_NAME || '<ФИО>',
+      '<организация>': values.ORG_SHORT_NAME || values.ORG_FULL_NAME || '<организация>',
     };
     setReply((current) =>
       current
@@ -1161,7 +1194,7 @@ export default function SetupWizard() {
       try {
         const res = await api.post('/setup/profile/from-certificate');
         const saved = res.data.profile || {};
-        const next = lowerKeys(saved);
+        const next = saved;
         setProfile({ ...profile, ...next });
         applyProfileToReply(next);
         setNotice({
@@ -1185,7 +1218,7 @@ export default function SetupWizard() {
           org_short_name: org,
         });
         const saved = res.data.profile || {};
-        const next = lowerKeys(saved);
+        const next = saved;
         setProfile({ ...profile, ...next });
         applyProfileToReply(next);
         setNotice({ type: 'success', text: 'Реквизиты сохранены и подставлены в письмо.' });
@@ -1454,6 +1487,118 @@ export default function SetupWizard() {
               description="Заберите файл из письма УЦ блоком ниже, положите его в папку или принесите вручную."
             />
           )}
+        </div>
+
+        <div>
+          <Title level={5}>
+            <SafetyCertificateOutlined /> Получить тестовый сертификат
+          </Title>
+          <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+            Инструкция Оператора по работе с тестовой средой предлагает выпускать
+            сертификат в тестовом удостоверяющем центре, а не просить письмом. Стенд
+            собирает запрос сам: ключ остаётся здесь, наружу уходит только открытая
+            часть внутри запроса. Письмом тоже можно, шаблон лежит на шаге «Почта»,
+            но там ждать ответа сутками.
+          </Paragraph>
+
+          <Space direction="vertical" size={10} style={{ width: '100%' }}>
+            <div>
+              <Space wrap style={{ marginBottom: 6 }}>
+                <Text strong>1. Имя владельца в запросе</Text>
+                <Button size="small" onClick={() => setCertRdn(buildRdn())}>
+                  Собрать из реквизитов
+                </Button>
+                <Button size="small" onClick={() => setStep(3)}>
+                  Поправить реквизиты
+                </Button>
+              </Space>
+              <Input.TextArea
+                value={certRdn}
+                onChange={(event) => setCertRdn(event.target.value)}
+                autoSize={{ minRows: 2, maxRows: 4 }}
+                placeholder="CN=..., O=..., INN=..., OGRN=..., SNILS=..., SN=..., G=..., C=RU"
+              />
+              <Text type="secondary">
+                Проверьте ИНН, ОГРН и СНИЛС: удостоверяющий центр сверяет их формат, а
+                ЕСИА потом сверяет с профилем организации.
+              </Text>
+            </div>
+
+            <Space wrap>
+              <Button
+                type="primary"
+                icon={<KeyOutlined />}
+                loading={Boolean(busy.request)}
+                onClick={createCertificateRequest}
+              >
+                2. Создать запрос
+              </Button>
+              <Text type="secondary">
+                Генерация ключа занимает около минуты: датчик случайных чисел в
+                контейнере программный.
+              </Text>
+            </Space>
+
+            {certRequest ? (
+              <Card size="small" title={`Запрос готов: ${certRequest.name}`}>
+                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                  <Space wrap>
+                    <Text>Контейнер ключа: </Text>
+                    <Text code>{certRequest.container}</Text>
+                    <CopyButton value={certRequest.request} title="Скопировать запрос" />
+                    <Button
+                      size="small"
+                      icon={<DownloadOutlined />}
+                      href={`${BACKEND_URL}/certsources/file?path=${encodeURIComponent(certRequest.path)}&download=1`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Скачать .req
+                    </Button>
+                    <Button
+                      size="small"
+                      type="primary"
+                      href={certRequest.ca_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      3. Открыть тестовый УЦ
+                    </Button>
+                  </Space>
+                  <Input.TextArea
+                    readOnly
+                    value={certRequest.request}
+                    autoSize={{ minRows: 4, maxRows: 10 }}
+                    style={{ fontSize: 12 }}
+                  />
+                  <Alert
+                    type="info"
+                    showIcon
+                    message="Что делать в удостоверяющем центре"
+                    description={
+                      <Space direction="vertical" size={2}>
+                        <Text>
+                          На странице УЦ выберите выпуск по готовому запросу, вставьте
+                          текст выше или приложите файл .req, дождитесь выпуска и
+                          скачайте сертификат файлом .cer.
+                        </Text>
+                        <Text type="secondary">
+                          4. Файл принесите сюда кнопкой «Загрузить документы и
+                          сертификаты» ниже, затем «Установить» и свяжите его с
+                          контейнером {certRequest.container}.
+                        </Text>
+                        <Text type="secondary">
+                          5. Тот же файл загрузите в карточку своей ИС на
+                          технологическом портале ЕСИА: без этого ЕПГУ не узнает
+                          подпись.
+                        </Text>
+                      </Space>
+                    }
+                  />
+                </Space>
+              </Card>
+            ) : null}
+          </Space>
         </div>
 
         <div>

@@ -118,6 +118,7 @@ class ProfileRequest(BaseModel):
     is_mnemonic: Optional[str] = Field(default=None, max_length=100)
     contact_name: Optional[str] = Field(default=None, max_length=200)
     contact_role: Optional[str] = Field(default=None, max_length=200)
+    contact_snils: Optional[str] = Field(default=None, max_length=14)
     contact_phone: Optional[str] = Field(default=None, max_length=50)
     contact_email: Optional[str] = Field(default=None, max_length=320)
 

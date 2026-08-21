@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import io
 import json
@@ -1189,6 +1190,54 @@ async def delete_certificate_endpoint(cert_id: str = Query(..., min_length=40, m
             ],
         }
     )
+
+
+class CertificateRequest(BaseModel):
+    """Запрос на сертификат для удостоверяющего центра."""
+
+    container: str = Field(default="", max_length=40)
+    rdn: str = Field(default="", max_length=800)
+
+
+@app.post("/certificates/request")
+async def create_certificate_request(request: CertificateRequest):
+    """Собрать запрос на сертификат для тестового удостоверяющего центра.
+
+    Инструкция Оператора по работе с тестовой средой предлагает выпускать
+    сертификат в тестовом УЦ, а не просить его письмом. Для этого нужен
+    PKCS#10, и собрать его умеет сам стенд: ключ остаётся здесь, наружу
+    уходит только открытая часть внутри запроса.
+    """
+    import certsources
+    import settings_store
+
+    profile = {
+        key: settings_store.load().get(key, "")
+        for key in settings_store.PROFILE_FIELDS
+    }
+    rdn = request.rdn.strip() or certsources.request_rdn(profile)
+    missing = certsources.missing_for_request(profile) if not request.rdn.strip() else []
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail="Заполните реквизиты организации: " + ", ".join(missing),
+        )
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M")
+    container = request.container.strip() or ("epgu-" + stamp)
+    try:
+        result = await asyncio.to_thread(
+            certsources.create_request,
+            container=container,
+            rdn=rdn,
+            pin=os.getenv("KeyPin", ""),
+        )
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail=str(err)) from err
+    except RuntimeError as err:
+        raise HTTPException(status_code=503, detail=str(err)) from err
+
+    logger.warning("Создан запрос на сертификат, контейнер %s", container)
+    return JSONResponse(content=result)
 
 
 @app.post("/certificates/restore-keys")

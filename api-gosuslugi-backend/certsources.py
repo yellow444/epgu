@@ -320,6 +320,168 @@ def restore_key_backup(name: str) -> Dict[str, Any]:
     return {"restored": restored, "skipped": skipped, "backup": clean}
 
 
+# ---------- Запрос на сертификат для удостоверяющего центра ----------
+
+CRYPTCP = "/opt/cprocsp/bin/amd64/cryptcp"
+
+# Тестовый удостоверяющий центр КриптоПро из инструкции Оператора по работе с
+# тестовой средой. Через него сертификат выпускается сразу, письмом в
+# поддержку его больше просить не нужно.
+TEST_CA_URL = "http://testca2012.cryptopro.ru/ui/"
+
+_CONTAINER_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$")
+# Кавычки и переводы строк в имени сломали бы команду, а остальное КриптоПро
+# кодирует само.
+_RDN_FORBIDDEN = re.compile(r'["\r\n$`;|&]')
+
+# Как называются поля в запросе. Слева наши ключи реквизитов, справа то, что
+# понимает cryptcp: проверено на живом запросе, разбор asn1parse показывает
+# INN, OGRN и SNILS отдельными атрибутами.
+RDN_FIELDS = (
+    ("CN", "ORG_FULL_NAME"),
+    ("O", "ORG_FULL_NAME"),
+    ("T", "CONTACT_ROLE"),
+    ("E", "CONTACT_EMAIL"),
+    ("INN", "ORG_INN"),
+    ("OGRN", "ORG_OGRN"),
+    ("SNILS", "CONTACT_SNILS"),
+)
+
+
+def request_rdn(profile: Dict[str, str]) -> str:
+    """Собрать строку имени для запроса из реквизитов организации.
+
+    Порядок полей повторяет сертификат, который тестовый УЦ РТК выдал нам в
+    прошлый раз: наименование, должность, почта, ИНН, ОГРН, СНИЛС и ФИО
+    владельца отдельными атрибутами.
+    """
+    parts: List[str] = []
+    for name, key in RDN_FIELDS:
+        value = str(profile.get(key, "") or "").strip()
+        if value:
+            parts.append("%s=%s" % (name, value))
+    person = str(profile.get("CONTACT_NAME", "") or "").strip().split()
+    if person:
+        parts.append("SN=%s" % person[0])
+        if len(person) > 1:
+            parts.append("G=%s" % " ".join(person[1:]))
+    parts.append("C=RU")
+    return ",".join(parts)
+
+
+def missing_for_request(profile: Dict[str, str]) -> List[str]:
+    """Чего не хватает в реквизитах, чтобы запрос приняли в УЦ."""
+    required = {
+        "ORG_FULL_NAME": "наименование организации",
+        "ORG_INN": "ИНН",
+        "ORG_OGRN": "ОГРН",
+        "CONTACT_NAME": "ФИО владельца",
+        "CONTACT_EMAIL": "адрес электронной почты",
+    }
+    return [title for key, title in required.items() if not str(profile.get(key, "") or "").strip()]
+
+
+# Ключ КриптоПро генерирует только со строгого датчика случайных чисел.
+# Аппаратного в контейнере нет, остаётся биологический: он читает нажатия
+# клавиш. Поэтому команда запускается под псевдотерминалом, а в него подаются
+# символы с паузами, как при наборе руками, и следом пароль контейнера.
+_FEED_SCRIPT = """#!/bin/sh
+i=0
+while [ $i -lt 1500 ]; do
+  head -c 8 /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 1
+  sleep 0.02
+  i=$((i+1))
+done
+j=0
+while [ $j -lt 24 ]; do printf '%s\\n' "$PIN"; sleep 0.4; j=$((j+1)); done
+"""
+
+
+def create_request(
+    *,
+    container: str,
+    rdn: str,
+    pin: str = "",
+    timeout: int = 300,
+) -> Dict[str, Any]:
+    """Создать ключевой контейнер и запрос на сертификат в формате PKCS#10.
+
+    Файл запроса ложится в каталог вложений, оттуда его видно в интерфейсе и
+    можно скачать. Ключ остаётся на стенде и никуда не уходит: наружу
+    отправляется только открытая часть внутри запроса.
+    """
+    if not cryptopro_available():
+        raise RuntimeError("В этом образе нет КриптоПро, запрос собирать нечем")
+    if not _CONTAINER_NAME.match(str(container or "")):
+        raise ValueError("Имя контейнера: латиница, цифры, точка, дефис, от 3 до 40 знаков")
+    clean_rdn = str(rdn or "").strip()
+    if not clean_rdn or _RDN_FORBIDDEN.search(clean_rdn) or len(clean_rdn) > 800:
+        raise ValueError("Недопустимое имя в запросе")
+
+    target = cert_dir() / ("%s.req" % container)
+    if target.exists():
+        raise ValueError("Запрос %s уже есть, выберите другое имя контейнера" % target.name)
+    cert_dir().mkdir(parents=True, exist_ok=True)
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as workdir:
+        feed = Path(workdir) / "feed.sh"
+        command = Path(workdir) / "request.sh"
+        feed.write_text(_FEED_SCRIPT, encoding="utf-8")
+        command.write_text(
+            "#!/bin/sh\nexec %s -createrqst -provtype 80 -cont '\\\\.\\HDIMAGE\\%s' -rdn \"%s\" %s\n"
+            % (CRYPTCP, container, clean_rdn, target),
+            encoding="utf-8",
+        )
+        feed.chmod(0o700)
+        command.chmod(0o700)
+        pipeline = "PIN='%s' %s | script -qec %s /dev/null" % (
+            pin.replace("'", ""),
+            feed,
+            command,
+        )
+        try:
+            result = subprocess.run(
+                ["sh", "-c", pipeline],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as err:
+            raise RuntimeError("Генерация ключа не уложилась в отведённое время") from err
+
+    output = (result.stdout or "") + (result.stderr or "")
+    if not target.exists():
+        logger.warning("Запрос на сертификат собрать не удалось")
+        raise RuntimeError(_request_error(output))
+    logger.info("Создан запрос на сертификат, контейнер %s", container)
+    return {
+        "container": container,
+        "path": str(target),
+        "name": target.name,
+        "rdn": clean_rdn,
+        "request": target.read_text(encoding="utf-8", errors="replace"),
+        "ca_url": TEST_CA_URL,
+    }
+
+
+def _request_error(output: str) -> str:
+    """Человеческая причина отказа вместо шестнадцатеричного кода."""
+    text = output or ""
+    if "0x8009000F" in text or "already exists" in text:
+        return "Контейнер с таким именем уже есть, выберите другое имя"
+    if "0x8010001C" in text or "smart card" in text:
+        return "КриптоПро не принял имя контейнера, проверьте его написание"
+    if "0x80090020" in text:
+        return (
+            "Не набралась энтропия для генерации ключа. Повторите попытку: "
+            "датчик случайных чисел в контейнере программный и иногда не успевает"
+        )
+    return "Собрать запрос не удалось, подробности в логе контейнера"
+
+
 def readers_status() -> Dict[str, Any]:
     """Что КриптоПро видит внутри контейнера: ридеры и ключевые контейнеры."""
     if not cryptopro_available():

@@ -49,6 +49,7 @@
 | POST | `/certsources/extract` | Достать вложения архива или документа на диск |
 | POST | `/certificates/delete` | Удалить сертификат (`cert_id`), сначала скопировав ключи |
 | POST | `/certificates/restore-keys` | Вернуть ключевой контейнер из копии (`name`) |
+| POST | `/certificates/request` | Собрать запрос PKCS#10 для удостоверяющего центра |
 | GET | `/mail/attachments` | Вложения последних писем одним списком |
 | POST | `/mail/attachments/collect` | Забрать из писем сертификаты, ключи, архивы и документы |
 | POST | `/mail/messages/{uid}/attachments/{index}/save` | Сохранить одно вложение (`target`: `certs` или `keys`) |

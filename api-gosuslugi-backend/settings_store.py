@@ -59,6 +59,7 @@ ALLOWED_KEYS = {
     "ORG_ROLE",
     "CONTACT_NAME",
     "CONTACT_ROLE",
+    "CONTACT_SNILS",
     "CONTACT_PHONE",
     "CONTACT_EMAIL",
 }
@@ -74,6 +75,7 @@ PROFILE_FIELDS = {
     "IS_MNEMONIC": ("мнемоника ИС",),
     "CONTACT_NAME": ("ФИО",),
     "CONTACT_ROLE": ("должность",),
+    "CONTACT_SNILS": ("СНИЛС",),
     "CONTACT_PHONE": ("телефон",),
     "CONTACT_EMAIL": ("smev@домен организации",),
 }

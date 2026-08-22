@@ -101,3 +101,6 @@ Thumbs.db
 /requirements.txt
 /unittest.py
 /wsgi.py
+
+# Ключ SSH-туннеля до VPS, в репозиторий не кладётся
+deploy/vps/secret/

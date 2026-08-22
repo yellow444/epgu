@@ -1,0 +1,17 @@
+# Обратный SSH-туннель со стенда на VPS.
+#
+# Стенд и VPS в разных сетях: у VPS свой WireGuard, у стенда чужой OpenVPN,
+# общего пути между ними нет. Поэтому стенд сам держит исходящее SSH-соединение
+# до VPS и пробрасывает на нём порт: VPS:127.0.0.1:58080 -> приёмник стенда.
+# Caddy на VPS ходит на этот 127.0.0.1:58080.
+#
+# Отдельный контейнер, а не autossh на хосте: стенд под Windows, а так туннель
+# поднимается вместе со всем стендом и переживает разрывы сам.
+FROM alpine:3.20
+
+RUN apk add --no-cache openssh-client
+
+COPY entrypoint-tunnel.sh /entrypoint-tunnel.sh
+RUN chmod +x /entrypoint-tunnel.sh
+
+ENTRYPOINT ["/entrypoint-tunnel.sh"]

@@ -1,0 +1,31 @@
+# Обратный SSH-туннель до VPS с внешним адресом.
+#
+# Стенд и VPS в разных сетях (у VPS свой WireGuard, у стенда чужой OpenVPN),
+# прямого пути между ними нет. Поэтому стенд держит исходящее SSH-соединение
+# до VPS и пробрасывает на нём порт 58080 на приёмник. Caddy на VPS ходит на
+# 127.0.0.1:58080.
+#
+# Запуск вместе со стендом:
+#   docker compose -f docker-compose.yml -f docker-compose.cryptopro.yml \
+#                  -f docker-compose.tunnel.yml up -d
+#
+# Ключ туннеля лежит в deploy/vps/secret и в репозиторий не попадает.
+# Отпечаток ключа хоста VPS фиксируется в TUNNEL_HOSTKEY, чтобы туннель нельзя
+# было увести на подставной сервер.
+
+services:
+  tunnel:
+    build:
+      context: ./deploy/vps
+      dockerfile: Dockerfile.tunnel
+    environment:
+      - TUNNEL_HOST=${TUNNEL_HOST:-132.243.251.210}
+      - TUNNEL_USER=${TUNNEL_USER:-epgu-tunnel}
+      - TUNNEL_REMOTE_BIND=${TUNNEL_REMOTE_BIND:-127.0.0.1:58080}
+      - TUNNEL_LOCAL_TARGET=${TUNNEL_LOCAL_TARGET:-inbound:5001}
+      - TUNNEL_HOSTKEY=${TUNNEL_HOSTKEY:-}
+    volumes:
+      - ./deploy/vps/secret/tunnel_key:/keys/tunnel_key:ro
+    depends_on:
+      - inbound
+    restart: always

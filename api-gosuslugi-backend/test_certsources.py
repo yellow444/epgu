@@ -111,3 +111,53 @@ def test_backup_is_skipped_when_there_are_no_keys(sources, monkeypatch, tmp_path
     result = sources.delete_certificate(THUMB)
 
     assert result["keys_backup"] == ""
+
+
+# ---------- Копии ключей ----------
+
+
+def test_backups_are_listed_newest_first(sources, monkeypatch):
+    monkeypatch.setattr(sources, "_run", fake_run([0, 0]))
+    sources.delete_certificate(THUMB)
+    # Вторая копия делается из того, что осталось: контейнер на месте.
+    sources.delete_certificate(THUMB)
+
+    listed = sources.list_key_backups()
+
+    assert len(listed) == 2
+    assert listed[0]["name"] > listed[1]["name"]
+    assert listed[0]["containers"][0]["name"] == "xxx.000"
+    assert "UTC" in listed[0]["made_at"]
+
+
+def test_restore_puts_the_container_back(sources, monkeypatch, tmp_path):
+    monkeypatch.setattr(sources, "_run", fake_run([0]))
+    sources.delete_certificate(THUMB)
+    backup = sources.list_key_backups()[0]["name"]
+    # Повторяем то, что делает certmgr: контейнер исчез вместе с сертификатом.
+    container = tmp_path / "keys" / "xxx.000"
+    for path in container.iterdir():
+        path.unlink()
+
+    result = sources.restore_key_backup(backup)
+
+    assert sorted(path.name for path in container.iterdir()) == ["header.key", "primary.key"]
+    assert len(result["restored"]) == 2
+
+
+def test_restore_does_not_overwrite_a_working_key(sources, monkeypatch, tmp_path):
+    monkeypatch.setattr(sources, "_run", fake_run([0]))
+    sources.delete_certificate(THUMB)
+    backup = sources.list_key_backups()[0]["name"]
+    (tmp_path / "keys" / "xxx.000" / "primary.key").write_bytes("новый ключ".encode())
+
+    result = sources.restore_key_backup(backup)
+
+    assert (tmp_path / "keys" / "xxx.000" / "primary.key").read_bytes() == "новый ключ".encode()
+    assert any("уже на месте" in line for line in result["skipped"])
+
+
+def test_backup_name_is_checked(sources):
+    for bad in ("", "../etc", "keys-backup-x", "keys-backup-20260821"):
+        with pytest.raises(ValueError):
+            sources.restore_key_backup(bad)

@@ -235,6 +235,26 @@ async def head_probe() -> PlainTextResponse:
     return PlainTextResponse(content="", status_code=200)
 
 
+@app.get("/{path:path}")
+@app.head("/{path:path}")
+async def probe_any(path: str) -> JSONResponse:
+    """Проба любого адреса, который указали в карточке ИС.
+
+    Путь для push в техпортале задаём мы сами, и он не обязан называться
+    /push: встречается и /message, и что-нибудь своё. Приём и так работает по
+    любому пути, а вот проверка доступности ходит методом GET, и 405 в ответ
+    выглядит как неработающий адрес. Поэтому отвечаем ровно то же, что и на
+    /push, но говорим, какой путь спросили.
+    """
+    return JSONResponse(
+        content={
+            "code": "OK",
+            "message": "Адрес принимает push сообщения методом POST",
+            "path": "/" + path.lstrip("/"),
+        }
+    )
+
+
 @app.api_route("/push", methods=["POST", "PUT", "PATCH"])
 async def push_receive(request: Request) -> JSONResponse:
     """Приём push сообщения. Своим - всегда 200, чтобы не копились повторы."""

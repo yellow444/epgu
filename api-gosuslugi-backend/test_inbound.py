@@ -312,3 +312,30 @@ def test_public_check_reports_a_foreign_answer(monkeypatch, tmp_path):
     # Прокси ответил своей страницей: адрес занят, но ведёт не к нам.
     assert payload["reachable"] is False
     assert any("не привёл" in hint for hint in payload["hints"])
+
+
+# ---------- Проба произвольного пути ----------
+
+
+def test_probe_answers_on_any_path(client):
+    """Путь для push придумываем мы, и проверка ходит по нему методом GET."""
+    for path in ("/message", "/push", "/api/notify/status", "/что-угодно"):
+        response = client.get(path)
+        assert response.status_code == 200, path
+        payload = response.json()
+        assert payload["code"] == "OK"
+        assert payload["message"].startswith("Адрес принимает")
+
+    # Ответ говорит, какой путь спросили: так видно, что дошло именно до нас.
+    assert client.get("/message").json()["path"] == "/message"
+
+
+def test_system_url_still_answers_with_endpoints(client):
+    payload = client.get("/is").json()
+
+    assert payload["status"] == "ok"
+    assert payload["endpoints"]["push"] == "/push"
+
+
+def test_head_probe_works_for_any_path(client):
+    assert client.head("/message").status_code == 200

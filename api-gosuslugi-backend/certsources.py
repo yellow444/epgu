@@ -35,6 +35,15 @@ def cert_dir() -> Path:
     return Path(os.getenv("CERT_INBOX_DIR", "/var/lib/epgu-mail"))
 
 
+def keys_dir() -> Path:
+    """Каталог ключевых контейнеров КриптоПро.
+
+    Держится отдельно от каталога документов: провайдер ищет контейнеры
+    именно здесь, и класть их вперемешку с инструкциями и архивами нельзя.
+    """
+    return Path(os.getenv("KEYS_DIR", "/var/opt/cprocsp/keys/app"))
+
+
 def cryptopro_available() -> bool:
     return Path(CERTMGR).exists()
 

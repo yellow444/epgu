@@ -161,3 +161,77 @@ def test_backup_name_is_checked(sources):
     for bad in ("", "../etc", "keys-backup-x", "keys-backup-20260821"):
         with pytest.raises(ValueError):
             sources.restore_key_backup(bad)
+
+
+# ---------- Запрос на сертификат для удостоверяющего центра ----------
+
+
+PROFILE = {
+    "ORG_FULL_NAME": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ КВИК РЕСТО",
+    "ORG_INN": "7726734798",
+    "ORG_OGRN": "5137746099046",
+    "CONTACT_NAME": "Ситников Максим Валериевич",
+    "CONTACT_ROLE": "Генеральный директор",
+    "CONTACT_EMAIL": "smev@mirasnowfox.ru",
+    "CONTACT_SNILS": "127-439-029 61",
+}
+
+
+def test_request_name_is_built_from_the_profile(sources):
+    rdn = sources.request_rdn(PROFILE)
+
+    assert rdn.startswith("CN=ОБЩЕСТВО С ОГРАНИЧЕННОЙ")
+    assert "INN=7726734798" in rdn
+    assert "OGRN=5137746099046" in rdn
+    assert "SNILS=127-439-029 61" in rdn
+    # Фамилия и имя идут отдельными полями, как в сертификате от УЦ РТК.
+    assert "SN=Ситников" in rdn
+    assert "G=Максим Валериевич" in rdn
+    assert rdn.endswith("C=RU")
+
+
+def test_empty_profile_fields_are_skipped(sources):
+    rdn = sources.request_rdn({"ORG_FULL_NAME": "ООО Ромашка", "CONTACT_NAME": ""})
+
+    assert rdn == "CN=ООО Ромашка,O=ООО Ромашка,C=RU"
+
+
+def test_missing_fields_are_named(sources):
+    missing = sources.missing_for_request({"ORG_FULL_NAME": "ООО Ромашка"})
+
+    assert "ИНН" in missing
+    assert "ОГРН" in missing
+    assert "ФИО владельца" in missing
+    assert sources.missing_for_request(PROFILE) == []
+
+
+def test_container_name_is_checked(sources, monkeypatch):
+    monkeypatch.setattr(sources, "_run", fake_run([]))
+    for bad in ("", "ab", "имя", "name; rm -rf /", "a" * 41):
+        with pytest.raises(ValueError):
+            sources.create_request(container=bad, rdn="CN=X")
+
+
+def test_dangerous_name_is_refused(sources):
+    for bad in ('CN="X"', "CN=X\nO=Y", "CN=$(whoami)", "CN=X; rm -rf /"):
+        with pytest.raises(ValueError):
+            sources.create_request(container="epgu-test", rdn=bad)
+
+
+def test_existing_request_is_not_overwritten(sources):
+    (sources.cert_dir() / "epgu-test.req").write_text("уже есть", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        sources.create_request(container="epgu-test", rdn="CN=X")
+
+
+def test_without_cryptopro_the_request_is_refused(sources, monkeypatch):
+    monkeypatch.setattr(sources, "cryptopro_available", lambda: False)
+
+    with pytest.raises(RuntimeError):
+        sources.create_request(container="epgu-test", rdn="CN=X")
+
+
+def test_error_text_explains_entropy_failure(sources):
+    assert "энтропия" in sources._request_error("ErrorCode: 0x80090020").lower()
+    assert "уже есть" in sources._request_error("Error: Object already exists 0x8009000F")

@@ -319,21 +319,73 @@ def describe(path: Path) -> Dict[str, Any]:
     return result
 
 
-def extract(path: Path, target_dir: Path, *, only: Optional[List[str]] = None) -> Dict[str, Any]:
+def _pdf_attachments(data: bytes) -> List[Dict[str, Any]]:
+    """Вложенные в PDF файлы вместе с содержимым, а не только именами."""
+    if PdfReader is None:
+        return []
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        named = getattr(reader, "attachments", None) or {}
+    except Exception:
+        return []
+    found: List[Dict[str, Any]] = []
+    for name, payloads in named.items():
+        for payload in payloads:
+            found.append({"name": str(name), "data": payload})
+    return found
+
+
+def extract(
+    path: Path,
+    target_dir: Path,
+    *,
+    only: Optional[List[str]] = None,
+    keys_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
     """Достать вложенные файлы на диск.
 
     Имена внутри архива приходят снаружи, поэтому каждое приводим к простому
     имени: путь из архива в файловую систему попасть не должен.
+
+    Ключевой контейнер раскладывается отдельно. Это каталог из шести файлов, и
+    рассыпать его по общей папке значит получить нерабочий закрытый ключ, о
+    чём разбор сам предупреждает при осмотре архива.
     """
     path = Path(path)
     target_dir = Path(target_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
     kind = kind_of(path)
+    extracted: List[Dict[str, Any]] = []
+    skipped: List[str] = []
+
+    if kind == "pdf":
+        # Контейнер и сертификат присылают вложением в инструкцию, и до сих
+        # пор кнопка "Извлечь" на таком файле возвращала отказ.
+        found = _pdf_attachments(path.read_bytes())
+        if not found:
+            return {
+                "extracted": [],
+                "skipped": [
+                    "В этом PDF вложенных файлов нет. Если значки видны, документ "
+                    "напечатали из Word и вложения потерялись, запросите исходник."
+                ],
+            }
+        for item in found:
+            safe = _safe_name(item["name"])
+            if not safe:
+                skipped.append("%s: небезопасное имя" % item["name"])
+                continue
+            destination = _place(target_dir, keys_dir, safe, "")
+            destination.write_bytes(item["data"])
+            extracted.append(
+                {"name": destination.name, "source": item["name"], "size": len(item["data"]),
+                 "path": str(destination), "kind": kind_of(destination)}
+            )
+        return {"extracted": extracted, "skipped": skipped}
+
     if kind not in {"archive", "docx"}:
         return {"extracted": [], "skipped": ["Извлекать нечего: файл не архив и не документ"]}
 
-    extracted: List[Dict[str, Any]] = []
-    skipped: List[str] = []
     with zipfile.ZipFile(path) as archive:
         for item in archive.infolist():
             if item.is_dir():
@@ -348,13 +400,34 @@ def extract(path: Path, target_dir: Path, *, only: Optional[List[str]] = None) -
                 skipped.append("%s: небезопасное имя" % item.filename)
                 continue
             payload = archive.read(item)
-            destination = target_dir / safe
+            # Каталог контейнера внутри архива сохраняем: по нему провайдер
+            # и находит ключ.
+            parent = str(item.filename).replace("\\", "/").split("/")[-2:-1]
+            destination = _place(target_dir, keys_dir, safe, parent[0] if parent else "")
             destination.write_bytes(payload)
             extracted.append(
-                {"name": safe, "source": item.filename, "size": len(payload),
+                {"name": destination.name, "source": item.filename, "size": len(payload),
                  "path": str(destination), "kind": kind_of(destination)}
             )
     return {"extracted": extracted, "skipped": skipped}
+
+
+def _place(target_dir: Path, keys_dir: Optional[Path], name: str, parent: str) -> Path:
+    """Куда положить извлечённый файл: к документам или к ключам."""
+    if keys_dir is not None and name.lower() in CONTAINER_FILES:
+        container = _safe_name(parent) or "container.000"
+        if not container.endswith(".000"):
+            container = container + ".000"
+        folder = Path(keys_dir) / container
+    else:
+        folder = target_dir
+    folder.mkdir(parents=True, exist_ok=True)
+    destination = folder / name
+    counter = 1
+    while destination.exists():
+        destination = folder / ("%s-%d%s" % (Path(name).stem, counter, Path(name).suffix))
+        counter += 1
+    return destination
 
 
 def _safe_name(name: str) -> str:

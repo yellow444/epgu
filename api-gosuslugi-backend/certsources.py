@@ -101,16 +101,21 @@ def scan_folder(folder: Optional[Path] = None) -> Dict[str, Any]:
                         }
                     )
                 continue
-            suffix = entry.suffix.lower()
-            if suffix not in CERT_SUFFIXES and suffix not in CONTAINER_SUFFIXES:
+            # Показываем всё, что лежит в папке, а не только сертификаты:
+            # инструкция в PDF и документ Word тоже часть работы, и разбирать
+            # их нужно отсюда же. Тип определяем по содержимому.
+            import attachments
+
+            if entry.name.startswith(".") or entry.suffix.lower() in {".json", ".env", ".tmp"}:
                 continue
+            kind = attachments.kind_of(entry)
             item: Dict[str, Any] = {
                 "name": entry.name,
                 "path": str(entry),
                 "size": entry.stat().st_size,
-                "kind": "certificate" if suffix in CERT_SUFFIXES else "archive",
+                "kind": kind,
             }
-            if suffix in CERT_SUFFIXES:
+            if kind == "certificate":
                 item.update(describe_certificate(entry))
             files.append(item)
     return {

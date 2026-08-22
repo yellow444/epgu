@@ -57,6 +57,28 @@ _LINK_RE = re.compile(r"https?://[^\s<>\"')]+")
 _PIN_RE = re.compile(r"(?:ПИН|PIN|пин)[ -]?код[^0-9]{0,12}([0-9]{4,12})")
 
 
+def guess_kind(name: str) -> str:
+    """Что это за файл по одному имени, без чтения содержимого.
+
+    Нужно для вложений в письмах: файл ещё лежит на почтовом сервере, а
+    показать оператору, сертификат это или архив, нужно уже сейчас.
+    """
+    base = str(name).replace("\\", "/").split("/")[-1]
+    lowered = base.lower()
+    if lowered in CONTAINER_FILES or Path(lowered).suffix in KEY_SUFFIXES:
+        return "key"
+    suffix = Path(lowered).suffix
+    if suffix in CERT_SUFFIXES:
+        return "certificate"
+    if suffix in ARCHIVE_SUFFIXES:
+        return "archive"
+    if suffix == ".pdf":
+        return "pdf"
+    if suffix in {".docx", ".doc"}:
+        return "docx"
+    return "unknown"
+
+
 def kind_of(path: Path) -> str:
     """Что это за файл. Смотрим и на расширение, и на первые байты."""
     suffix = path.suffix.lower()

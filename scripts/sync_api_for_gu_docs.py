@@ -22,7 +22,7 @@ from urllib.request import Request, urlopen
 
 
 SOURCE_PAGE = "https://partners.gosuslugi.ru/catalog/api_for_gu"
-SNAPSHOT_DATE = "2026-08-12"
+SNAPSHOT_DATE = "2026-08-21"
 BASE_URL = "https://gu-st.ru/content/partners/api_for_gu/"
 
 
@@ -48,6 +48,16 @@ DOCUMENTS: List[Dict[str, Optional[str]]] = [
         "Регламент подключения к API Госуслуг, версия 1.8",
         "2026-03-06",
         "Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx",
+    ),
+    _doc(
+        # Публичная редакция без номера версии: на неё ссылается текст
+        # каталога, а карточка со ссылкой на 1.8 лежит рядом. Держим обе,
+        # чтобы видеть расхождение между тем, что читают снаружи, и тем, по
+        # чему мы работаем.
+        "regulation",
+        "Регламент подключения к API Госуслуг, публичная редакция",
+        "",
+        "Reglament_podklyucheniya_k_API_Gosuslug.docx",
     ),
     _doc(
         "agreement",

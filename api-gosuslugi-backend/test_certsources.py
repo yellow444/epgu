@@ -235,3 +235,91 @@ def test_without_cryptopro_the_request_is_refused(sources, monkeypatch):
 def test_error_text_explains_entropy_failure(sources):
     assert "энтропия" in sources._request_error("ErrorCode: 0x80090020").lower()
     assert "уже есть" in sources._request_error("Error: Object already exists 0x8009000F")
+
+
+# ---------- Доверие тестовому удостоверяющему центру ----------
+
+
+def test_ca_roots_are_installed_into_their_stores(sources, monkeypatch):
+    calls = []
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def read(self, limit=None):
+            return self.payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    import urllib.request
+
+    monkeypatch.setattr(
+        urllib.request, "urlopen", lambda url, timeout=30: FakeResponse(b"cert-" + url.encode()[-9:])
+    )
+
+    def runner(args, timeout=20):
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, stdout="Subject: Тестовый УЦ", stderr="")
+
+    monkeypatch.setattr(sources, "_run", runner)
+
+    result = sources.trust_test_ca()
+
+    stores = [item["store"] for item in result["installed"]]
+    assert stores == ["mroot", "uCA"]
+    assert result["failed"] == []
+    # Корневой идёт в доверенные корни, промежуточный в промежуточные.
+    assert any("-store" in call and "mroot" in call for call in calls)
+    assert any("-store" in call and "uCA" in call for call in calls)
+
+
+def test_root_waits_for_restart_when_store_is_locked(sources, monkeypatch):
+    """Доверенные корни машины пишет только root, приложение работает не им."""
+
+    class FakeResponse:
+        def read(self, limit=None):
+            return b"cert"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    import urllib.request
+
+    monkeypatch.setattr(urllib.request, "urlopen", lambda url, timeout=30: FakeResponse())
+    # certmgr отказывает и на установке, и на чтении: прав нет ни там, ни там.
+    monkeypatch.setattr(
+        sources,
+        "_run",
+        lambda args, timeout=20: subprocess.CompletedProcess(args, 1, stdout="", stderr=""),
+    )
+
+    result = sources.trust_test_ca()
+
+    assert result["installed"] == []
+    assert len(result["pending"]) == 2
+    # Файл лежит там, откуда entrypoint ставит корни при старте.
+    assert result["pending"][0]["file"].endswith("test-root.cer")
+    assert (sources.keys_dir() / "ca-trust" / "test-root.cer").exists()
+
+
+def test_unreachable_ca_is_reported_not_hidden(sources, monkeypatch):
+    import urllib.request
+
+    def boom(url, timeout=30):
+        raise OSError("нет сети")
+
+    monkeypatch.setattr(urllib.request, "urlopen", boom)
+    monkeypatch.setattr(sources, "_run", fake_run([]))
+
+    result = sources.trust_test_ca()
+
+    assert result["installed"] == []
+    assert len(result["failed"]) == 2

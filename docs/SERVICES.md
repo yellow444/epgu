@@ -1,8 +1,8 @@
 # Каталог услуг и контрактов API ЕПГУ
 
-> Снимок официального [каталога API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu) прочитан **12 августа 2026 года**. Авторитетный базовый документ - [API ЕПГУ v1.14 от 29.01.2026](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_14.docx).
+> Снимок официального [каталога API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu) прочитан **12 августа 2026 года**, сверен **21 августа 2026 года**. Авторитетный базовый документ - [API ЕПГУ v1.14 от 29.01.2026](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_14.docx).
 
-В локальном снимке 28 документов: 21 спецификация отдельной услуги и 7 общих документов. Их URL, размер и SHA-256 записаны в [`api_for_gu/catalog.json`](./api_for_gu/catalog.json). Backend-источник готовности - [`../api-gosuslugi-backend/service_profiles.json`](../api-gosuslugi-backend/service_profiles.json), а не само наличие строки на портале.
+В локальном снимке 29 документов: 21 спецификация отдельной услуги и 8 общих документов. Их URL, размер и SHA-256 записаны в [`api_for_gu/catalog.json`](./api_for_gu/catalog.json). Backend-источник готовности - [`../api-gosuslugi-backend/service_profiles.json`](../api-gosuslugi-backend/service_profiles.json), а не само наличие строки на портале.
 
 ## Статусы готовности
 

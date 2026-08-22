@@ -23,7 +23,7 @@
 Полный перечень с привязкой к актуальным источникам - в [SERVICES.md](./SERVICES.md).
 Основные локальные файлы:
 
-- `Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx` - регламент подключения (локальная редакция v1.8; на портале публичная v1.4)
+- `Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx` - регламент подключения. Внутри файла версия 1.8.1, это то, что отдаёт карточка каталога от 06.03.2026. Ссылка из текста каталога ведёт на файл без номера в имени, а там версия 1.8
 - `Specifikaciya_API_EPGU_v1_13.docx` - общая спецификация API (актуально на 2026-05)
 - `Specifikaciya_API_EPGU_Podacha_zayavlenij_hodatajstv_obyasnenij_v1_3_kod_uslugi_10000000367_18_06_2024.docx` - услуга `10000000367`
 - `Specifikaciya_API_EPGU_Prilozhenie_10000000367_Podacha_zayavleni_hodatajstv_obyasnenij_v1.3.docx` - приложение к ней

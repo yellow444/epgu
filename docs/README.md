@@ -35,6 +35,10 @@
 - `Rukovodstvo_polzovatelya_dlya_organizacii-vendora_..._Versiya_3.2_...pdf` - получение API-Key (вендор)
 - `metodicheskierekomendatsiipoispolzovaniyuesiav348.docx` - методрекомендации ЕСИА (v3.48)
 - `rp-esia-tehportal-1328.pdf` - руководство по технологическому порталу ЕСИА
+- `Instrukciya_po_rabote_s_testovoy_sredoy_1_10.pdf` - работа с тестовой средой
+  ЕСИА (ТЕСИА): адреса модулей, табличные учётные записи, регистрация ЮЛ,
+  загрузка сертификата ИС. Пришла письмом по запросу SCR#6451421 20.08.2026,
+  выжимка в [context/14-test-environment.md](./context/14-test-environment.md)
 
 ## Документы, доступные на портале, но не загруженные локально
 

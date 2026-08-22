@@ -1,0 +1,39 @@
+# Внешний адрес информационной системы на Caddy.
+#
+# Caddy сам получает и продлевает сертификат, отдельный certbot не нужен: имя
+# должно резолвиться на этот сервер, а порты 80 и 443 быть открыты.
+#
+# Кладётся в /etc/caddy/Caddyfile (или подключается через import).
+# После правки: sudo caddy validate --config /etc/caddy/Caddyfile
+#              sudo systemctl reload caddy
+
+smev.mirasnowfox.ru {
+	# Наружу открыты только адреса из карточки ИС. Путь для push задаём мы
+	# сами, поэтому здесь их три: /is, /push и /message. Лишний не мешает,
+	# отсутствующий превращается в 404 на стороне Caddy, и запрос до стенда
+	# не доходит вовсе.
+	@is path /is /push /message
+	handle @is {
+		reverse_proxy 127.0.0.1:58080 {
+			# Настоящий адрес отправителя. На стенде этот прокси должен быть
+			# в INBOUND_TRUSTED_PROXIES, иначе в журнале будет виден Caddy.
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Всё остальное наружу не отдаём: операторские методы стенда сюда не
+	# проксируются вообще, они слушают localhost на другой машине.
+	handle {
+		respond 404
+	}
+
+	request_body {
+		max_size 2MB
+	}
+
+	log {
+		output file /var/log/caddy/smev.log
+	}
+}

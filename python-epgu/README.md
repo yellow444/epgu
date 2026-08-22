@@ -223,18 +223,20 @@ python -m twine check dist/*
 python -m pip_audit --local --skip-editable
 ```
 
-CI выполняет lint, тесты на Python 3.10-3.14, coverage gate, сборку wheel/sdist,
-`twine check`, проверку установки wheel и аудит зависимостей. Перед выпуском
-обновите версию одновременно в `pyproject.toml` и `epgu.__version__`, а также
-`CHANGELOG.md`. Публикацию выполняйте через PyPI Trusted Publishing; токен PyPI
-в репозиторий не добавляется.
+Проверки выполняются локально, автоматики в репозитории нет: команды выше это
+и есть весь набор, который раньше гонял CI. Перед выпуском обновите версию
+одновременно в `pyproject.toml` и `epgu.__version__`, а также `CHANGELOG.md`.
 
-Для автоматической публикации настройте Trusted Publisher проекта `epgu-api` в
-PyPI: owner `yellow444`, repository `epgu`, workflow `python-publish.yml`,
-environment `pypi`. После прохождения CI создайте GitHub Release с тегом,
-совпадающим с версией (например, `v0.2.0`). Release-workflow собирает артефакты
-в job без OIDC-доступа, проверяет их и только затем передаёт отдельному
-publish-job с `id-token: write`; GitHub Actions закреплены полными commit SHA.
+Публикация ручная, с токеном PyPI из личного кабинета:
+
+```bash
+python -m build
+python -m twine check dist/*
+python -m twine upload dist/*
+```
+
+Токен в репозиторий не кладётся: он живёт в `~/.pypirc` или в переменной
+`TWINE_PASSWORD` на машине, с которой публикуют.
 
 ## Лицензия
 

@@ -212,3 +212,103 @@ def test_forwarded_address_is_believed_only_from_our_proxy(client, monkeypatch):
     monkeypatch.setenv("INBOUND_TRUSTED_PROXIES", "127.0.0.1")
     client.post("/push", content=b"{}", headers={"X-Forwarded-For": "8.8.8.8"})
     assert read_journal(client.journal)[-1]["client"] == "8.8.8.8"
+
+
+# ---------- Проверка внешнего адреса ----------
+
+
+def operator_client(monkeypatch, tmp_path):
+    """Операторский роутер журнала входящих, без публичного приёмника."""
+    import importlib
+
+    monkeypatch.setenv("INBOUND_JOURNAL", str(tmp_path / "messages.jsonl"))
+    import inbound_store
+    import inbound_api
+
+    importlib.reload(inbound_store)
+    importlib.reload(inbound_api)
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    app = FastAPI()
+    app.include_router(inbound_api.inbound_router())
+    return TestClient(app), inbound_api
+
+
+def test_public_check_needs_an_address(monkeypatch, tmp_path):
+    monkeypatch.delenv("INBOUND_PUBLIC_URL", raising=False)
+    client, _ = operator_client(monkeypatch, tmp_path)
+
+    assert client.post("/inbound/check-public").status_code == 400
+
+
+def test_public_check_refuses_a_bare_host(monkeypatch, tmp_path):
+    client, _ = operator_client(monkeypatch, tmp_path)
+
+    response = client.post("/inbound/check-public", params={"url": "smev.example.ru"})
+
+    assert response.status_code == 400
+
+
+def test_public_check_recognises_our_own_receiver(monkeypatch, tmp_path):
+    client, _ = operator_client(monkeypatch, tmp_path)
+
+    class FakeResponse:
+        status = 200
+
+        def __init__(self, payload):
+            self.payload = payload
+
+        def read(self, limit=None):
+            return self.payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    import urllib.request
+
+    def fake_open(request, timeout=15):
+        url = request.full_url if hasattr(request, "full_url") else str(request)
+        body = b'{"status":"ok","endpoints":{}}' if url.endswith("/is") else b'{"code":"OK"}'
+        return FakeResponse(body)
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_open)
+
+    payload = client.post(
+        "/inbound/check-public", params={"url": "https://smev.example.ru/"}
+    ).json()
+
+    assert payload["reachable"] is True
+    assert [item["path"] for item in payload["checks"]] == ["/is", "/push"]
+    assert any("техпортале" in hint for hint in payload["hints"])
+
+
+def test_public_check_reports_a_foreign_answer(monkeypatch, tmp_path):
+    client, _ = operator_client(monkeypatch, tmp_path)
+
+    class FakeResponse:
+        status = 200
+
+        def read(self, limit=None):
+            return b"<html>nginx default page</html>"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    import urllib.request
+
+    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout=15: FakeResponse())
+
+    payload = client.post(
+        "/inbound/check-public", params={"url": "https://smev.example.ru"}
+    ).json()
+
+    # Прокси ответил своей страницей: адрес занят, но ведёт не к нам.
+    assert payload["reachable"] is False
+    assert any("не привёл" in hint for hint in payload["hints"])

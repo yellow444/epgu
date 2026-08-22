@@ -89,6 +89,8 @@ export default function InboundLog() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [auto, setAuto] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState(null);
   const [publicUrl, setPublicUrl] = useState(
     () => localStorage.getItem(PUBLIC_URL_KEY) || ''
   );
@@ -143,6 +145,30 @@ export default function InboundLog() {
 
   const base = normalizeBase(publicUrl);
 
+  // Единственная честная проверка адреса: уйти в интернет и вернуться к себе.
+  // Локальный запрос на 58080 не скажет ничего про домен, сертификат и прокси.
+  const checkPublic = async () => {
+    if (!base) {
+      setError('Укажите внешний адрес: https://ваш-хост');
+      return;
+    }
+    setChecking(true);
+    setError('');
+    try {
+      const res = await axios.post(`${BACKEND_URL}/inbound/check-public`, null, {
+        params: { url: base },
+        timeout: 60000,
+      });
+      setCheckResult(res.data);
+    } catch (requestError) {
+      const detail = requestError.response && requestError.response.data;
+      setError((detail && detail.detail) || 'Проверить адрес не удалось.');
+      setCheckResult(null);
+    } finally {
+      setChecking(false);
+    }
+  };
+
   const columns = [
     {
       title: 'Время',
@@ -195,6 +221,51 @@ export default function InboundLog() {
           />
           <CopyField label="URL системы" value={base ? base + SYSTEM_PATH : ''} />
           <CopyField label="URL push" value={base ? base + PUSH_PATH : ''} />
+          <Space wrap>
+            <Button type="primary" loading={checking} onClick={checkPublic} disabled={!base}>
+              Проверить адрес снаружи
+            </Button>
+            <Text type="secondary">
+              Запрос уйдёт в интернет и должен вернуться на этот же приёмник.
+            </Text>
+          </Space>
+          {checkResult ? (
+            <Alert
+              type={checkResult.reachable ? 'success' : 'warning'}
+              showIcon
+              message={
+                checkResult.reachable
+                  ? 'Адрес отвечает нашим приёмником'
+                  : 'Адрес до приёмника не довёл'
+              }
+              description={
+                <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                  {(checkResult.checks || []).map((item) => (
+                    <Text key={item.path}>
+                      {item.path}: {item.status ? `HTTP ${item.status}` : 'нет ответа'}
+                      {item.error ? ` (${item.error})` : ''}
+                      {item.ours ? ' - это мы' : ''}
+                      {typeof item.seconds === 'number' ? `, ${item.seconds} с` : ''}
+                    </Text>
+                  ))}
+                  {(checkResult.hints || []).map((hint) => (
+                    <Text key={hint} type="secondary">
+                      {hint}
+                    </Text>
+                  ))}
+                  {checkResult.token_set ? (
+                    <Text type="warning">
+                      Задан INBOUND_TOKEN. ЕПГУ про него не знает и получит 401: для
+                      публичного адреса общий секрет не годится.
+                    </Text>
+                  ) : null}
+                  <Text type="secondary">
+                    Доверенные прокси: {checkResult.trusted_proxies || 'не заданы'}
+                  </Text>
+                </Space>
+              }
+            />
+          ) : null}
         </Space>
       </Card>
 

@@ -7,11 +7,14 @@ describe('production nginx security policy', () => {
     'utf8'
   );
 
-  test('prevents framing and restricts executable content to this origin', () => {
-    expect(config).toContain("frame-ancestors 'none'");
+  test('prevents framing by other sites and restricts executable content', () => {
+    // 'self', а не 'none': приложение само показывает PDF из письма в рамке.
+    // Чужой сайт встроить нас по-прежнему не может.
+    expect(config).toContain("frame-ancestors 'self'");
     expect(config).toContain("script-src 'self'");
     expect(config).toContain("connect-src 'self'");
-    expect(config).toContain('add_header X-Frame-Options "DENY" always;');
+    expect(config).toContain('add_header X-Frame-Options "SAMEORIGIN" always;');
+    expect(config).not.toContain('add_header X-Frame-Options "DENY" always;');
   });
 
   test('sets browser MIME and referrer protections on every response', () => {

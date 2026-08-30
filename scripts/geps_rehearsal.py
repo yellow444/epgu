@@ -5,23 +5,28 @@
 Двойник отвечает примерами из «Спецификации API ГЭПС» версии 1.0, отличие от
 ЕПГУ ровно одно - кто на том конце.
 
-Запуск (скрипт работает внутри контейнера, рядом с приложением)::
+Запуск из корня репозитория в окружении backend::
 
-    docker compose cp scripts/geps_rehearsal.py api:/tmp/geps_rehearsal.py
-    docker compose exec -u app api python /tmp/geps_rehearsal.py
+    api-gosuslugi-backend/.venv/Scripts/python scripts/geps_rehearsal.py
 
 Скрипт пишет в то же хранилище, что и стенд, поэтому после репетиции данные
-надо убрать: docker compose exec -u app api python -c "import geps_store; geps_store.clear()"
+надо убрать: запустите `geps_store.clear()` из того же backend-окружения.
 
 Настоящий прогон этим не заменяется. Для него нужны API-Key организации из
 техпортала, сертификат организации с закрытым ключом в хранилище контейнера и
 роль руководителя или администратора на ЕПГУ.
 """
-import asyncio, json, sys, threading, time
+import asyncio, json, os, shutil, sys, tempfile, threading, time
 from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 
-sys.path.insert(0, "/app")
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "python-epgu" / "src"))
+sys.path.insert(0, str(ROOT / "api-gosuslugi-backend"))
+REHEARSAL_ROOT = Path(tempfile.mkdtemp(prefix="epgu-geps-rehearsal-"))
+os.environ["GEPS_STORE_DIR"] = str(REHEARSAL_ROOT / "geps")
+os.environ["GEPS_QUOTA_FILE"] = str(REHEARSAL_ROOT / "geps-quota.json")
 
 THREAD = "6c7a5efd-2a8c-11f0-8080-808080808080"
 MESSAGE = "91160bbb-f997-11ef-8080-808080808080"
@@ -182,5 +187,8 @@ async def main():
     print("   POST", REAL_HOST + geps_mod.search_path())
     print("   ответ без маркера доступа: HTTP", resp.status_code)
 
-asyncio.run(main())
-server.shutdown()
+try:
+    asyncio.run(main())
+finally:
+    server.shutdown()
+    shutil.rmtree(REHEARSAL_ROOT, ignore_errors=True)

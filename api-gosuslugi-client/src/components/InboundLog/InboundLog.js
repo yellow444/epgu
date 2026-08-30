@@ -108,7 +108,7 @@ export default function InboundLog() {
       setError(
         requestError.response
           ? `Backend ответил ${requestError.response.status}. Журнал прочитать не удалось.`
-          : 'Backend не отвечает. Поднимите стенд: docker compose up -d.'
+          : 'Backend не отвечает. Запустите службу или процесс uvicorn.'
       );
     } finally {
       setLoading(false);

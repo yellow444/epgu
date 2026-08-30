@@ -94,7 +94,7 @@ logger = logging.getLogger(__name__)
 # httpx печатает полный URL каждого запроса на уровне INFO, а в нём едут API-Key
 # (сегмент пути ext-app) и подпись. Код приложения специально не пускает этот
 # материал в логи, поэтому чужие логгеры приглушаем до предупреждений: иначе
-# ключ попадёт в docker compose logs при первом же обращении к ЕСИА.
+# ключ попадёт в журнал процесса при первом же обращении к ЕСИА.
 for _third_party_logger in ("httpx", "httpcore"):
     logging.getLogger(_third_party_logger).setLevel(logging.WARNING)
 logger.info(f"log_level:{log_level}")
@@ -1165,7 +1165,7 @@ async def delete_certificate_endpoint(cert_id: str = Query(..., min_length=40, m
     if cert_id in CERTIFICATES:
         raise HTTPException(
             status_code=502,
-            detail="КриптоПро не убрал сертификат, подробности в логах контейнера",
+            detail="КриптоПро не убрал сертификат, подробности в журнале backend",
         )
     logger.warning("Сертификат %s удалён оператором", cert_id[:8])
     return JSONResponse(

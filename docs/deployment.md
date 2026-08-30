@@ -1,120 +1,101 @@
-# Развёртывание
+# Развёртывание на хосте
 
-## Docker Compose
+Публичный репозиторий содержит исходники, но не готовую контейнеризацию.
+Операционные процессы запускаются непосредственно в Python 3.12, frontend
+собирается Node.js 24 и публикуется статическим веб-сервером.
 
-Из корня репозитория:
+## Backend
 
-```bash
-docker compose up -d --build
+```powershell
+cd api-gosuslugi-backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn app:app --host 127.0.0.1 --port 55000
 ```
 
-Compose публикует только два порта:
+Readiness проверяется через `GET /version`. `/hc` и `/status` относятся к
+CryptoPro и без лицензированных CSP/`pycades` ожидаемо возвращают `503`.
 
-| Сервис | Образ | Host -> container | Назначение |
-|---|---|---|---|
-| `api` | `api-gosuslugi-backend:latest` | `127.0.0.1:${API_PORT:-55000}:5000` | FastAPI core/catalogue |
-| `frontend` | `api-gosuslugi-client` | `127.0.0.1:${FRONTEND_PORT:-50080}:80` | React UI и Nginx proxy `/api/` |
+Основной backend оставляйте на loopback. Он хранит токен и выбранный сертификат
+в process-global состоянии и рассчитан на одного доверенного оператора.
 
-Backend проверяется встроенным Docker healthcheck через `GET /version`. Frontend объявляет `depends_on: api: condition: service_healthy`, поэтому Nginx запускается только после готовности core API. Сам frontend проверяется запросом `GET /`.
+## Frontend
 
-Оба порта привязаны только к loopback и недоступны напрямую с других машин. Это обязательная граница по умолчанию: backend хранит access token и выбранный сертификат в глобальном состоянии процесса и рассчитан на одного оператора.
-
-`/hc` не используется для compose readiness: без отдельно лицензированных CryptoPro/`pycades` он намеренно возвращает degraded/`503`, тогда как `/version` остаётся доступен.
-
-## Backend-образ
-
-Публичный [Dockerfile](../api-gosuslugi-backend/Dockerfile) собирается из корня monorepo на `python:3.12-slim-bookworm`:
-
-```mermaid
-flowchart LR
-    root["monorepo context"] --> sdk["python-epgu"]
-    sdk --> deps["pinned backend dependencies"]
-    deps --> app["app + config + profiles + XML/XSD"]
-    app --> runtime["USER app, port 5000, health /version"]
+```powershell
+cd api-gosuslugi-client
+npm ci
+$env:REACT_APP_BACKEND_URL='https://api.example.test'
+npm run build
 ```
 
-Образ:
+Публикуйте `build/` обычным статическим веб-сервером. Требования:
 
-- запускается непривилегированным пользователем `app`;
-- содержит Python-библиотеку, backend-код, `service_profiles.json` и runtime XML/XSD;
-- не содержит и не распространяет CryptoPro CSP, `pycades` или контейнеры закрытых ключей;
-- поддерживает каталог, Swagger, XML/XSD-проверку и preview без CSP;
-- требует отдельного лицензированного signing runtime для получения подписанного токена и операций detached CAdES.
+- SPA fallback на `index.html`;
+- TLS;
+- security headers и запрет directory listing;
+- точный origin frontend в `ALLOWED_ORIGINS` backend;
+- недоступность основного backend из Интернета без отдельной аутентификации.
 
-## Frontend-образ и proxy
+## Входящая точка ИС
 
-Frontend - multi-stage образ: сборка выполняется на `node:24-alpine`, runtime - `nginx:stable-alpine`.
+Для URL системы и push-сообщений запускайте отдельный процесс с минимальными
+правами и отдельным каталогом журнала:
 
-```mermaid
-flowchart LR
-    src["React sources"] --> node["Node 24: npm ci + npm run build"]
-    node --> nginx["Nginx: static build + template + entrypoint"]
+```powershell
+cd api-gosuslugi-backend
+$env:IS_MNEMONIC='TESTEP'
+$env:INBOUND_PUBLIC_URL='https://example.test/is'
+$env:INBOUND_MAX_BODY='1048576'
+python -m uvicorn inbound:app --host 127.0.0.1 --port 58080 `
+  --no-server-header --timeout-keep-alive 15 --limit-concurrency 64
 ```
 
-`BACKEND_URL` - build argument React, по умолчанию `/api`. `BACKEND_API` - runtime-адрес upstream для Nginx, по умолчанию `http://api:5000`.
+Наружу публикуется только этот процесс через TLS reverse proxy. Основной API,
+сертификаты и маркер доступа ему не передаются.
 
-Шаблон Nginx и `entrypoint.sh` встроены в образ. При старте `envsubst` атомарно создаёт конфигурацию, после чего Nginx запускается foreground-процессом. Правило:
+## Исходящая выдача сохранённых уведомлений
 
-```nginx
-location /api/ {
-    proxy_pass ${BACKEND_API}/;
-}
+```powershell
+cd api-gosuslugi-backend
+$env:OUTBOUND_TOKEN='REPLACE_WITH_RANDOM_SECRET'
+$env:OUTBOUND_ALLOW_NETS='10.0.0.0/24'
+$env:GEPS_STORE_DIR='D:\epgu-data\geps'
+python -m uvicorn outbound:app --host 127.0.0.1 --port 58081 `
+  --no-server-header --timeout-keep-alive 15 --limit-concurrency 64
 ```
 
-снимает внешний префикс: запрос браузера `/api/version` уходит backend как `/version`. Поэтому в `BACKEND_API` не нужно добавлять `/api`.
+Процессу нужен только read-only доступ к уже сохранённым уведомлениям. Он не
+должен получать сертификаты, API-Key и возможность обращаться к ЕПГУ.
 
-Nginx принимает тело запроса не более `64m`, отключает request/response buffering для API и использует `proxy_read_timeout`/`proxy_send_timeout` по 300 секунд. Frontend передаёт исходный комплект целиком; backend ограничивает каждый файл и сумму 50 000 000 байт, затем собирает ZIP и нарезает upstream-части до 50 МБ.
+## Службы ОС
 
-## Неизменяемые контейнеры
+В production оформите каждый процесс как отдельную службу операционной системы
+(например, systemd на Linux или Windows Service через выбранный администратором
+service wrapper). Для каждой службы задайте:
 
-В текущем `docker-compose.yml` нет bind mounts или named volumes. Исходники, profile registry, XML/XSD, frontend build, Nginx template и entrypoint входят в образы. После изменения любого из этих файлов образ нужно пересобрать:
+- отдельного непривилегированного пользователя;
+- рабочий каталог и venv;
+- явный набор переменных окружения/secret provider;
+- автоматический restart с ограничением частоты;
+- ротацию журналов и права на каталоги данных;
+- health monitoring по `/version` или `/health` соответствующего процесса.
 
-```bash
-docker compose up -d --build api
-docker compose up -d --build frontend
-```
+## Обновление
 
-Локальные `.env`, сертификаты и ключевые контейнеры не монтируются в публичный runtime.
+1. Сделайте резервную копию `.env`, лицензий и каталогов данных вне Git.
+2. Получите проверенную ревизию исходников.
+3. Обновите зависимости в venv через `pip install -r requirements.txt`.
+4. Выполните backend tests и `npm ci && npm run build`.
+5. Атомарно замените статический `build/` и перезапустите службы.
+6. Проверьте `/version`, `/health`, CORS и один безопасный preview.
 
-## Конфигурация услуг
+## Checklist
 
-Compose намеренно читает `SERVICES_OVERRIDE` из корневого `.env` и передаёт его процессу backend под именем `SERVICES`:
-
-```yaml
-- SERVICES=${SERVICES_OVERRIDE:-}
-```
-
-Это не позволяет старому legacy `SERVICES` из локального `.env` незаметно заменить versioned-каталог. При standalone-запуске backend без Compose приложение по-прежнему читает переменную `SERVICES` напрямую.
-
-## Проверка запуска
-
-```bash
-docker compose config --quiet
-docker compose ps
-curl http://localhost:55000/version
-curl http://localhost:50080/
-curl http://localhost:50080/api/version
-```
-
-Логи:
-
-```bash
-docker compose logs -f api frontend
-```
-
-## Production-чеклист
-
-- [ ] Не публиковать `55000` или `50080` напрямую в LAN/Internet и не заменять loopback bind на `0.0.0.0` без защищённого gateway.
-- [ ] Для shared/public deployment поставить внешний reverse proxy с TLS, authentication, authorization, rate limits и аудитом перед frontend/API.
-- [ ] Выделять отдельный backend process/runtime на оператора или tenant: общие `ACCESS_TKN_ESIA`, `CURRENT_CERT_ID` и certificate store нельзя безопасно разделять между пользователями.
-- [ ] Использовать формальные адреса среды: test `svcdev-gostapi.test.gosuslugi.ru`, production `www.gosuslugi.ru`.
-- [ ] Задать `ALLOWED_ORIGINS` точным HTTPS origin frontend; CORS не заменяет authentication/authorization.
-- [ ] Хранить API key и все signing secrets вне Git и вне публичного образа.
-- [ ] Подключить отдельно лицензированный CryptoPro/`pycades` runtime и доверенную для контура цепочку CA, если нужны операции подписи.
-- [ ] Завершить TLS на внешнем reverse proxy перед frontend/API.
-- [ ] Мониторить `/version` как core readiness; состояние CSP проверять отдельно через `/hc`/`/status`.
-- [ ] Согласовать ingress/body limits, backend memory и таймауты с реальными размерами документов; не повышать `64m`/300 с без нагрузочной проверки.
-- [ ] Включить аудит операций подписания без журналирования PII и содержимого заявлений.
-- [ ] Проверить регламентную регистрацию ИС и согласия отдельно для test/prod контуров.
-
-Подробности переменных окружения: [api.md](./api.md#переменные-окружения).
+- [ ] Секреты, сертификаты и ключевые контейнеры находятся вне Git.
+- [ ] Основной backend слушает только loopback/закрытую сеть.
+- [ ] Публичен только отдельный inbound через TLS proxy.
+- [ ] У процессов разные права и каталоги данных.
+- [ ] `ALLOWED_ORIGINS` содержит точный origin frontend.
+- [ ] CSP/`pycades` установлены из законного источника.
+- [ ] Перед обновлением пройдены tests и smoke-check endpoint-ов.

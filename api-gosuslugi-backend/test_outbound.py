@@ -301,8 +301,11 @@ def test_outbound_never_calls_epgu(client, monkeypatch):
     def explode(*args, **kwargs):
         raise AssertionError("отдача полезла в сеть")
 
-    monkeypatch.setattr(httpx.Client, "request", explode)
-    monkeypatch.setattr(httpx.Client, "send", explode)
+    # TestClient itself inherits from the synchronous httpx.Client. Patching
+    # that class would block the three local calls below instead of detecting
+    # an accidental upstream request made by the application.
+    monkeypatch.setattr(httpx.AsyncClient, "request", explode)
+    monkeypatch.setattr(httpx.AsyncClient, "send", explode)
 
     assert client.get("/messages").status_code == 200
     assert client.get(f"/messages/{MESSAGE}").status_code == 200

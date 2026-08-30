@@ -1,121 +1,116 @@
-# HOWTO - развёртывание и использование
+# HOWTO - запуск на обычной системе
 
-Текущий публичный Compose запускает каталог услуг, OpenAPI, XML-preview и неподписывающие функции. Он намеренно не содержит КриптоПро CSP, `pycades`, сертификат или закрытый ключ. Для получения токена ЕСИА, подписи и реальной отправки нужен отдельно собранный лицензированный signing-runtime; его нельзя распространять как часть публичного образа.
+Публичная версия намеренно не содержит готовую контейнеризацию. Backend
+запускается в Python 3.12, frontend - в Node.js 24. Для подписи отдельно
+устанавливаются лицензированные КриптоПро CSP и совместимый `pycades`.
 
-## 1. Предварительные требования
+## 1. Требования
 
-- Docker 24+ и Docker Compose v2;
-- для локальной сборки frontend без Docker - Node.js 24 и npm;
-- для проверки реального тестового контура - выданные организации API-ключ, сертификат/закрытый ключ и доступ к ЕПГУ;
-- для подписания - законно установленный КриптоПро CSP с совместимым `pycades` в отдельном runtime.
+- Python 3.12;
+- Node.js 24 LTS и npm;
+- для реальной подписи - законно полученные CSP, `pycades`, сертификат и
+  закрытый ключ;
+- для тестового контура - выданные организации API-Key и полномочия ЕПГУ.
 
-## 2. Локальная конфигурация
+## 2. Конфигурация
 
-Скопируйте шаблон в локальный файл, который не коммитится:
+Скопируйте `.env.example` в локальный файл, который не коммитится:
 
 ```powershell
 Copy-Item .env.example .env.local
 ```
 
-Для Bash эквивалентная команда - `cp .env.example .env.local`. Значения `REPLACE_WITH_...` в `.env.example` являются плейсхолдерами, а не секретами. Подставленные реальные API-ключи и PIN-коды храните только локально или в secret manager.
+Реальные `apikey`, `KeyPin`, сертификаты и ключевые контейнеры храните вне Git.
+Backend читает переменные процесса. В PowerShell безопаснее загрузить только
+нужные значения в текущий терминал, например:
 
-Официальные адреса контуров:
-
-| Контур | `esia_host` | `svcdev_host` |
-|---|---|---|
-| тестовый | `https://esia-portal1.test.gosuslugi.ru` | `https://svcdev-gostapi.test.gosuslugi.ru` |
-| промышленный | `https://esia.gosuslugi.ru` | `https://www.gosuslugi.ru` |
-
-Оставьте `BACKEND_URL=/api`, `BACKEND_API=http://api:5000`, `API_PORT=55000` и `FRONTEND_PORT=50080`, если не требуется изменить локальные порты. Не задавайте старый JSON `SERVICES`: штатный источник - версионируемый `service_profiles.json`; для контролируемого частичного переопределения существует `SERVICES_OVERRIDE`.
-
-## 3. Сборка и запуск
-
-```bash
-docker compose --env-file .env.local config
-docker compose --env-file .env.local up -d --build
-docker compose --env-file .env.local logs -f api frontend
+```powershell
+$env:esia_host='https://esia-portal1.test.gosuslugi.ru'
+$env:svcdev_host='https://svcdev-gostapi.test.gosuslugi.ru'
+$env:ALLOWED_ORIGINS='http://localhost:3000,http://127.0.0.1:3000'
 ```
 
-Открыть:
+## 3. Backend
 
-- UI - <http://localhost:50080>;
-- Backend/OpenAPI - <http://localhost:55000/docs>;
-- core healthcheck - <http://localhost:55000/version>.
+```powershell
+cd api-gosuslugi-backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn app:app --host 127.0.0.1 --port 55000
+```
 
-Compose публикует оба порта только на `127.0.0.1`. Backend хранит выбранный сертификат и токен ЕСИА в глобальном состоянии процесса, поэтому это однопользовательский стенд для одного доверенного оператора. Не меняйте binding на `0.0.0.0` и не ставьте его за общедоступный proxy без отдельной аутентификации, TLS, изоляции сессий и аудита.
+Проверка: <http://127.0.0.1:55000/version> и
+<http://127.0.0.1:55000/docs>. `/hc` и `/status` без CSP/`pycades` ожидаемо
+возвращают `503`, но `/version` должен отвечать `200`.
 
-В публичном core-образе `/hc` и `/status` закономерно отвечают `503`: эти endpoint-ы проверяют именно CSP/`pycades`. Успешный `/version` означает, что core-контейнер исправен.
+## 4. Frontend
 
-## 4. Выбор услуги
+Во втором терминале:
 
-Frontend получает реестр через `GET /services`; статического собственного списка у него нет. Сейчас в реестре ровно 21 профиль:
+```powershell
+cd api-gosuslugi-client
+npm ci
+$env:REACT_APP_BACKEND_URL='http://127.0.0.1:55000'
+npm start
+```
 
-- 3 исполняемых профиля Госключа: УНЭП `10000000374`, УКЭП для юридического лица/ИП `60025907`, УКЭП с сертификатом Федерального казначейства `60080470`;
-- 18 справочных: видны с причиной блокировки, но preview рабочего шаблона и отправка запрещены.
+Откройте <http://localhost:3000>. Для production-сборки выполните
+`npm run build` и обслуживайте каталог `build/` любым статическим веб-сервером.
+Маршрутизацию SPA настройте на возврат `index.html`; адрес backend встраивается
+в bundle при сборке через `REACT_APP_BACKEND_URL`.
 
-Для ФССП `60010153` схема и транспорт каталогизированы, но XML из официальных материалов является демонстрационным. Профиль останется заблокированным до появления типизированной формы, fail-closed проверки placeholder/полей и проверки в авторизованном контуре.
+## 5. Отдельные входящий и исходящий процессы
 
-Для `10000000374` проверен только сценарий УНЭП. Возможность УКЭП физического лица остаётся справочной; `60079416` (расшифрование в Госключе) также не исполняется из-за противоречий официальных документов.
+Если нужны зарегистрированные URL `/is` и `/push`, запустите отдельный процесс
+из каталога backend:
 
-После выбора услуги UI использует её собственные имена XML, XSD, transforms, ограничения файлов и режим `chunked`/`adaptive`. Код ОКАТО `region` вводится для конкретного заявления и не берётся из профиля как константа. Полная матрица - в [docs/SERVICES.md](./docs/SERVICES.md).
+```powershell
+$env:IS_MNEMONIC='TESTEP'
+$env:INBOUND_PUBLIC_URL='https://example.test/is'
+python -m uvicorn inbound:app --host 127.0.0.1 --port 58080
+```
 
-## 5. Preview и отправка
+Отдача уже полученных уведомлений внешней системе запускается отдельно:
 
-Обычный сценарий:
+```powershell
+$env:OUTBOUND_TOKEN='REPLACE_WITH_RANDOM_SECRET'
+$env:OUTBOUND_ALLOW_NETS='127.0.0.1/32'
+python -m uvicorn outbound:app --host 127.0.0.1 --port 58081
+```
 
-1. Выберите доступную услугу и заполните её форму/XML.
-2. Укажите фактический ОКАТО пользователя и приложите документы, разрешённые профилем.
-3. Проверьте preview. Для Госключа он вызывается через `POST /goskey/preview` и не требует подписи или отправки.
-4. В лицензированном signing-runtime выберите сертификат, получите токен ЕСИА и отправьте заявление. Госключ использует `POST /goskey/submit`; обычная услуга - профильный `/push` или `/push/chunked`.
-5. Backend сам собирает ZIP, валидирует XML по XSD выбранной услуги и при chunked-режиме последовательно отправляет части `.z001` с индексами `0..N-1`.
-6. Проверяйте состояние через `/order/{orderId}`, затем скачивайте ответ через `/download_file/...`.
+Публичный TLS и reverse proxy настраиваются администратором системы. Не
+выставляйте основной backend наружу: его токен и выбранный сертификат являются
+process-global состоянием одного оператора.
 
-Endpoint-ы и DTO подробно описаны в [docs/api.md](./docs/api.md), а работа формы Госключа - в [frontend HOWTO](./api-gosuslugi-client/HOWTO.md).
+## 6. Проверки
 
-## 6. Лицензированный signing-runtime
-
-Публичный `api-gosuslugi-backend/Dockerfile` - это переносимый core-образ без дистрибутива КриптоПро. Для реальной подписи подготовьте отдельный закрытый Dockerfile или контролируемый host-runtime, где:
-
-- CSP и `pycades` установлены из лицензированного источника;
-- сертификат и контейнер закрытого ключа передаются как секреты/защищённые mounts, а не добавляются в image layer;
-- `KeyPin` и API-ключ поступают из secret manager;
-- доступ остаётся однопользовательским либо backend предварительно доработан для per-session состояния.
-
-Не копируйте проприетарный архив CSP в публичный build context и не публикуйте производный образ.
-
-## 7. Проверка исходников
-
-```bash
-cd python-epgu
-python -m pip install -e ".[dev]"
-python -m pytest
-
-cd ../api-gosuslugi-backend
+```powershell
+cd api-gosuslugi-backend
 python -m pip install -r requirements-test.txt
-python -m pytest -q
+python -m pytest -c pytest.ini
 
-cd ../api-gosuslugi-client
+cd ..\api-gosuslugi-client
 npm ci
 npm audit --omit=dev --audit-level=high
-CI=true npm test -- --watchAll=false --runInBand
+$env:CI='true'
+npm test -- --watchAll=false --runInBand
 npm run lint
-CI=true npm run build
+npm run build
 ```
 
-Последний зафиксированный результат перед финальным прогоном: SDK - 163 passed; backend после security/contract regressions - 44 passed и 5 CSP-зависимых skipped; frontend - 20 passed до добавления проверок очистки/ОКАТО. Точные итоговые числа формирует CI. Production dependency audit frontend - 0 уязвимостей; 57 advisories остаются в legacy CRA build/dev-дереве и являются отдельным долгом миграции.
+## 7. Диагностика
 
-## 8. Диагностика и остановка
-
-```bash
-docker compose --env-file .env.local ps
-docker compose --env-file .env.local logs api frontend
-docker compose --env-file .env.local down
-```
-
-| Симптом | Объяснение / действие |
+| Симптом | Что проверить |
 |---|---|
-| `/hc` или `/status` возвращает `503` | Нормально для public core; для подписи нужен отдельный лицензированный CSP/`pycades` runtime. |
-| Услуга видна, но disabled | Это один из 18 `reference`-профилей либо справочная capability; причина приходит из backend. |
-| `Invalid XML` | XML не соответствует XSD выбранного профиля; проверьте service-specific контракт и [схемы](./docs/schemas.md). |
-| CORS/404 из браузера | Открывайте UI на `http://localhost:50080`; production Nginx снимает внешний префикс `/api`. |
-| 401 от ЕСИА | Проверьте контур, срок действия выданного API-ключа и выбранный сертификат, не выводя секреты в лог. |
+| `/version` недоступен | Терминал backend, активное venv и порт 55000 |
+| CORS в браузере | `ALLOWED_ORIGINS` должен содержать точный адрес frontend |
+| `/hc` или `/status` возвращает `503` | Для подписи не установлен CSP/`pycades` |
+| 401 от ЕСИА | Контур, срок API-Key, сертификат и полномочия; секреты не выводить в лог |
+| Услуга видна, но disabled | Это справочный профиль; причина приходит из backend |
+| `Invalid XML` | XML не соответствует XSD конкретной услуги |
+
+Подробности: [backend](./api-gosuslugi-backend/HOWTO.md),
+[frontend](./api-gosuslugi-client/HOWTO.md),
+[развёртывание](./docs/deployment.md) и [безопасность](./docs/security.md).

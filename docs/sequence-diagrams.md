@@ -96,11 +96,11 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant Docker
+    participant Host as Служба ОС
     participant App as FastAPI
     participant CSP
 
-    Docker->>App: uvicorn app:app
+    Host->>App: uvicorn app:app
     App->>App: lifespan -> best-effort load_certificates
     alt pycades/CSP доступны
         App->>CSP: Store.Open(CONTAINER_STORE, MY_STORE)
@@ -111,7 +111,7 @@ sequenceDiagram
         App->>App: warning; core/catalogue остаётся доступным
     end
     Note over App: debugpy.listen(:5678) только при DEBUG=true/1/yes
-    App-->>Docker: ready
+    App-->>Host: ready
 ```
 
 ## 6. Госключ: preview и adaptive-отправка

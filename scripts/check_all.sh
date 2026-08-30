@@ -8,7 +8,7 @@
 # Запуск из корня репозитория:
 #   sh scripts/check_all.sh
 #
-# Бэкенд проверяется в образе с тестами, чтобы не тащить зависимости на хост.
+# Перед запуском установите backend requirements-test и frontend npm dependencies.
 set -e
 
 echo "== гигиена репозитория =="
@@ -18,8 +18,7 @@ echo "== типографика =="
 python scripts/check_text_style.py
 
 echo "== бэкенд: тесты =="
-docker build -q -f api-gosuslugi-backend/Dockerfile.test -t epgu-backend-tests:latest . >/dev/null
-docker run --rm epgu-backend-tests:latest -q --no-header -p no:warnings
+(cd api-gosuslugi-backend && python -m pytest -q --no-header -p no:warnings)
 
 echo "== библиотека python-epgu =="
 if command -v ruff >/dev/null 2>&1; then

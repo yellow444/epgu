@@ -42,12 +42,13 @@ Preview не является криптографической проверк�
 
 ## Требования и зависимости
 
-- Node.js 24 LTS для разработки и build-stage Docker;
+- Node.js 24 LTS для разработки и production-сборки;
 - npm с поддержкой lockfile v3;
 - React 18, Ant Design 6, Axios 1.19.0, Ace Editor и IndexedDB (`idb`);
 - работающий backend для реальных сценариев.
 
-`react-scripts` относится к devDependencies: он нужен для тестов и сборки, но отсутствует в финальном nginx-образе. Неиспользуемый `cra-template` удалён.
+`react-scripts` относится к devDependencies: он нужен для тестов и сборки.
+Неиспользуемый `cra-template` удалён.
 
 ## Локальный запуск
 
@@ -73,25 +74,15 @@ REACT_APP_BACKEND_URL=http://localhost:55000
 
 Dev-сервер доступен на <http://localhost:53000>. Backend должен быть запущен с `ALLOWED_ORIGINS=http://localhost:53000`; переменная `REACT_APP_BACKEND_URL` встраивается в bundle во время сборки.
 
-## Docker и nginx proxy
-
-Из корня репозитория:
+## Production-сборка
 
 ```bash
-docker compose up -d --build frontend
+REACT_APP_BACKEND_URL=https://api.example.test npm run build
 ```
 
-По умолчанию интерфейс доступен на <http://localhost:50080>. Docker build-stage использует `node:24-alpine` и `npm ci`, после чего статический bundle копируется в `nginx:stable-alpine`; Node и build/dev dependencies в runtime-образ не попадают.
-
-Production bundle использует `REACT_APP_BACKEND_URL=/api`. Nginx принимает `/api/...`, удаляет внешний префикс благодаря завершающему `/` в `proxy_pass` и передаёт запрос на `${BACKEND_API}` (по умолчанию `http://api:5000`).
-
-Доступные настройки Compose:
-
-| Переменная | По умолчанию | Когда применяется |
-|---|---|---|
-| `BACKEND_URL` | `/api` | build arg frontend; становится `REACT_APP_BACKEND_URL` |
-| `BACKEND_API` | `http://api:5000` | runtime nginx; внутренний адрес FastAPI |
-| `FRONTEND_PORT` | `50080` | host-порт nginx |
+Публикуйте каталог `build/` обычным статическим веб-сервером и настройте SPA
+fallback на `index.html`. `REACT_APP_BACKEND_URL` встраивается в bundle во время
+сборки. Backend должен разрешать точный origin интерфейса.
 
 ## Проверки
 
@@ -109,9 +100,14 @@ CI=true npm run build
 - production/runtime audit: **0 vulnerabilities**;
 - Jest: **3 suites, 20 tests passed** (включая 9 тестов формы Госключа);
 - ESLint по `src`: успешно;
-- production build и Docker build-stage на Node 24: успешно.
+- production build на Node 24: успешно.
 
-Полный `npm audit` намеренно показывает остаток legacy CRA build/dev-дерева: **57 advisories** - 3 critical, 28 high, 13 moderate и 13 low; единственная прямая уязвимая зависимость - `react-scripts`. Они отсутствуют из `npm audit --omit=dev` и финального nginx-runtime, но остаются риском CI/build-среды. `npm audit fix --force` не применяется: npm предлагает некорректное разрушительное разрешение для `react-scripts`. Долг устраняется отдельной контролируемой миграцией с Create React App, а не принудительным изменением lockfile.
+Полный `npm audit` намеренно показывает остаток legacy CRA build/dev-дерева:
+**57 advisories** - 3 critical, 28 high, 13 moderate и 13 low; единственная
+прямая уязвимая зависимость - `react-scripts`. Они отсутствуют из
+`npm audit --omit=dev`, но остаются риском CI/build-среды. `npm audit fix
+--force` не применяется: долг устраняется отдельной контролируемой миграцией с
+Create React App, а не принудительным изменением lockfile.
 
 Текущая сборка также предупреждает о неподдерживаемом CRA, старом `caniuse-lite`, одном source map и большом bundle; это не делает текущий build ошибочным, но должно войти в план миграции и оптимизации.
 

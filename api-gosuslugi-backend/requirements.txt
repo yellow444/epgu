@@ -1,5 +1,5 @@
-# Runtime dependency lock for the backend container (Python 3.12).
-# CryptoPro/pycades is supplied by the image and is intentionally not on PyPI.
+# Runtime dependency lock for a Python 3.12 host installation.
+# CryptoPro/pycades is installed separately from a licensed distribution.
 fastapi==0.141.1
 uvicorn==0.52.1
 python-dotenv==1.2.2

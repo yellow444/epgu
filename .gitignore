@@ -88,6 +88,29 @@ python-epgu/tests/fixtures/goskey/
 # только локально.
 /private/
 
+# TESTEP browser/mail automation belongs to the separate private repository.
+/browser-extension/
+/.private-addons/
+/api-gosuslugi-client/public/downloads/testep-browser-bridge.zip
+/api-gosuslugi-client/src/components/SetupGuide/
+/api-gosuslugi-client/src/components/SetupWizard/
+/api-gosuslugi-backend/mail_worker.py
+/api-gosuslugi-backend/mailbox.py
+/api-gosuslugi-backend/maildiscovery.py
+/api-gosuslugi-backend/mail_state.py
+/api-gosuslugi-backend/setup_api.py
+/api-gosuslugi-backend/support_requests.py
+/api-gosuslugi-backend/test_mail_worker.py
+/api-gosuslugi-backend/test_mail_threads.py
+/api-gosuslugi-backend/test_mail_state.py
+/api-gosuslugi-backend/test_setup_api.py
+/api-gosuslugi-backend/test_settings_store.py
+/api-gosuslugi-backend/test_support_requests.py
+/epgu/context/05-journal.md
+/epgu/context/13-mail-automation.md
+/docs/context/05-journal.md
+/docs/context/13-mail-automation.md
+
 # OS
 Thumbs.db
 .DS_Store

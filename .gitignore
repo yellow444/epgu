@@ -94,6 +94,7 @@ python-epgu/tests/fixtures/goskey/
 /api-gosuslugi-client/public/downloads/testep-browser-bridge.zip
 /api-gosuslugi-client/src/components/SetupGuide/
 /api-gosuslugi-client/src/components/SetupWizard/
+/api-gosuslugi-client/src/components/PrivateAddons/
 /api-gosuslugi-backend/mail_worker.py
 /api-gosuslugi-backend/mailbox.py
 /api-gosuslugi-backend/maildiscovery.py
@@ -106,6 +107,17 @@ python-epgu/tests/fixtures/goskey/
 /api-gosuslugi-backend/test_setup_api.py
 /api-gosuslugi-backend/test_settings_store.py
 /api-gosuslugi-backend/test_support_requests.py
+/api-gosuslugi-backend/test_edition.py
+/api-gosuslugi-backend/test_license_keys.py
+
+# Multiple organizations per installation is a separate private add-on
+# (multiorg). Its files exist here only in an installed private build; the
+# public core serves exactly one organization. src/index.js is tracked and is
+# replaced by the add-ons like App.js, so it cannot be ignored here.
+/api-gosuslugi-backend/multiorg_extension.py
+/api-gosuslugi-backend/tenancy_*.py
+/api-gosuslugi-backend/test_tenancy.py
+/api-gosuslugi-client/src/components/MultiOrg/
 /epgu/context/05-journal.md
 /epgu/context/13-mail-automation.md
 /docs/context/05-journal.md

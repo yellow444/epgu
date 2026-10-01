@@ -69,6 +69,7 @@ import geps_scheduler
 import geps_store
 import settings_store
 from inbound_api import inbound_router
+import auth_api
 
 try:
     import pycades
@@ -284,6 +285,8 @@ app = FastAPI(
     ),
     version=SPEC_VERSION,
     lifespan=lifespan,
+    # Любой метод требует вход, кроме проверки здоровья и самого входа.
+    dependencies=[Depends(auth_api.require_login)],
 )
 # CORS: список доменов через запятую или "*" (см. docs/security.md, .env.example).
 _allowed_origins_raw = os.getenv(
@@ -360,6 +363,8 @@ app.include_router(
 # Журнал входящих запросов от ЕПГУ. Пишет его отдельный публичный приёмник
 # (inbound.py), здесь только чтение для оператора.
 app.include_router(inbound_router())
+# Вход, выход, смена пароля и пользователи установки.
+app.include_router(auth_api.auth_router())
 
 # Pydantic-модели
 
@@ -1312,6 +1317,12 @@ async def home_route():
     version = pycades.About().Version
     module_version = pycades.ModuleVersion()
     return JSONResponse(content={"Version": version, "ModuleVersion": module_version}, status_code=200)
+
+
+@app.get("/health")
+async def health_route():
+    """Жив ли процесс. Открыт без входа: по нему проверяют контейнер."""
+    return {"status": "ok"}
 
 
 @app.get("/hc")

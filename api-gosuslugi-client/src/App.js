@@ -115,7 +115,10 @@ const purgeLegacyPersistentData = () => {
   }
 };
 
-function App() {
+// headerExtra, extraTabs и requestedTab нужны оболочке входа и дополнениям:
+// меню учётной записи в шапке, дополнительные вкладки и переход на вкладку
+// извне. Без них приложение выглядит и работает как раньше.
+function App({ headerExtra = null, extraTabs = [], requestedTab = null, onRequestedTabShown = null } = {}) {
   // Основные рефы и состояния
   const isDragging = useRef(false);
   const [allowBtn, setAllowBtn] = useState(true);
@@ -755,6 +758,12 @@ function App() {
     sessionStorage.setItem('currentTab', currentTab);
   }, [currentTab]);
   useEffect(() => {
+    if (!requestedTab) return;
+    setCurrentTab(requestedTab);
+    if (onRequestedTabShown) onRequestedTabShown();
+    // eslint-disable-next-line
+  }, [requestedTab]);
+  useEffect(() => {
     sessionStorage.setItem('orderId', orderId);
   }, [orderId]);
 
@@ -1045,26 +1054,30 @@ function App() {
             height: 64,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
             <img src={logo} alt="Логотип" style={{ height: 36 }} />
             <Title level={4} style={{ margin: 0, fontWeight: 600 }}>
               API Client
             </Title>
           </div>
-          <Menu
-            mode="horizontal"
-            selectedKeys={[currentTab]}
-            onClick={({ key }) => setCurrentTab(key)}
-            style={{ border: 'none', fontWeight: 500 }}
-            items={[
-              { key: 'main', icon: <HomeOutlined />, label: 'Главная' },
-              { key: 'setup', icon: <SettingOutlined />, label: 'Настройка' },
-              { key: 'xml', icon: <CodeOutlined />, label: 'Редактор XML' },
-              { key: 'requests', icon: <UnorderedListOutlined />, label: 'Запросы' },
-              { key: 'inbound', icon: <InboxOutlined />, label: 'Входящие' },
-              { key: 'gospochta', icon: <MailOutlined />, label: 'Госпочта' },
-            ]}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0, justifyContent: 'flex-end' }}>
+            <Menu
+              mode="horizontal"
+              selectedKeys={[currentTab]}
+              onClick={({ key }) => setCurrentTab(key)}
+              style={{ border: 'none', fontWeight: 500, flex: 1, minWidth: 0 }}
+              items={[
+                { key: 'main', icon: <HomeOutlined />, label: 'Главная' },
+                { key: 'setup', icon: <SettingOutlined />, label: 'Настройка' },
+                { key: 'xml', icon: <CodeOutlined />, label: 'Редактор XML' },
+                { key: 'requests', icon: <UnorderedListOutlined />, label: 'Запросы' },
+                { key: 'inbound', icon: <InboxOutlined />, label: 'Входящие' },
+                { key: 'gospochta', icon: <MailOutlined />, label: 'Госпочта' },
+                ...extraTabs.map((tab) => ({ key: tab.key, icon: tab.icon, label: tab.label })),
+              ]}
+            />
+            {headerExtra}
+          </div>
         </Header>
 
         <Content style={{ padding: '24px 32px', maxWidth: 1400, margin: '0 auto', width: '100%' }}>
@@ -1495,6 +1508,9 @@ function App() {
           )}
           {currentTab === 'inbound' && <InboundLog />}
           {currentTab === 'gospochta' && <Gospochta />}
+          {extraTabs.map((tab) =>
+            currentTab === tab.key ? <React.Fragment key={tab.key}>{tab.render()}</React.Fragment> : null
+          )}
 
           {/* Таб для XML редактора */}
           {currentTab === 'xml' && (

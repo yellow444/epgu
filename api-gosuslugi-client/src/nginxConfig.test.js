@@ -24,6 +24,12 @@ describe('production nginx security policy', () => {
     expect(config).toContain('add_header Referrer-Policy "no-referrer" always;');
   });
 
+  test('never caches the application page, only hashed bundle files', () => {
+    expect(config).toContain('add_header Cache-Control $epgu_cache_control always;');
+    expect(config).toMatch(/default\s+"no-cache";/);
+    expect(config).toMatch(/~\^\/static\/\s+"public, max-age=31536000, immutable";/);
+  });
+
   test('allows the 50 MB backend aggregate limit plus multipart overhead', () => {
     expect(config).toContain('client_max_body_size 64m;');
     expect(config).not.toContain('client_max_body_size 512m;');

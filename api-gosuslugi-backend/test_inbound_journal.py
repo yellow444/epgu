@@ -97,3 +97,26 @@ def test_clear_removes_every_rotation(store):
 
     assert list(store.journal_path().parent.iterdir()) == []
     assert store.count() == 0
+
+
+def test_reading_with_a_filter_counts_only_matching_records(store):
+    for number in range(2):
+        store.append(record(store, "своё-%d" % number))
+    other = record(store, "чужое")
+    other["host"] = "ul1.smev.example.ru"
+    store.append(other)
+
+    mine = lambda item: item["host"] != "ul1.smev.example.ru"  # noqa: E731
+
+    assert store.count() == 3
+    assert store.count(mine) == 2
+    assert len(store.read_last(10, mine)) == 2
+
+
+def test_old_records_get_their_host_from_the_saved_headers(store):
+    legacy = record(store, "старая запись")
+    legacy.pop("host")
+    legacy["headers"] = {"Host": "SMEV.example.ru:443"}
+    store.append(legacy)
+
+    assert store.read_last(1)[0]["host"] == "smev.example.ru"

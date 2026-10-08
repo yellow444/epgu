@@ -14,11 +14,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 DEFAULT_JOURNAL = "/var/lib/epgu-inbound/messages.jsonl"
 
@@ -36,6 +37,12 @@ SENSITIVE_HEADERS = {
 }
 
 _write_lock = threading.Lock()
+
+_HOST_RE = re.compile(
+    r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$"
+)
+
+Accept = Callable[[Mapping[str, Any]], bool]
 
 
 def journal_path() -> Path:
@@ -77,6 +84,44 @@ def redact_headers(headers: Mapping[str, str]) -> Dict[str, str]:
     return result
 
 
+def normalize_host(value: str) -> str:
+    """Имя хоста в нижнем регистре, без порта и точки в конце.
+
+    Всё, что на имя хоста не похоже (адрес IPv6, пробелы, мусор), даёт
+    пустую строку: по такому значению запись ни к кому не относится.
+    """
+    text = str(value or "").split(",")[0].strip().lower()
+    if not text or text.startswith("["):
+        return ""
+    text = text.split(":")[0].rstrip(".")
+    if len(text) > 253 or not _HOST_RE.match(text):
+        return ""
+    return text
+
+
+def request_host(headers: Mapping[str, str]) -> str:
+    """Адрес, на который пришёл запрос.
+
+    У каждой организации может быть свой поддомен приёмника, и по нему
+    видно, кому адресован запрос. Прокси на VPS передаёт исходный Host
+    и дублирует его в X-Forwarded-Host; второй надёжнее, если прокси
+    когда-нибудь станет подменять Host адресом туннеля.
+    """
+    lowered = {str(name).lower(): value for name, value in headers.items()}
+    return normalize_host(lowered.get("x-forwarded-host", "")) or normalize_host(
+        lowered.get("host", "")
+    )
+
+
+def record_host(record: Mapping[str, Any]) -> str:
+    """Хост записи. У записей до появления поля берём его из заголовков."""
+    stored = record.get("host")
+    if isinstance(stored, str):
+        return stored
+    headers = record.get("headers")
+    return request_host(headers) if isinstance(headers, Mapping) else ""
+
+
 def build_record(
     *,
     method: str,
@@ -105,6 +150,7 @@ def build_record(
         "id": str(uuid.uuid4()),
         "received_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "mnemonic": mnemonic,
+        "host": request_host(headers),
         "method": method,
         "path": path,
         "query": query,
@@ -161,8 +207,12 @@ def append(record: Mapping[str, Any]) -> None:
             handle.write(line)
 
 
-def read_last(limit: int = 100) -> List[Dict[str, Any]]:
-    """Последние записи, свежие сверху. Битые строки пропускаются."""
+def read_last(limit: int = 100, accept: Optional[Accept] = None) -> List[Dict[str, Any]]:
+    """Последние записи, свежие сверху. Битые строки пропускаются.
+
+    ``accept`` оставляет только нужные записи, например адресованные одной
+    организации; лимит считается уже по ним.
+    """
     path = journal_path()
     if not path.exists():
         return []
@@ -177,28 +227,59 @@ def read_last(limit: int = 100) -> List[Dict[str, Any]]:
         if not line:
             continue
         try:
-            records.append(json.loads(line))
+            record = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(record, dict):
+            continue
+        record.setdefault("host", record_host(record))
+        if accept is not None and not accept(record):
+            continue
+        records.append(record)
         if len(records) >= limit:
             break
     return records
 
 
-def count() -> int:
+def count(accept: Optional[Accept] = None) -> int:
     path = journal_path()
     if not path.exists():
         return 0
     try:
         with path.open("r", encoding="utf-8") as handle:
-            return sum(1 for line in handle if line.strip())
+            if accept is None:
+                return sum(1 for line in handle if line.strip())
+            total = 0
+            for line in handle:
+                record = _parse(line)
+                if record is not None and accept(record):
+                    total += 1
+            return total
     except OSError:
         return 0
 
 
-def clear() -> None:
+def _parse(line: str) -> Optional[Dict[str, Any]]:
+    line = line.strip()
+    if not line:
+        return None
+    try:
+        record = json.loads(line)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(record, dict):
+        return None
+    record.setdefault("host", record_host(record))
+    return record
+
+
+def clear(keep: Optional[Accept] = None) -> None:
     """Удалить журнал. Ошибку доступа наверх не глушим: оператор должен
-    увидеть, что очистка не прошла, а не считать журнал пустым."""
+    увидеть, что очистка не прошла, а не считать журнал пустым.
+
+    С ``keep`` удаляются только записи, для которых он ложен: так очистка
+    из одной организации не стирает запросы, адресованные другим.
+    """
     path = journal_path()
     with _write_lock:
         candidates = [path]
@@ -207,7 +288,26 @@ def clear() -> None:
             for number in range(1, journal_keep() + 1)
         ]
         for candidate in candidates:
+            if keep is None:
+                try:
+                    candidate.unlink()
+                except FileNotFoundError:
+                    pass
+                continue
             try:
-                candidate.unlink()
+                with candidate.open("r", encoding="utf-8") as handle:
+                    lines = handle.readlines()
             except FileNotFoundError:
                 continue
+            kept = []
+            for line in lines:
+                record = _parse(line)
+                if record is not None and keep(record):
+                    kept.append(line if line.endswith("\n") else line + "\n")
+            if not kept:
+                candidate.unlink()
+                continue
+            temporary = candidate.with_name(candidate.name + ".tmp")
+            with temporary.open("w", encoding="utf-8") as handle:
+                handle.writelines(kept)
+            temporary.replace(candidate)

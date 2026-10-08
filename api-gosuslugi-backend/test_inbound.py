@@ -339,3 +339,51 @@ def test_system_url_still_answers_with_endpoints(client):
 
 def test_head_probe_works_for_any_path(client):
     assert client.head("/message").status_code == 200
+
+
+def test_journal_records_the_host_the_request_came_to(client):
+    client.post("/push", content=b"{}", headers={"Host": "ul1090455728.smev.example.ru"})
+    client.post(
+        "/push",
+        content=b"{}",
+        headers={"Host": "127.0.0.1:58080", "X-Forwarded-Host": "IP1.smev.example.ru:443"},
+    )
+    client.post("/push", content=b"{}", headers={"Host": "[::1]:5001"})
+
+    hosts = [record["host"] for record in read_journal(client.journal)]
+
+    # Прокси передаёт исходный адрес в X-Forwarded-Host, он важнее Host
+    # туннеля. Порт и регистр отбрасываются, адрес IPv6 хостом не считается.
+    assert hosts == ["ul1090455728.smev.example.ru", "ip1.smev.example.ru", ""]
+
+
+def test_legacy_journal_can_be_narrowed_and_cleared_without_touching_others(monkeypatch, tmp_path):
+    client, inbound_api = operator_client(monkeypatch, tmp_path)
+    import inbound_store
+
+    for host in ("smev.example.ru", "ul1.smev.example.ru", "smev.example.ru"):
+        inbound_store.append(
+            inbound_store.build_record(
+                method="POST",
+                path="/push",
+                query="",
+                client="127.0.0.1",
+                headers={"host": host},
+                body=b"{}",
+                truncated=False,
+                mnemonic="TESTIS01",
+            )
+        )
+    monkeypatch.setattr(
+        inbound_api,
+        "legacy_record_filters",
+        [lambda: lambda record: record["host"] != "ul1.smev.example.ru"],
+    )
+
+    listed = client.get("/inbound/messages").json()
+    assert listed["total"] == 2
+    assert {item["host"] for item in listed["messages"]} == {"smev.example.ru"}
+
+    assert client.post("/inbound/clear").status_code == 200
+    left = inbound_store.read_last(10)
+    assert [item["host"] for item in left] == ["ul1.smev.example.ru"]

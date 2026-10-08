@@ -7,10 +7,11 @@
 загрузить -> дождаться статуса».
 """
 
-from . import goskey
+from . import fssp, goskey
 from .submit import GoskeySubmitResult, SubmitResult, submit_application, submit_goskey
 
 __all__ = [
+    "fssp",
     "goskey",
     "submit_application",
     "submit_goskey",

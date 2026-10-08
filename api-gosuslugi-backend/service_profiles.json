@@ -114,7 +114,9 @@
             "required": true,
             "mediaType": "application/xml",
             "signature": "none",
-            "role": "transport"
+            "role": "transport",
+            "generator": "fssp",
+            "validation": "well-formed"
           },
           {
             "id": "request",
@@ -122,10 +124,13 @@
             "required": true,
             "mediaType": "application/xml",
             "signature": "none",
-            "role": "business"
+            "role": "business",
+            "generator": "fssp",
+            "schemaFile": "piev_epgu.xsd",
+            "validation": "xsd"
           }
         ],
-        "allowAdditionalFiles": true
+        "allowAdditionalFiles": false
       },
       "additionalEndpoints": [],
       "serviceCode": "10000000352",
@@ -135,9 +140,9 @@
       "targetCode": "-10000000352",
       "eServiceCode": "10000000352",
       "serviceTargetCode": "-10000000352",
-      "status": "reference",
-      "available": false,
-      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "status": "verified",
+      "available": true,
+      "unavailableReason": "",
       "spec": {
         "version": "10000000352__Specifikaciya_API_EPGU_Prilozhenie_10000000352_Hod_IP_v9",
         "published": "2025-09-24",
@@ -241,7 +246,7 @@
             "mediaType": "application/xml",
             "signature": "none",
             "role": "transport",
-            "sourceFile": "req.xml",
+            "generator": "fssp",
             "validation": "well-formed"
           },
           {
@@ -251,12 +256,12 @@
             "mediaType": "application/xml",
             "signature": "none",
             "role": "business",
-            "sourceFile": "piev_epgu.xml",
+            "generator": "fssp",
             "schemaFile": "piev_epgu.xsd",
             "validation": "xsd"
           }
         ],
-        "allowAdditionalFiles": true
+        "allowAdditionalFiles": false
       },
       "additionalEndpoints": [],
       "serviceCode": "60010153",
@@ -266,9 +271,9 @@
       "targetCode": "-60010153",
       "eServiceCode": "60010153",
       "serviceTargetCode": "-60010153",
-      "status": "reference",
-      "available": false,
-      "unavailableReason": "Официальная схема и транспорт проверены, но текущий XML содержит демонстрационные данны. Отправка закрыта до типизированной формы и fail-closed валидации полей.",
+      "status": "verified",
+      "available": true,
+      "unavailableReason": "",
       "spec": {
         "version": "60010153__Specifikaciya_API_EPGU_Prilozhenie_60010153_Nalichie_IP_v8",
         "published": "2024-07-17",
@@ -348,48 +353,6 @@
           "wellFormed": true,
           "rootName": "schema",
           "namespace": "http://www.w3.org/2001/XMLSchema"
-        }
-      ],
-      "transforms": [
-        {
-          "documentId": "transport",
-          "selector": {
-            "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1",
-            "localName": "OrderId"
-          },
-          "value": "{orderId}"
-        },
-        {
-          "documentId": "transport",
-          "selector": {
-            "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1",
-            "localName": "Date"
-          },
-          "value": "{now}"
-        },
-        {
-          "documentId": "transport",
-          "selector": {
-            "namespace": "urn://x-artifacts-fssp-ru/mvv/smev3/epgu/1.0.1",
-            "localName": "StatementDate"
-          },
-          "value": "{date}"
-        },
-        {
-          "documentId": "request",
-          "selector": {
-            "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1",
-            "localName": "ExternalKey"
-          },
-          "value": "{orderId}"
-        },
-        {
-          "documentId": "request",
-          "selector": {
-            "namespace": "http://www.fssprus.ru/namespace/incoming/2019/1",
-            "localName": "DocDate"
-          },
-          "value": "{date}"
         }
       ]
     },
@@ -829,7 +792,7 @@
       "serviceTargetCode": "-10000000396",
       "status": "reference",
       "available": false,
-      "unavailableReason": "Формат и транспорт каталогизированы по официальной спецификации, но рабочий шаблон этого варианта ещё не прошёл XSD/golden-проверку.",
+      "unavailableReason": "Услуга только для физических лиц (ФЛ, ИГ): заявитель всегда должник, представителя нет. Организация подать её через API от своего имени не может, поэтому построитель не включён.",
       "spec": {
         "version": "10000000396__Specifikaciya_API_EPGU_Prilozhenie_10000000396_servis_snyatiya_ogranichenij_na_vyezd_v1",
         "published": "2024-07-18",

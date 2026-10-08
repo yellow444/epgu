@@ -70,6 +70,8 @@ import geps_store
 import settings_store
 from inbound_api import inbound_router
 import auth_api
+from fssp_api import environment_for as fssp_environment_for
+from fssp_api import fssp_router
 
 try:
     import pycades
@@ -671,6 +673,11 @@ def _reject_generated_submission(submission: Dict[str, Any]) -> None:
             status_code=409,
             detail="Профиль Госключа должен отправляться только через /goskey/submit",
         )
+    if any(document.get("generator") == "fssp" for document in submission["documents"]):
+        raise HTTPException(
+            status_code=409,
+            detail="Заявление ФССП собирается из формы и отправляется только через /fssp/submit",
+        )
 
 
 def _remaining_chunk_timeout(started_at: float) -> float:
@@ -1078,14 +1085,16 @@ async def _push_goskey_archive_chunked(
     session: SessionSnapshot,
     *,
     chunk_size: int = 5_000_000,
+    archive_name: str = "goskey.zip",
 ) -> Tuple[Dict[str, Any], int]:
     total = max(1, (len(archive) + chunk_size - 1) // chunk_size)
+    archive_stem = archive_name.rsplit(".", 1)[0]
     started_at = time.monotonic()
     result: Dict[str, Any] = {}
     for current in range(total):
         _ensure_session_current(session)
         content = archive[current * chunk_size:(current + 1) * chunk_size]
-        name = "goskey.zip" if total == 1 else "goskey.z{:03d}".format(current + 1)
+        name = archive_name if total == 1 else "{}.z{:03d}".format(archive_stem, current + 1)
         files: Dict[str, Tuple[Optional[str], Any, Optional[str]]] = {
             "meta": (None, json.dumps(meta), "application/json"),
             "file": (name, content, "application/octet-stream"),
@@ -1861,6 +1870,22 @@ async def submit_goskey_request(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except httpx.HTTPStatusError as exc:
         raise _upstream_http_failure("goskey submit", exc) from exc
+
+
+# Заявления ФССП по типизированной форме. Роутер получает транспорт и маркер
+# приложения, своего состояния у него нет.
+app.include_router(
+    fssp_router(
+        services=_get_service_data,
+        ensure_available=_ensure_service_available,
+        access_token=_require_access_token,
+        reserve=_reserve_upstream_order,
+        push_chunked=_push_goskey_archive_chunked,
+        upstream_failure=_upstream_http_failure,
+        client_dependency=get_async_client,
+        environment=lambda: fssp_environment_for(SVCDEV_HOST),
+    )
+)
 
 
 @app.get("/services")

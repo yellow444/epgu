@@ -374,10 +374,17 @@ def test_xml_reference_profile_is_visible_but_not_executable(client):
     assert "только для справки" in response.json()["detail"]
 
 
-def test_xml_fssp_demo_profile_is_reference_only(client):
-    response = client.get("/xml", params={"service": "60010153"})
+def test_fssp_generated_profiles_have_no_borrowed_xml_template(client):
+    for code in ("60010153", "10000000352"):
+        response = client.get("/xml", params={"service": code})
+        assert response.status_code == 200
+        body = response.json()
+        # Демонстрационных шаблонов больше нет: оба файла строит форма ФССП.
+        assert body["files"] == []
+        assert [item["generator"] for item in body["service"]["submission"]["documents"]] == ["fssp", "fssp"]
+    response = client.get("/xml", params={"service": "10000000396"})
     assert response.status_code == 409
-    assert "демонстрационные данны" in response.json()["detail"]
+    assert "только для физических лиц" in response.json()["detail"]
 
 
 def test_goskey_generated_profile_has_no_borrowed_xml_template(client):

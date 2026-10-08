@@ -115,15 +115,26 @@ def operator_session(monkeypatch):
 
 @pytest.fixture()
 def executable_generic_profile(monkeypatch):
-    """Enable the generic FSSP fixture only inside transport unit tests.
+    """Turn 60010153 into a plain file-upload profile inside transport tests.
 
-    The shipped catalogue keeps 60010153 reference-only until its applicant
-    form can reject demonstration data, while these tests still exercise the
-    generic ZIP/chunk implementation itself.
+    In the shipped catalogue both FSSP documents come from the typed form
+    (generator ``fssp``) and the generic upload routes refuse them.  These
+    tests exercise the generic ZIP/chunk implementation itself, so they put
+    file-based documents back for their own duration only.
     """
     profile = app_module.services_dict["60010153"]
     monkeypatch.setitem(profile, "status", "verified")
     monkeypatch.setitem(profile, "available", True)
+    monkeypatch.setitem(
+        profile["submission"],
+        "documents",
+        [
+            {key: value for key, value in document.items() if key != "generator"}
+            | {"sourceFile": document["outputName"]}
+            for document in profile["submission"]["documents"]
+        ],
+    )
+    monkeypatch.setitem(profile["submission"], "allowAdditionalFiles", True)
     return profile
 
 

@@ -144,7 +144,7 @@ def validate_service_catalog(
             if schema_file:
                 _safe_relative_file(str(schema_file), "{}.{}.schemaFile".format(code, document_id))
             generator = item.get("generator")
-            if generator not in {None, "goskey"}:
+            if generator not in {None, "goskey", "fssp"}:
                 raise ServiceConfigError("Неизвестный generator у {}.{}".format(code, document_id))
             if value.get("available") and not source_file and not generator:
                 raise ServiceConfigError(

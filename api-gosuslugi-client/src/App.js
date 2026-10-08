@@ -59,6 +59,11 @@ import GoskeyForm, {
   createGoskeySubmissionFormData,
   isGoskeyServiceProfile,
 } from './components/GoskeyForm/GoskeyForm';
+import FsspForm, {
+  FSSP_ROUTES,
+  fieldErrorsFromResponse,
+  isFsspServiceProfile,
+} from './components/FsspForm/FsspForm';
 import PublicSetup from './components/PublicSetup/PublicSetup';
 import Gospochta from './components/Gospochta/Gospochta';
 import InboundLog from './components/InboundLog/InboundLog';
@@ -163,6 +168,8 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
   const [goskeyCapabilities, setGoskeyCapabilities] = useState([]);
   const [goskeyPreviewing, setGoskeyPreviewing] = useState(false);
   const [goskeySubmitting, setGoskeySubmitting] = useState(false);
+  const [fsspPreviewing, setFsspPreviewing] = useState(false);
+  const [fsspSubmitting, setFsspSubmitting] = useState(false);
   // Пагинация и дата обновления запросов
   const [updatedAfter, setUpdatedAfter] = useState(() => new Date());
 
@@ -630,6 +637,57 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
     }
   };
 
+  // Ошибки проверки заявления ФССП возвращаются в форму, чтобы подсветить поля.
+  const fsspFailure = (error) => {
+    const fieldErrors = fieldErrorsFromResponse(error);
+    if (error?.response?.status === 422 && fieldErrors) {
+      setStatus('Заявление ФССП не прошло проверку: поля отмечены в форме.');
+      return { fieldErrors };
+    }
+    handleError(error);
+    return undefined;
+  };
+
+  const previewFsspRequest = async (payload) => {
+    setFsspPreviewing(true);
+    try {
+      const res = await api.post(FSSP_ROUTES.preview, payload);
+      const documents = Object.entries(res.data?.documents || {});
+      if (documents.length === 0) throw new Error('Backend не вернул файлы заявления.');
+      setXmlDocuments(documents.map(([name, content]) => ({ id: name, name, content })));
+      setSelectedXmlIndex(0);
+      setResponseData({ serviceCode: res.data.serviceCode, environment: res.data.environment });
+      setStatus(
+        'Заявление ФССП прошло проверку. Номер заявления в предпросмотре условный, ' +
+          'при отправке сервер подставит настоящий.'
+      );
+      setCurrentTab('xml');
+      return undefined;
+    } catch (error) {
+      return fsspFailure(error);
+    } finally {
+      setFsspPreviewing(false);
+    }
+  };
+
+  const submitFsspRequest = async (payload) => {
+    setFsspSubmitting(true);
+    try {
+      const res = await api.post(FSSP_ROUTES.submit, payload);
+      if (res.data?.orderId) setOrderId(String(res.data.orderId));
+      setResponseData(res.data);
+      setStatus(
+        `Заявление ФССП отправлено: номер ${res.data?.orderId || '-'}, ` +
+          `частей: ${res.data?.chunks ?? '-'}.`
+      );
+      return undefined;
+    } catch (error) {
+      return fsspFailure(error);
+    } finally {
+      setFsspSubmitting(false);
+    }
+  };
+
   // Получение деталей запроса
   const getOrderDetails = async (id) => {
     return await api.post(orderRoute(id), null, {
@@ -879,6 +937,15 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
       );
       return undefined;
     }
+    if (isFsspServiceProfile(profile)) {
+      xmlRequestGateRef.current.cancel();
+      setStatus(
+        profile.available
+          ? 'Заполните заявление ФССП и проверьте его перед отправкой.'
+          : profile.unavailableReason
+      );
+      return undefined;
+    }
     if (!profile.available) {
       xmlRequestGateRef.current.cancel();
       setStatus(profile.unavailableReason);
@@ -899,6 +966,10 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
     }
     if (isGoskeyServiceProfile(profile)) {
       setStatus('Сформируйте новый предпросмотр req.xml для Госключа.');
+      return;
+    }
+    if (isFsspServiceProfile(profile)) {
+      setStatus('Проверьте заявление ФССП заново, XML соберёт сервер.');
       return;
     }
     updateXmlDocuments(selectedService, profile);
@@ -1005,6 +1076,7 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
 
   const activeService = getActiveService();
   const activeServiceUsesGoskey = isGoskeyServiceProfile(activeService);
+  const activeServiceUsesFssp = isFsspServiceProfile(activeService);
   const submissionModes = getSubmissionModes(activeService);
   const selectedServiceAvailable = Boolean(activeService.available);
   const chunkedOrderMissing =
@@ -1285,6 +1357,8 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
                               <Text>Способ отправки:</Text>
                               {activeServiceUsesGoskey ? (
                                 <Tag>adaptive - выбирает backend</Tag>
+                              ) : activeServiceUsesFssp ? (
+                                <Tag>chunked - номер резервирует backend</Tag>
                               ) : submissionModes.length > 1 ? (
                                 <Select
                                   aria-label="Способ отправки"
@@ -1303,7 +1377,7 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
                           </Space>
                         </div>
                       )}
-                      {!activeServiceUsesGoskey && (
+                      {!activeServiceUsesGoskey && !activeServiceUsesFssp && (
                         <Input
                           aria-label="Регион ОКАТО пользователя"
                           placeholder="ОКАТО пользователя: от 2 до 11 цифр"
@@ -1325,7 +1399,9 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
                         placeholder={
                           activeServiceUsesGoskey
                             ? 'Order ID необязателен; указанное значение включает chunked'
-                            : 'Введите Order ID запроса'
+                            : activeServiceUsesFssp
+                              ? 'Номер появится после отправки заявления'
+                              : 'Введите Order ID запроса'
                         }
                         value={orderId}
                         onChange={(e) => setOrderId(e.target.value)}
@@ -1371,6 +1447,37 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
                             Оценка ZIP исходных документов без req.xml и .sig:{' '}
                             {(zipSize / (1024 * 1024)).toFixed(2)} MB
                           </Text>
+                        </>
+                      ) : activeServiceUsesFssp ? (
+                        <>
+                          <FsspForm
+                            service={activeService}
+                            organizationName={
+                              certificates.find((cert) => cert.id === selectedCertId)
+                                ?.organization || ''
+                            }
+                            previewing={fsspPreviewing}
+                            submitting={fsspSubmitting}
+                            onPreview={previewFsspRequest}
+                            onSubmit={submitFsspRequest}
+                          />
+                          <Space wrap>
+                            <Button
+                              danger
+                              icon={<CloseCircleOutlined />}
+                              onClick={cancelOrder}
+                              disabled={!isValidOrderId(orderId)}
+                            >
+                              Отменить запрос
+                            </Button>
+                            <Button
+                              icon={<SearchOutlined />}
+                              onClick={() => checkOrderDetailsMain(orderId)}
+                              disabled={!isValidOrderId(orderId)}
+                            >
+                              Проверить статус
+                            </Button>
+                          </Space>
                         </>
                       ) : (
                         <>

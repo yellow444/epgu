@@ -44,11 +44,16 @@ def test_default_services_shape():
         assert value["submission"]["documents"]
 
 
-def test_only_golden_and_typed_goskey_profiles_are_enabled():
+def test_only_golden_and_typed_profiles_are_enabled():
     from config import DEFAULT_SERVICES
 
     enabled = [code for code, profile in DEFAULT_SERVICES.items() if profile["available"]]
-    assert enabled == ["10000000374", "60025907", "60080470"]
+    assert enabled == ["10000000374", "10000000352", "60010153", "60025907", "60080470"]
+    # Включённые профили ФССП не берут XML из шаблонов: оба файла строит форма.
+    for code in ("10000000352", "60010153"):
+        documents = DEFAULT_SERVICES[code]["submission"]["documents"]
+        assert [item["generator"] for item in documents] == ["fssp", "fssp"]
+        assert all("sourceFile" not in item for item in documents)
     assert all(DEFAULT_SERVICES[code]["status"] == "verified" for code in enabled)
     for code, profile in DEFAULT_SERVICES.items():
         if code not in enabled:
@@ -56,7 +61,7 @@ def test_only_golden_and_typed_goskey_profiles_are_enabled():
             assert profile["unavailableReason"]
     assert DEFAULT_SERVICES["10000000374"]["capabilities"][0]["state"] == "verified"
     assert DEFAULT_SERVICES["10000000374"]["capabilities"][1]["state"] == "reference"
-    assert "демонстрационные данны" in DEFAULT_SERVICES["60010153"]["unavailableReason"]
+    assert "только для физических лиц" in DEFAULT_SERVICES["10000000396"]["unavailableReason"]
 
 
 def test_services_override_is_lossless():

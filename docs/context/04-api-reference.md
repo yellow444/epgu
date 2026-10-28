@@ -127,4 +127,4 @@ Word и архивы. Их ручной разбор делает
 
 Сводка несоответствий в спецификациях ЕПГУ/ЕСИА (push/chunked vs order, коды услуг, `DsContentType=21`,
 диапазон `TrusteeDoctype`, статус SAML, нумерация разделов, GET vs POST для `getOrdersStatus`/`getUpdatedAfter`,
-лишний `/` перед query) - см. [`issue.md`](../../issue.md).
+лишний `/` перед query) - см. [`specification-issues.md`](../specification-issues.md).

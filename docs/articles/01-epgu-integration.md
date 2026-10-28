@@ -92,9 +92,9 @@ https://info.gosuslugi.ru/articles/Обмен_в_СМЭВ4_c_использов�
 
 ### Регистрация и настройка ИС
 
-- Зарегистрировать ИС в [Технологическом портале ЕСИА](https://esia-portal1.test.gosuslugi.ru/console/tech) ![addIS.png](./step/addIS.png) ![IS.png](./step/IS.png) или в [Портале ЕСИА](https://svcdev-partners.test.gosuslugi.ru/systems) ![addIS2.png](./step/addIS2.png) ![IS2.png](./step/IS2.png)
+- Зарегистрировать ИС в [Технологическом портале ЕСИА](https://esia-portal1.test.gosuslugi.ru/console/tech) ![addIS.png](../guides/addIS.png) ![IS.png](../guides/IS.png) или в [Портале ЕСИА](https://svcdev-partners.test.gosuslugi.ru/systems) ![addIS2.png](../guides/addIS2.png) ![IS2.png](../guides/IS2.png)
 - Указать мнемонику тестовой ИС.
-- Загрузить публичную часть сертификата. ![certIS.png](./step/certIS.png)
+- Загрузить публичную часть сертификата. ![certIS.png](../guides/certIS.png)
 - Отправить заявку на [sd@sc.digital.gov.ru](mailto:sd@sc.digital.gov.ru).
 
 ## 5. Получение тестового API-ключа

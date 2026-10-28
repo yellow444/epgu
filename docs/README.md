@@ -16,6 +16,13 @@
 | [data-model.md](./data-model.md) | Таблицы сущностей и внутреннего состояния |
 | [deployment.md](./deployment.md) | Развёртывание, docker-compose, переменные окружения |
 | [security.md](./security.md) | Криптография, сертификаты, JWT, риски |
+| [HOWTO.md](./HOWTO.md) | Локальный запуск и диагностика |
+| [guides/STEP.md](./guides/STEP.md) | Пошаговые материалы и скриншоты TEST-контура |
+| [articles/README.md](./articles/README.md) | Статьи и заметки для Хабра |
+| [postman/](./postman/) | Коллекции запросов Postman |
+| [plans.md](./plans.md) | Планы развития |
+| [specification-issues.md](./specification-issues.md) | Замечания к спецификациям |
+| [metrics/README.md](./metrics/README.md) | Источник, период и обновление traffic-бейджей |
 | [../.env.example](../.env.example) | Шаблон переменных окружения с пояснениями |
 
 ## Оригинальные регламенты ЕПГУ (docx/pdf)
@@ -50,7 +57,7 @@
 
 ## Пошаговые инструкции с иллюстрациями
 
-См. [../step/](../step) - добавление ИС, установка сертификатов, скриншоты.
+См. [guides/](./guides/) - добавление ИС, установка сертификатов, скриншоты.
 
 ## Методические материалы ЕСИА / Цифрового профиля
 

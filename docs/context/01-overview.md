@@ -48,7 +48,7 @@ Frontend ждёт healthy-состояния backend. Compose проверяет
 
 Для shared/LAN/public сценария нужен внешний auth reverse proxy с TLS, authentication, authorization, rate limits и аудитом. Из-за process-global access token и выбранного сертификата каждому оператору/tenant требуется отдельный backend process/runtime; прямое открытие compose-портов недопустимо.
 
-Пошаговые материалы: [step/STEP.md](../../step/STEP.md).
+Пошаговые материалы: [guides/STEP.md](../guides/STEP.md).
 
 ## Ограничения
 

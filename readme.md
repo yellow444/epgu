@@ -3,10 +3,14 @@
 [![GitHub Stars](https://img.shields.io/github/stars/yellow444/epgu?style=flat&logo=github&label=Stars)](https://github.com/yellow444/epgu)
 [![GitHub Forks](https://img.shields.io/github/forks/yellow444/epgu?style=flat&logo=github&label=Forks)](https://github.com/yellow444/epgu/forks)
 [![Лицензия](https://img.shields.io/github/license/yellow444/epgu?style=flat)](./LICENSE)
+[![Просмотры репозитория за 14 дней, датированный снимок GitHub Traffic](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyellow444%2Fepgu%2Fmain%2Fdocs%2Fmetrics%2Fviews.json)](./docs/metrics/README.md)
+[![Клонирования за 14 дней, датированный снимок GitHub Traffic](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyellow444%2Fepgu%2Fmain%2Fdocs%2Fmetrics%2Fclones.json)](./docs/metrics/README.md)
 
 Монорепозиторий для интеграции с API ЕПГУ/ГУСМЭВ: FastAPI-шлюз, React-интерфейс и отдельная Python-библиотека `epgu-api`.
 
 **Проект оказался полезен? Поставьте ⭐ [yellow444/epgu](https://github.com/yellow444/epgu)** — так вы поддержите развитие открытого инструментария для интеграции с Госуслугами. Нашли ошибку или недостающий сценарий? [Создайте issue](https://github.com/yellow444/epgu/issues), не прикладывая персональные данные, API-ключи, PIN-коды и закрытые ключи.
+
+[Быстрый старт](#быстрый-старт) · [Инструкция запуска](./docs/HOWTO.md) · [Документация](./docs/README.md) · [Python SDK](./python-epgu/README.md) · [Postman](./docs/postman/) · [О статистике](./docs/metrics/README.md)
 
 > Контракты сверены 12 августа 2026 года с [официальным каталогом API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu). Базовый протокол реализуется по [спецификации API ЕПГУ v1.14 от 29.01.2026](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_14.docx). Наличие услуги в каталоге не означает, что её уже можно безопасно отправлять из этого проекта.
 
@@ -118,3 +122,11 @@ python -m twine check dist/*
 ## Лицензия
 
 Корневой проект распространяется по AGPL-3.0-or-later - см. [`LICENSE`](./LICENSE). У Python-пакета также есть отдельные [коммерческие условия](./python-epgu/COMMERCIAL-LICENSE.md).
+
+## Поддержать проект
+
+Дочитали и нашли полезное? Поддержите проект звездой:
+
+[![Поддержать проект: перейти к кнопке Star на GitHub](https://img.shields.io/badge/Support-Star_on_GitHub-ffca28?style=for-the-badge&logo=github&logoColor=black)](https://github.com/yellow444/epgu#start-of-content)
+
+Ссылка возвращает к верхней части репозитория: нажмите **Star** справа вверху. Сам бейдж не ставит звезду автоматически.

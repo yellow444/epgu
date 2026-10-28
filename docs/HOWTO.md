@@ -111,6 +111,6 @@ npm run build
 | Услуга видна, но disabled | Это справочный профиль; причина приходит из backend |
 | `Invalid XML` | XML не соответствует XSD конкретной услуги |
 
-Подробности: [backend](./api-gosuslugi-backend/HOWTO.md),
-[frontend](./api-gosuslugi-client/HOWTO.md),
-[развёртывание](./docs/deployment.md) и [безопасность](./docs/security.md).
+Подробности: [backend](../api-gosuslugi-backend/HOWTO.md),
+[frontend](../api-gosuslugi-client/HOWTO.md),
+[развёртывание](./deployment.md) и [безопасность](./security.md).

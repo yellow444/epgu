@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Iterable, List, Tuple
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MAX_TRACKED_BYTES = 20 * 1024 * 1024
 MAX_SCANNED_BYTES = 5 * 1024 * 1024
 

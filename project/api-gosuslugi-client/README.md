@@ -140,4 +140,4 @@ src/
 
 ## Лицензия
 
-См. корневой файл [`../LICENSE`](../LICENSE) (AGPL-3.0-or-later).
+См. корневой файл [`../LICENSE`](../../LICENSE) (AGPL-3.0-or-later).

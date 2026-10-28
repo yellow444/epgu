@@ -54,7 +54,7 @@ python -m pytest -c pytest.ini
 имён документов, XSD, подписей, typed-генератора/golden-тестов и проверки в
 авторизованном контуре.
 
-Из корня репозитория:
+Из каталога `project/`:
 
 ```powershell
 python scripts/sync_api_for_gu_docs.py

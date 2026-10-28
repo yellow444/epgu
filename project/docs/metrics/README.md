@@ -8,7 +8,7 @@
 
 ## Обновление
 
-Из корня репозитория:
+Из каталога `project/`:
 
 ```powershell
 python scripts/update_repository_traffic.py

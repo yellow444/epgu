@@ -1,6 +1,12 @@
 # API Госуслуг (ЕПГУ) - интеграционное решение
 
+[![GitHub Stars](https://img.shields.io/github/stars/yellow444/epgu?style=flat&logo=github&label=Stars)](https://github.com/yellow444/epgu)
+[![GitHub Forks](https://img.shields.io/github/forks/yellow444/epgu?style=flat&logo=github&label=Forks)](https://github.com/yellow444/epgu/forks)
+[![Лицензия](https://img.shields.io/github/license/yellow444/epgu?style=flat)](./LICENSE)
+
 Монорепозиторий для интеграции с API ЕПГУ/ГУСМЭВ: FastAPI-шлюз, React-интерфейс и отдельная Python-библиотека `epgu-api`.
+
+**Проект оказался полезен? Поставьте ⭐ [yellow444/epgu](https://github.com/yellow444/epgu)** — так вы поддержите развитие открытого инструментария для интеграции с Госуслугами. Нашли ошибку или недостающий сценарий? [Создайте issue](https://github.com/yellow444/epgu/issues), не прикладывая персональные данные, API-ключи, PIN-коды и закрытые ключи.
 
 > Контракты сверены 12 августа 2026 года с [официальным каталогом API Госуслуг](https://partners.gosuslugi.ru/catalog/api_for_gu). Базовый протокол реализуется по [спецификации API ЕПГУ v1.14 от 29.01.2026](https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_14.docx). Наличие услуги в каталоге не означает, что её уже можно безопасно отправлять из этого проекта.
 

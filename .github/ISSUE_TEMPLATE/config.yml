@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Сообщить об уязвимости
+    url: https://github.com/yellow444/epgu/blob/main/.github/SECURITY.md
+    about: Не публикуйте уязвимости в issue. Порядок приватного сообщения описан в политике безопасности.
+  - name: Вопрос по использованию
+    url: https://github.com/yellow444/epgu/discussions
+    about: Вопросы о запуске, SDK и API задавайте в Discussions.
+  - name: Обращения к оператору Госуслуг
+    url: https://partners.gosuslugi.ru/catalog/api_for_gu
+    about: Подключение ИС, доступы и сбои ЕПГУ решаются с оператором по официальным каналам, а не в этом репозитории.

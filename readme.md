@@ -136,6 +136,14 @@ python -m twine check dist/*
 вне Git. Перед публикацией любой ветки проверяйте её историю и чистый клон;
 подробный список проверок приведён в [`docs/AUDIT_2026-08-12.md`](./project/docs/AUDIT_2026-08-12.md).
 
+## Участие и поддержка
+
+[Как внести вклад](./.github/CONTRIBUTING.md) · [Куда задать вопрос](./.github/SUPPORT.md) ·
+[Правила поведения](./.github/CODE_OF_CONDUCT.md) · [Сообщить об уязвимости](./.github/SECURITY.md).
+Для ошибок, предложений, документации и вопросов доступны отдельные
+[формы issue](https://github.com/yellow444/epgu/issues/new/choose). Не публикуйте
+в них секреты и персональные данные.
+
 ## Лицензия
 
 Корневой проект распространяется по AGPL-3.0-or-later - см. [`LICENSE`](./LICENSE). У Python-пакета также есть отдельные [коммерческие условия](./project/python-epgu/COMMERCIAL-LICENSE.md).

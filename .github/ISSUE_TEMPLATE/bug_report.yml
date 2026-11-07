@@ -1,0 +1,86 @@
+name: Ошибка
+description: Сообщить об ошибке интерфейса, базы знаний, HTTP/MCP, SDK или скриптов.
+title: "[Ошибка]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Спасибо, что сообщаете об ошибке. Этот репозиторий не является поддержкой оператора ЕПГУ: о сбоях на стороне Госуслуг сообщайте оператору по официальным каналам.
+
+        **Не прикладывайте** API-ключи, токены ЕСИА, cookie, PIN-коды, контейнеры закрытых ключей, паспортные данные, СНИЛС и другие персональные данные. Замените такие значения заглушками. Об уязвимостях пишите приватно, см. [SECURITY.md](https://github.com/yellow444/epgu/blob/main/.github/SECURITY.md).
+  - type: dropdown
+    id: component
+    attributes:
+      label: Компонент
+      options:
+        - backend (project/api-gosuslugi-backend)
+        - frontend (project/api-gosuslugi-client)
+        - Python SDK epgu-api (project/python-epgu)
+        - база знаний / карточка TEST (project/knowledge)
+        - MCP-сервер (project/mcp-server)
+        - скрипты (project/scripts)
+        - другое или не знаю
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия или коммит
+      description: Хеш коммита, тег или версия пакета epgu-api, epgu-knowledge либо epgu-mcp.
+      placeholder: "например, 9e5c088 или epgu-knowledge 0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Окружение
+      description: ОС, версии Python и Node.js, запуск локально или в контейнере, установлен ли КриптоПро.
+    validations:
+      required: false
+  - type: input
+    id: service
+    attributes:
+      label: Код услуги ЕПГУ
+      description: Если ошибка связана с конкретной услугой, например 10000000374.
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги воспроизведения
+      description: Минимальный набор действий или код на синтетических данных.
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Фактическое поведение
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Обезличенные логи и свидетельства
+      description: Фрагменты логов, коды ответов, трассировки. Перед вставкой удалите токены, ключи и персональные данные.
+      render: text
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Перед отправкой
+      options:
+        - label: В issue нет секретов и персональных данных.
+          required: true
+        - label: Похожие issue уже просмотрены.
+          required: false

@@ -1,0 +1,56 @@
+name: Документация
+description: Сообщить о неточности в документации или руководстве либо запросить новое руководство.
+title: "[Документация]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Сюда относятся ошибки в README, `project/docs/`, `project/epgu/`, схемах и общем наборе знаний, а также запросы новых руководств. Не прикладывайте секреты и персональные данные, в том числе на скриншотах. Отделяйте прочитанный документ от реально проверенного поведения сервиса.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Тип обращения
+      options:
+        - неточность или ошибка
+        - устаревшие сведения
+        - битая ссылка
+        - запрос нового руководства
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Документ или раздел
+      description: Путь к файлу или ссылка на раздел.
+      placeholder: "например, project/docs/HOWTO.md"
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Что написано сейчас
+      description: Для запроса нового руководства опишите, чего не хватает.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Как должно быть
+      description: Предлагаемый текст или описание правильного порядка действий.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Источник
+      description: Официальный документ с версией и датой, на котором основана правка, если есть.
+    validations:
+      required: false
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Перед отправкой
+      options:
+        - label: В описании и приложениях нет секретов и персональных данных.
+          required: true

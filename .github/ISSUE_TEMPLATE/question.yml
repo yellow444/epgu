@@ -1,0 +1,38 @@
+name: Вопрос
+description: Уточнить запуск, использование публичного интерфейса, знаний, HTTP API или MCP.
+title: "[Вопрос]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Перед вопросом посмотрите [запуск и ограничения публичной версии](https://github.com/yellow444/epgu/blob/main/project/epgu/PUBLIC_RELEASE_2026-11-07.md).
+        Не вставляйте API-ключи, токены, cookie, PIN, документы и персональные данные. По уязвимостям используйте приватный канал из [SECURITY.md](https://github.com/yellow444/epgu/blob/main/.github/SECURITY.md), а не эту форму.
+  - type: input
+    id: version
+    attributes:
+      label: Версия или коммит
+      description: Если известно, укажите коммит репозитория или версию пакета.
+    validations:
+      required: false
+  - type: textarea
+    id: goal
+    attributes:
+      label: Какую задачу вы решаете
+      description: Опишите ожидаемый результат без данных реальной организации или заявителя.
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Что требуется уточнить
+      description: Укажите шаг интерфейса, метод API или инструмент MCP; что уже прочитали и попробовали.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Перед отправкой
+      options:
+        - label: В вопросе нет секретов и персональных данных.
+          required: true

@@ -175,6 +175,40 @@ token = aas.exchange_callback(callback_url, expected_state=expected_state)
 `state` со своим одноразовым in-memory хранилищем и без `expected_state`.
 Многопроцессному приложению нужно внешнее серверное хранилище.
 
+## Планы операций своего backend
+
+`epgu.integration.IntegrationClient` ходит не в Госуслуги, а в backend
+установки по ключу интеграции (`Authorization: Bearer`). Адрес backend
+задаётся явно. `http://` допускается только с `allow_insecure_http=True` и
+только для loopback (`localhost`, `127.0.0.0/8`, `[::1]`). Одобряет план
+человек в интерфейсе установки: в клиенте такого метода нет.
+
+Ответы проверяются по контракту. План с чужим `plan_id` или полями не того
+вида даёт `UnexpectedResponse`. Ответ execute 200 считается успехом, только
+если это `succeeded` того же плана; иначе исход неизвестен. Ключ
+вырезается из всех полей ошибки.
+
+`timeout` задаёт таймауты httpx на соединение, чтение, запись и пул. Таймаут
+чтения действует на каждое ожидание данных, а не на весь ответ, поэтому
+общего срока на запрос в Python-клиенте нет. Между раскодированными порциями
+тела клиент дополнительно прерывает чтение, если прошло больше `timeout`, но
+сжатое тело может долго не давать таких порций. Любой сбой у
+`execute_plan` это `OutcomeUnknown` без повтора.
+
+```python
+from epgu.integration import IntegrationClient, OutcomeUnknown
+
+with IntegrationClient("https://epgu.example/api", key) as api:
+    plan = api.prepare_plan("svc.send", "target-1", payload,
+                            idempotency_key="order-42-v1")
+    # ... план одобрен человеком ...
+    try:
+        api.execute_plan(plan.plan_id, plan.plan_hash)
+    except OutcomeUnknown as err:
+        # Повтора нет. Списки None, если сервер их не прислал.
+        print(err.completed_calls, err.uncertain_calls)
+```
+
 ## Контракты ответов
 
 ```python

@@ -11,9 +11,10 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { KeyOutlined, LogoutOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
+import { AuditOutlined, KeyOutlined, LogoutOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
 import { authRequest } from './authApi';
 import { useAuth } from './AuthGate';
+import PlanReviewModal from '../OperationPlans/PlanReviewModal';
 
 const { Text } = Typography;
 
@@ -232,7 +233,12 @@ export default function AccountMenu({ extraItems = [], compact = false }) {
   const items = [
     ...extraItems.map((item) => ({ key: item.key, label: item.label, icon: item.icon })),
     { key: 'password', icon: <KeyOutlined />, label: 'Сменить пароль' },
-    ...(account.installation_admin ? [{ key: 'users', icon: <TeamOutlined />, label: 'Пользователи' }] : []),
+    ...(account.installation_admin
+      ? [
+          { key: 'users', icon: <TeamOutlined />, label: 'Пользователи' },
+          { key: 'plans', icon: <AuditOutlined />, label: 'Одобрение планов' },
+        ]
+      : []),
     { type: 'divider' },
     { key: 'logout', icon: <LogoutOutlined />, label: 'Выйти' },
   ];
@@ -255,6 +261,9 @@ export default function AccountMenu({ extraItems = [], compact = false }) {
       </Dropdown>
       <PasswordModal open={openKey === 'password'} onClose={() => setOpenKey(null)} />
       {account.installation_admin && <UsersModal open={openKey === 'users'} onClose={() => setOpenKey(null)} />}
+      {account.installation_admin && (
+        <PlanReviewModal key={account.id} open={openKey === 'plans'} onClose={() => setOpenKey(null)} />
+      )}
       {extraItems.map((item) =>
         item.Modal ? <item.Modal key={item.key} open={openKey === item.key} onClose={() => setOpenKey(null)} /> : null
       )}

@@ -5,6 +5,9 @@
 - [Backend](./api-gosuslugi-backend/README.md)
 - [Frontend](./api-gosuslugi-client/README.md)
 - [Python SDK](./python-epgu/README.md)
+- [База знаний](./knowledge/README.md)
+- [MCP-сервер](./mcp-server/README.md)
+- [Публичная версия: возможности и границы проверки](./epgu/PUBLIC_RELEASE_2026-11-07.md)
 - [Документация](./docs/README.md)
 - [Инструменты](./scripts/)
 

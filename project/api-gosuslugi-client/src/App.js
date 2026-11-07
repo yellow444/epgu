@@ -91,6 +91,7 @@ import {
   certificateOptionLabel,
 } from './certificateDisplay';
 import { exactOrderId, isValidOrderId, orderRoute } from './orderId';
+import { notifyWorkspaceContextChanged } from './workspaceContext';
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -858,6 +859,10 @@ function App({ headerExtra = null, extraTabs = [], requestedTab = null, onReques
       setStatus(`Сертификат ${certId} выбран; прежний токен сброшен.`);
     } catch (e) {
       setStatus('Ошибка установки сертификата.');
+    } finally {
+      // Даже при ошибке сервер мог уже сменить сертификат: окна, показывающие
+      // данные прежнего контекста, сбрасываются в обоих случаях.
+      notifyWorkspaceContextChanged();
     }
   };
 

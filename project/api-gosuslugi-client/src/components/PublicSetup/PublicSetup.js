@@ -15,116 +15,18 @@ import {
   ExportOutlined,
   MailOutlined,
 } from '@ant-design/icons';
+import manualPath from './manual_path.v1.json';
 
 const { Paragraph, Text, Title } = Typography;
 const { TextArea } = Input;
 
-const LINKS = [
-  {
-    key: 'test-systems',
-    label: 'TEST: «Мои системы»',
-    url: 'https://svcdev-partners.test.gosuslugi.ru/systems',
-  },
-  {
-    key: 'test-powers',
-    label: 'TEST: «Полномочия»',
-    url: 'https://svcdev-partners.test.gosuslugi.ru/powers',
-  },
-  {
-    key: 'prod-systems',
-    label: 'PROD: «Мои системы»',
-    url: 'https://partners.gosuslugi.ru/systems',
-  },
-  {
-    key: 'prod-powers',
-    label: 'PROD: «Полномочия»',
-    url: 'https://partners.gosuslugi.ru/powers',
-  },
-  {
-    key: 'test-tech',
-    label: 'TEST: техническая консоль ЕСИА',
-    url: 'https://esia-portal1.test.gosuslugi.ru/console/tech/',
-  },
-  {
-    key: 'prod-tech',
-    label: 'PROD: техническая консоль ЕСИА',
-    url: 'https://esia.gosuslugi.ru/console/tech',
-  },
-];
+// Все тексты приходят из ручного маршрута: своих копий здесь нет.
+const KIND_LABELS = new Map(manualPath.link_kinds.map((kind) => [kind.id, kind.label]));
 
-const FACT_FIELDS = [
-  {
-    key: 'organizationOid',
-    label: 'OID организации',
-    placeholder: 'Введите вручную, если он отображается в ЛК',
-    rows: 1,
-  },
-  {
-    key: 'systemOid',
-    label: 'OID внешней ИС (ext-app)',
-    placeholder: 'Введите вручную из адреса или карточки ИС',
-    rows: 1,
-  },
-  {
-    key: 'mnemonic',
-    label: 'Мнемоника ИС',
-    placeholder: 'Например, TESTEP',
-    rows: 1,
-  },
-  {
-    key: 'systemCard',
-    label: 'Что отображается в карточке ИС',
-    placeholder: 'Откройте конкретную ИС и перенесите сюда нужные видимые строки вручную',
-    rows: 5,
-  },
-  {
-    key: 'powers',
-    label: 'Что отображается на странице «Полномочия»',
-    placeholder: 'Например: «У вас пока нет полномочий»',
-    rows: 4,
-  },
-  {
-    key: 'request',
-    label: 'Метод и URL запроса',
-    placeholder: 'Только метод и URL без Cookie, Authorization, API-Key и токенов',
-    rows: 3,
-  },
-  {
-    key: 'response',
-    label: 'HTTP-код и безопасный текст ответа',
-    placeholder: 'Например: 404 Not Found. Не вставляйте секреты и служебные заголовки',
-    rows: 4,
-  },
-];
-
-const EMPTY_FACTS = FACT_FIELDS.reduce(
-  (result, field) => ({ ...result, [field.key]: '' }),
+const EMPTY_FACTS = manualPath.fields.reduce(
+  (result, field) => ({ ...result, [field.id]: '' }),
   {}
 );
-
-const DEFAULT_BODY = `Здравствуйте!
-
-Организация: <заполните вручную>
-OID организации: <заполните вручную>
-Мнемоника ИС: <заполните вручную>
-OID внешней ИС (ext-app): <заполните вручную>
-
-Что отображается в карточке ИС:
-<заполните вручную>
-
-Что отображается на странице «Полномочия»:
-<заполните вручную>
-
-Метод и URL запроса без Cookie и токенов:
-<заполните вручную>
-
-HTTP-код и безопасный текст ответа:
-<заполните вручную>
-
-Просим проверить указанные сведения и сообщить официальный порядок дальнейших действий.
-
-С уважением,
-<заполните вручную>`;
 
 function copyText(value) {
   return navigator.clipboard.writeText(String(value || ''));
@@ -182,7 +84,7 @@ export default function PublicSetup() {
     to: '',
     cc: '',
     subject: '',
-    body: DEFAULT_BODY,
+    body: manualPath.letter_template.body,
   });
   const [notice, setNotice] = useState('');
 
@@ -212,14 +114,40 @@ export default function PublicSetup() {
           type="info"
           showIcon
           message="Публичная версия ничего не читает из соседних вкладок и ничего не отправляет автоматически"
-          description="Все значения остаются в редактируемых полях этой страницы. Проверяйте актуальные адреса и требования по официальным каналам Оператора."
+          description={`Все значения остаются в редактируемых полях этой страницы. ${manualPath.warnings[1]}`}
         />
+        <Paragraph type="secondary" style={{ marginTop: 12, marginBottom: 0 }}>
+          {manualPath.provenance.note}
+        </Paragraph>
+      </Card>
+
+      <Card title="Порядок действий">
+        <ol style={{ margin: 0, paddingLeft: 20 }}>
+          {manualPath.steps.map((step) => (
+            <li key={step.id} data-testid={`manual-step-${step.id}`} style={{ marginBottom: 12 }}>
+              <Text strong>{step.title}</Text>
+              <Paragraph style={{ margin: 0 }}>Действие: {step.action}</Paragraph>
+              <Paragraph style={{ margin: 0 }}>Что собрать: {step.collect}</Paragraph>
+              <Paragraph style={{ margin: 0 }}>Что должно получиться: {step.result}</Paragraph>
+              {step.link_kinds.map((kind) => (
+                <Paragraph style={{ margin: 0 }} key={kind}>
+                  {KIND_LABELS.get(kind)}:{' '}
+                  {manualPath.links.filter((link) => link.kind === kind).map((link) => (
+                    <a key={link.id} href={link.url} target="_blank" rel="noreferrer" aria-label={link.label} style={{ marginRight: 8 }}>
+                      {link.contour}
+                    </a>
+                  ))}
+                </Paragraph>
+              ))}
+            </li>
+          ))}
+        </ol>
       </Card>
 
       <Card title="Официальные кабинеты и консоли">
         <Row gutter={[12, 12]}>
-          {LINKS.map((item) => (
-            <Col xs={24} md={12} xl={8} key={item.key}>
+          {manualPath.links.map((item) => (
+            <Col xs={24} md={12} xl={8} key={item.id}>
               <Space direction="vertical" size={6} style={{ width: '100%' }}>
                 <Button
                   block
@@ -245,16 +173,16 @@ export default function PublicSetup() {
         </Row>
       </Card>
 
-      <Card title="Фактические данные — заполните вручную">
+      <Card title="Фактические данные - заполните вручную">
         <Alert
           type="warning"
           showIcon
           style={{ marginBottom: 16 }}
-          message="Не вставляйте Cookie, Authorization, API-Key, KeyPin, пароли и токены"
+          message={manualPath.warnings[0]}
         />
         <Row gutter={[16, 16]}>
-          {FACT_FIELDS.map((field) => (
-            <Col xs={24} xl={field.rows === 1 ? 8 : 12} key={field.key}>
+          {manualPath.fields.map((field) => (
+            <Col xs={24} xl={field.rows === 1 ? 8 : 12} key={field.id}>
               <Space direction="vertical" size={4} style={{ width: '100%' }}>
                 <Space>
                   <Text strong>{field.label}</Text>
@@ -262,23 +190,23 @@ export default function PublicSetup() {
                     size="small"
                     aria-label={`Скопировать поле ${field.label}`}
                     icon={<CopyOutlined />}
-                    onClick={() => copy(facts[field.key], `Поле «${field.label}»`)}
+                    onClick={() => copy(facts[field.id], `Поле «${field.label}»`)}
                   />
                 </Space>
                 {field.rows === 1 ? (
                   <Input
                     aria-label={field.label}
-                    placeholder={field.placeholder}
-                    value={facts[field.key]}
-                    onChange={(event) => setFacts({ ...facts, [field.key]: event.target.value })}
+                    placeholder={field.hint}
+                    value={facts[field.id]}
+                    onChange={(event) => setFacts({ ...facts, [field.id]: event.target.value })}
                   />
                 ) : (
                   <TextArea
                     aria-label={field.label}
                     rows={field.rows}
-                    placeholder={field.placeholder}
-                    value={facts[field.key]}
-                    onChange={(event) => setFacts({ ...facts, [field.key]: event.target.value })}
+                    placeholder={field.hint}
+                    value={facts[field.id]}
+                    onChange={(event) => setFacts({ ...facts, [field.id]: event.target.value })}
                   />
                 )}
               </Space>

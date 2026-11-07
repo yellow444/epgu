@@ -38,6 +38,7 @@ global.showSaveFilePicker = jest.fn().mockResolvedValue({
 });
 
 import axios from 'axios';
+import { workspaceContextVersion } from './workspaceContext';
 import App from './App';
 
 beforeEach(() => {
@@ -68,7 +69,7 @@ describe('App Component Basic Rendering Tests', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Настройка'));
     expect(screen.getByText('Ручная настройка подключения')).toBeInTheDocument();
-    expect(screen.getByText('Фактические данные — заполните вручную')).toBeInTheDocument();
+    expect(screen.getByText('Фактические данные - заполните вручную')).toBeInTheDocument();
     expect(screen.queryByText(/Мастер настройки/)).not.toBeInTheDocument();
   });
 
@@ -253,6 +254,7 @@ describe('App Component Basic Rendering Tests', () => {
       Promise.resolve({ data: url === '/get_certificates' ? [certificate] : {} })
     );
 
+    const before = workspaceContextVersion();
     render(<App />);
     const apiKey = screen.getByLabelText('API key');
     fireEvent.change(apiKey, { target: { value: 'operator-secret' } });
@@ -267,6 +269,7 @@ describe('App Component Basic Rendering Tests', () => {
       expect.anything(),
       expect.anything()
     );
+    expect(workspaceContextVersion()).toBe(before);
   });
 
   test('selects a certificate explicitly and renders its identity and validity', async () => {
@@ -284,6 +287,7 @@ describe('App Component Basic Rendering Tests', () => {
       Promise.resolve({ data: url === '/get_certificates' ? [certificate] : {} })
     );
 
+    const before = workspaceContextVersion();
     render(<App />);
     expect(screen.queryByText('session-token')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Показать токен' }));
@@ -315,6 +319,8 @@ describe('App Component Basic Rendering Tests', () => {
     expect(await screen.findByTestId('selected-certificate-details')).toHaveTextContent(
       '2026-01-01 - 2027-01-01'
     );
+    // Смена сертификата сообщается окнам, которые показывают данные контекста.
+    expect(workspaceContextVersion()).toBe(before + 1);
     expect(sessionStorage.getItem('token')).toBeNull();
     expect(screen.queryByText('session-token')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Получить токен/ })).toBeEnabled();

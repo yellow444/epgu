@@ -10,12 +10,25 @@
   в организации); функция получает запрос и аккаунт и бросает HTTPException;
 - ``session_extensions`` - поля, которые добавляются к описанию сессии;
 - ``mode_extensions`` - поля, которые добавляются к ``/auth/mode``.
+
+``public_endpoints`` - функции-обработчики GET, открытые без входа. Это точные
+маршруты (сопоставление по найденному маршруту, а не по префиксу пути); туда
+попадает только чтение статических публичных знаний.
+
+``public_post_endpoints`` - отдельный явный список чистых публичных расчётов
+по переданным отметкам. Разрешает только POST найденного обработчика, не
+другие методы или соседние пути.
+
+``machine_endpoints`` - функции-обработчики машинных маршрутов (любой метод):
+для них ``require_login`` не ищет cookie сессии, а доступ проверяет сама
+зависимость маршрута по ключу интеграции (``machine_api.require_machine``).
+Регистрация только явная, по найденному маршруту, не по префиксу пути.
 """
 
 from __future__ import annotations
 
 import os
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response
 from pydantic import BaseModel, Field
@@ -29,6 +42,11 @@ EXEMPT_PATHS = {"/health", "/hc", "/auth/login", "/auth/logout", "/auth/mode"}
 authorizers: List[Callable[[Request, Account], None]] = []
 session_extensions: List[Callable[[Account], Dict[str, Any]]] = []
 mode_extensions: List[Callable[[], Dict[str, Any]]] = []
+public_endpoints: Set[Callable[..., Any]] = set()
+# Отдельный явный список для чистых публичных POST-расчётов. Сам по себе
+# public_endpoints по-прежнему не открывает POST или другие методы.
+public_post_endpoints: Set[Callable[..., Any]] = set()
+machine_endpoints: Set[Callable[..., Any]] = set()
 
 ACCOUNT_ID = r"^acc_[0-9a-f]{32}$"
 
@@ -82,9 +100,28 @@ def _resolve(request: Request) -> Account:
     return account
 
 
+def _is_public_endpoint(request: Request) -> bool:
+    route = request.scope.get("route")
+    endpoint = getattr(route, "endpoint", None)
+    if request.method == "POST":
+        return endpoint in public_post_endpoints
+    if request.method not in ("GET", "HEAD"):
+        return False
+    return endpoint in public_endpoints
+
+
+def _is_machine_endpoint(request: Request) -> bool:
+    route = request.scope.get("route")
+    return getattr(route, "endpoint", None) in machine_endpoints
+
+
 def require_login(request: Request) -> Optional[Account]:
     """Общая зависимость приложения: сессия обязательна, кроме открытых путей."""
-    if route_path(request) in EXEMPT_PATHS:
+    if (
+        route_path(request) in EXEMPT_PATHS
+        or _is_public_endpoint(request)
+        or _is_machine_endpoint(request)
+    ):
         return None
     account = _resolve(request)
     for check in list(authorizers):

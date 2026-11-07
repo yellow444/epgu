@@ -1,0 +1,61 @@
+.integration-chart-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #d8e2f0;
+  border-radius: 10px;
+  background: #f6f9ff;
+}
+
+.integration-chart {
+  position: relative;
+  width: 780px;
+  margin: 0 auto;
+}
+
+.integration-chart-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.integration-node {
+  position: absolute;
+  width: 220px;
+  height: 80px;
+  padding: 8px 14px;
+  border: 2px solid #95afcf;
+  border-radius: 12px;
+  background: #fff;
+  color: #173354;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.integration-node:hover,
+.integration-node[aria-pressed='true'] {
+  border-color: #1677ff;
+  background: #e6f4ff;
+}
+
+.integration-node:focus-visible {
+  outline: 3px solid #1677ff;
+  outline-offset: 3px;
+}
+
+.integration-sources li {
+  margin-bottom: 10px;
+}
+
+.integration-sources-note {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.integration-sources a {
+  overflow-wrap: anywhere;
+}
+
+.integration-origin-note {
+  margin-left: 8px;
+}

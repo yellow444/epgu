@@ -1,0 +1,1844 @@
+{
+  "schema_version": "1.0",
+  "dataset": {
+    "id": "epgu-integration-guide",
+    "reviewed_at": "2026-10-23",
+    "generated_from": {
+      "file": "guideData.js",
+      "sha256": "9a32cc1178b85eb3f95d56176f35f22ae7004c223b7901c87afd39ada2e972a0",
+      "origin": "repos/public uncommitted"
+    },
+    "license_note": "Тексты маршрутов авторские (AGPL проекта). Внешние документы только ссылками."
+  },
+  "sources": [
+    {
+      "id": "apiCabinet",
+      "title": "ЛК API ЕПГУ: инструкция нового процесса",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Instrukciya_LK_API_v1.docx",
+      "section": "Доступ к ЛК API; Порядок работы; 19 подзадач",
+      "kind_label": "Официальный документ",
+      "officiality": "official",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "legacyVendor",
+      "title": "Старый маршрут вендора: руководство 3.2 (2022)",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Rukovodstvo_polzovatelya_dlya_organizacii-vendora_po_formirovaniyu_API-Key_i_polucheniyu_markera_dostupa._Versiya_3.2_ot_26.10.2022_g..pdf",
+      "section": "Письмо API-команде и дальнейшие инструкции; не гарантия приёма новой заявки сейчас",
+      "kind_label": "Официальная историческая публикация",
+      "officiality": "official_historical",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "esiaSite",
+      "title": "Официальный маршрут: вход на сайт через Госуслуги",
+      "url": "https://partners.gosuslugi.ru/catalog/esia",
+      "section": "Коммерческие сайты: организация, ИС, OAuth/OIDC, TEST, рабочий запуск",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "esiaTechNew",
+      "title": "Технологический портал ЕСИА: руководство 2.0.3",
+      "url": "https://sc.digital.gov.ru/documents/-/document_library/03jzkn2sfJTq/view_file/10072649",
+      "section": "Новая версия техпортала; не смешивать с руководством 1.3.x",
+      "kind_label": "Официальный документ",
+      "officiality": "official",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "esiaTechOld",
+      "title": "Старый техпортал ЕСИА: руководство 1.3.32",
+      "url": "https://sc.digital.gov.ru/documents/-/document_library/03jzkn2sfJTq/view_file/8507281",
+      "section": "Описание карточки прямо указывает старую версию /console/tech",
+      "kind_label": "Официальный документ для старой версии",
+      "officiality": "official",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "apiRegulation",
+      "title": "Регламент подключения API ЕПГУ (внутри файла 1.8.1)",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Reglament_podklyucheniya_k_API_Gosuslug_1_8.docx",
+      "section": "Разделы 2–3, приложения с заявками",
+      "kind_label": "Официальный документ",
+      "officiality": "official",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "apiSpec",
+      "title": "Спецификация API ЕПГУ 1.15",
+      "url": "https://gu-st.ru/content/partners/api_for_gu/Specifikaciya_API_EPGU_v1_15.docx",
+      "section": "Подключение; авторизация; методы и статусы",
+      "kind_label": "Официальный документ",
+      "officiality": "official",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "apiCatalogue",
+      "title": "Живой каталог API ЕПГУ",
+      "url": "https://partners.gosuslugi.ru/catalog/api_for_gu",
+      "section": "Документы и спецификации отдельных услуг",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "esia",
+      "title": "Методические рекомендации ЕСИА 3.66",
+      "url": "https://sc.digital.gov.ru/documents/-/document_library/03jzkn2sfJTq/view_file/10417441",
+      "section": "Выбор модели доступа и соответствующего протокола",
+      "kind_label": "Официальный документ",
+      "officiality": "official",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "faq",
+      "title": "Ситуационный центр: подключение, сертификаты и СМЭВ",
+      "url": "https://sc.digital.gov.ru/faq",
+      "section": "Категории участников; выделенная почта; ссылки на ЕСКС",
+      "kind_label": "Официальный FAQ",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "smev3",
+      "title": "СМЭВ 3: методические рекомендации",
+      "url": "https://sc.digital.gov.ru/documents/-/document_library/03jzkn2sfJTq/view/35823",
+      "section": "Выбор актуальной версии и применимого регламента",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "smev4",
+      "title": "СМЭВ 4: методические рекомендации",
+      "url": "https://sc.digital.gov.ru/documents/-/document_library/03jzkn2sfJTq/view/5904262",
+      "section": "ПОДД, регламентированные запросы, Агент",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "goskey",
+      "title": "Госключ: официальный каталог интеграции",
+      "url": "https://partners.gosuslugi.ru/catalog/goskey",
+      "section": "Услуга подписи и отдельные спецификации",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "attorney",
+      "title": "Машиночитаемые доверенности",
+      "url": "https://partners.gosuslugi.ru/catalog/attorney",
+      "section": "Доверенность, полномочия, регистрация",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "max",
+      "title": "MAX: подключение к платформе",
+      "url": "https://dev.max.ru/docs",
+      "section": "Организации, ИП, самозанятые; модерация",
+      "kind_label": "Документация оператора",
+      "officiality": "operator_docs",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "maxApi",
+      "title": "MAX Bot API: авторизация и актуальный домен",
+      "url": "https://dev.max.ru/docs-api",
+      "section": "Обзор; Authorization; изменения методов",
+      "kind_label": "Документация оператора",
+      "officiality": "operator_docs",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "maxWebhook",
+      "title": "MAX: Webhook, TLS, повторы и секрет",
+      "url": "https://dev.max.ru/docs-api/methods/POST/subscriptions",
+      "section": "HTTPS:443; ответ за 30 секунд; политика повторов",
+      "kind_label": "Документация оператора",
+      "officiality": "operator_docs",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "maxValidation",
+      "title": "MAX: проверка данных запуска мини-приложения",
+      "url": "https://dev.max.ru/docs/webapps/validation",
+      "section": "WebAppData; HMAC-SHA256; дубли параметров",
+      "kind_label": "Документация оператора",
+      "officiality": "operator_docs",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "maxId",
+      "title": "MAX: Цифровой ID",
+      "url": "https://dev.max.ru/docs/digital-id",
+      "section": "Отдельный сервис, не эквивалент Bot API",
+      "kind_label": "Документация оператора",
+      "officiality": "operator_docs",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "ruble",
+      "title": "Банк России: документы цифрового рубля",
+      "url": "https://www.cbr.ru/PSystem/dr/doc_dr/",
+      "section": "Правила; регламенты; договоры; дорожная карта",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "rubleStandards",
+      "title": "Платформа цифрового рубля: стандарты",
+      "url": "https://www.cbr.ru/PSystem/dr/doc_dr/standarts/",
+      "section": "Подключение 2.0 и технологическое взаимодействие 5.0: с 01.09.2026",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "rubleAlbums",
+      "title": "Цифровой рубль: альбомы и схемы сообщений",
+      "url": "https://www.cbr.ru/PSystem/dr/doc_dr/albums_r/",
+      "section": "Версия электронных сообщений 2026.09; распоряжения 2026.7",
+      "kind_label": "Официальный каталог",
+      "officiality": "official_catalog",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "goReference",
+      "title": "Go-клиент ЕПГУ: реализация автора",
+      "url": "https://github.com/ofstudio/go-api-epgu",
+      "section": "OAuth2, сертификаты, варианты транспорта; не регламент",
+      "kind_label": "Неофициальная реализация",
+      "officiality": "unofficial_implementation",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "goSignature",
+      "title": "Автор Go-провайдера: DER и client_certificate_hash",
+      "url": "https://pkg.go.dev/github.com/ofstudio/go-api-epgu/esia/signature",
+      "section": "certHash; raw отдельно от PKCS#7; сверять версию пакета",
+      "kind_label": "Документация неофициальной реализации",
+      "officiality": "unofficial_implementation",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "maxSdkNotes",
+      "title": "Заметки автора max-io о фактическом API",
+      "url": "https://github.com/xTCry/max-io/blob/main/docs/api-notes.md",
+      "section": "Удаление Webhook при polling; marker; attachment.not.ready; расхождения схем",
+      "kind_label": "Опыт разработчика, не контракт оператора",
+      "officiality": "developer_experience",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "maxPolling",
+      "title": "MAX: marker и получение обновлений",
+      "url": "https://dev.max.ru/docs-api/methods/GET/updates",
+      "section": "Пустой marker возвращает последнее обновление, а не всю очередь",
+      "kind_label": "Документация оператора",
+      "officiality": "operator_docs",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "smevReference",
+      "title": "MyLab.Smev: .NET-клиент и примеры",
+      "url": "https://github.com/mylab-tools/smev",
+      "section": "SendRequest, GetResponse, Ack; версии схем проверять отдельно",
+      "kind_label": "Неофициальная реализация",
+      "officiality": "unofficial_implementation",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    },
+    {
+      "id": "operatorArticle",
+      "title": "СМЭВ3 от первого лица: опыт РТ Лабс",
+      "url": "https://habr.com/ru/companies/rtlabs/articles/738294/",
+      "section": "Объяснение очередей, ЛК УВ и подключения; не текущий регламент",
+      "kind_label": "Историческая статья разработчика",
+      "officiality": "developer_experience",
+      "checked_at": "2026-10-23",
+      "version": null,
+      "sha256": null,
+      "redistribution": "link_only"
+    }
+  ],
+  "routes": [
+    {
+      "id": "transition",
+      "title": "Старый → новый процесс: переходный период",
+      "summary": "Регламент 1.8.1 допускает ЛК API и независимый маршрут. Их применимость к конкретной заявке и ограничения ЛК проверяют отдельно.",
+      "domain": "transition",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Новая заявка или существующий доступ?",
+          "body": "Новый ЛК API, независимый регламентный маршрут и смена версии техпортала — разные слои. Раздел 3 регламента 1.8.1 допускает выполнение шагов через ЛК или независимо; конкретный порядок нужно сопоставить с ответом оператора.",
+          "checks": [
+            "Сохранить номер существующей заявки и подтверждения оператора.",
+            "Разделить ИС, полномочие, ключ и канал переписки."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation",
+            "legacyVendor",
+            "esiaTechNew",
+            "esiaTechOld"
+          ],
+          "next": [
+            {
+              "to": "existing",
+              "label": "Уже есть заявка или API-доступ"
+            },
+            {
+              "to": "new",
+              "label": "Новый ЛК API"
+            },
+            {
+              "to": "outside-lk",
+              "label": "Независимый регламентный маршрут"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "existing",
+          "title": "Не пересоздавать рабочее вслепую",
+          "body": "Появление нового ЛК само по себе не доказывает отзыв старых ключей, сертификатов или полномочий. Проверьте фактический статус и уточните у оператора перенос существующей заявки, сохранив её идентификаторы.",
+          "checks": [
+            "Не удалять старую ИС, организацию или ключи.",
+            "Проверить операции чтения и статус текущего доступа.",
+            "Не отправлять дублирующую заявку без сверки."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiSpec",
+            "legacyVendor"
+          ],
+          "next": [
+            {
+              "to": "operator",
+              "label": "Уточнить правила для своей заявки"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "new",
+          "title": "Новый ЛК API: один из маршрутов",
+          "body": "Инструкция ЛК требует продуктивную организацию и описывает подзадачи по услуге. Но раздел 3 регламента 1.8.1 отдельно допускает выполнение действий независимо от ЛК. Направление поддержки в ЛК не доказывает отмену этой нормы.",
+          "checks": [
+            "Проверить предусловия именно ЛК, а не приписывать их всем каналам.",
+            "Сохранить инструкцию оператора по конкретной заявке.",
+            "При недоступности ЛК проверить независимый регламентный маршрут."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation",
+            "legacyVendor"
+          ],
+          "next": [
+            {
+              "to": "operator",
+              "label": "Согласовать применение к заявке"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "outside-lk",
+          "title": "Вне ЛК: регламентный маршрут",
+          "body": "Разделы 2.1 и 3 действующего регламента 1.8.1 допускают действия через ЛК API или независимо. Раздел 2 сохраняет обращения через ФГИС СЦ, а в оговорённых случаях — API-почту. Это действующая альтернатива в тексте регламента, не только инструкция 2022 года.",
+          "checks": [
+            "Указать оператору пункты 2.1 и 3 и мнемонику ИС.",
+            "Уточнить конкретную форму и канал своей TEST-заявки.",
+            "Отсутствие требования войти в ЛК не означает разрешение подключать синтетическую организацию без согласования."
+          ],
+          "sources": [
+            "apiRegulation",
+            "apiCabinet"
+          ],
+          "next": [
+            {
+              "to": "operator",
+              "label": "Уточнить правила и ограничения"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 1
+          }
+        },
+        {
+          "id": "operator",
+          "title": "Что известно о сроках перехода?",
+          "body": "ЛК доступен с 2026 года, а регламент 1.8.1 одновременно описывает независимый вариант. Общую дату его отключения или обязательной автоматической миграции всех заявок в проверенных материалах не установили. Ответ поддержки и положения регламента нужно сопоставить для своей заявки.",
+          "checks": [
+            "Уточнить: как подать именно эту заявку независимо от ЛК по разделу 3?",
+            "Нужен ли перенос уже открытой заявки?",
+            "Сохраняются ли действующие полномочия и ключи?",
+            "Отдельно подтвердить допустимость учебной организации без реального ЮЛ."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation",
+            "legacyVendor"
+          ],
+          "next": [
+            {
+              "to": "portals",
+              "label": "Отдельно сверить версию техпортала"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 2
+          }
+        },
+        {
+          "id": "portals",
+          "title": "Старый и новый техпорталы ЕСИА",
+          "body": "Официально опубликованы руководство новой версии 2.0.3 и отдельное руководство старой версии 1.3.32. Следуйте версии реально используемого интерфейса. Новый техпортал ЕСИА не тождествен новому ЛК API ЕПГУ.",
+          "checks": [
+            "Сверить интерфейс и руководство.",
+            "Не переносить адреса и шаги из старых скриншотов без проверки.",
+            "Одна работающая TEST-операция не доказывает применимость старого процесса ко всем заявкам."
+          ],
+          "sources": [
+            "esiaTechNew",
+            "esiaTechOld",
+            "apiCabinet"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "epgu-vendor",
+      "title": "API ЕПГУ: своя ИС вендора",
+      "summary": "От организации и новой заявки до тестирования услуги и промышленного подключения.",
+      "domain": "epgu",
+      "coverage": {
+        "status": "official_api_partial",
+        "capabilities": [
+          "services.list",
+          "order.reserve",
+          "order.push",
+          "order.details",
+          "order.cancel",
+          "order.download_file"
+        ],
+        "note": "Ядро исполняет часть операций API ЕПГУ после подключения; сам маршрут подключения выполняется вручную у оператора, ядро не подаёт заявки на подключение."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Есть реальная организация?",
+          "body": "Сначала определите роль: вендор подключает свою ИС, потребитель использует полномочие уже подключённого вендора. Новый ЛК API требует организацию в продуктивной ЕСИА даже для последующих TEST-заявок.",
+          "checks": [
+            "ЮЛ или ИП зарегистрировано в продуктивной ЕСИА?",
+            "Вы уполномочены действовать от этой организации?"
+          ],
+          "sources": [
+            "apiCabinet"
+          ],
+          "next": [
+            {
+              "to": "cabinet",
+              "label": "Да: проверить доступ в ЛК"
+            },
+            {
+              "to": "no-org",
+              "label": "Нет: официальный TEST-маршрут"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "no-org",
+          "title": "Нет реальной организации",
+          "body": "Запросите у API-команды точный TEST-адрес или операторское оформление учебной заявки. Наличие TEST-профиля, ИС и рабочей подписи само по себе не подтверждает право на API-полномочие.",
+          "checks": [
+            "Явно сообщить, что реквизиты синтетические.",
+            "Получить письменное согласование изолированного учебного контекста.",
+            "До ответа продолжать локальные mock/contract-тесты."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation"
+          ],
+          "next": [],
+          "warning": "Подтверждённого общего маршрута без реальной организации здесь нет. Не регистрируйте синтетические реквизиты в PROD.",
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "cabinet",
+          "title": "ЛК или независимая заявка",
+          "body": "Для ЛК руководитель имеет исходный доступ, сотруднику требуется OLK_API_ACCESS_EMPOWERMENT. Это не API-Key услуги. Если ЛК неприменим, раздел 3 регламента 1.8.1 допускает независимый маршрут — уточните его применение у оператора.",
+          "checks": [
+            "Проверить организацию и роль пользователя.",
+            "В ЛК выбрать услугу и свою ИС; вне ЛК согласовать форму и канал заявки.",
+            "Не переносить предусловия ЛК на все варианты подключения автоматически."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation"
+          ],
+          "next": [
+            {
+              "to": "test",
+              "label": "Подать TEST-заявки"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "test",
+          "title": "TEST: ИС, сертификат, услуга",
+          "body": "В карточке подключения выполняются подзадачи создания полномочий, настройки тестовой среды и тестирования. Заявки проходят согласование оператора. Подключение проверяется по конкретной услуге.",
+          "checks": [
+            "Мнемоника ИС и контур совпадают.",
+            "Публичный сертификат привязан к нужной ИС.",
+            "Создание API-полномочия подтверждено оператором."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation",
+            "apiCatalogue"
+          ],
+          "next": [
+            {
+              "to": "key",
+              "label": "Полномочие выдано"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 2
+          }
+        },
+        {
+          "id": "key",
+          "title": "Доверенность → API-Key → токен",
+          "body": "После выдачи нужного API-полномочия оформляют полномочия сотрудника и ключ потребителя. Далее подписывают предусмотренный протоколом запрос и проверяют обмен на токен. Обычная доверенность с произвольным полномочием не заменяет API-полномочие.",
+          "checks": [
+            "Проверить конкретную мнемонику полномочия.",
+            "Сверить сотрудника, организацию, сертификат и UUID ключа.",
+            "Не путать подпись API-Key и OAuth client_secret."
+          ],
+          "sources": [
+            "apiSpec",
+            "apiRegulation"
+          ],
+          "next": [
+            {
+              "to": "production",
+              "label": "Тесты приняты оператором"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 3
+          }
+        },
+        {
+          "id": "production",
+          "title": "Отдельное подключение PROD",
+          "body": "Промышленное подключение — отдельная заявка и отдельная проверка. TEST-сертификаты, адреса и синтетические данные не переносят автоматически.",
+          "checks": [
+            "Получить разрешение на промышленную услугу.",
+            "Проверить реальные реквизиты, сертификаты и конечные адреса.",
+            "Повторить проверку входящих ответов, повторов и журналирования."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation",
+            "apiSpec"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "epgu-consumer",
+      "title": "API ЕПГУ: организация-потребитель",
+      "summary": "Если интеграционная ИС принадлежит вендору, а организация только пользуется услугой.",
+      "domain": "epgu",
+      "coverage": {
+        "status": "official_api_partial",
+        "capabilities": [
+          "services.list",
+          "order.reserve",
+          "order.push",
+          "order.details",
+          "order.cancel",
+          "order.download_file"
+        ],
+        "note": "Ядро исполняет часть операций API ЕПГУ при наличии полномочия вендора; получение полномочия выполняется вручную."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Выбрать услугу и вендора",
+          "body": "Уточните, кто владеет подключённой ИС и какое полномочие предоставляется вашей организации. Использование вендора не означает, что нужно создавать вторую ИС.",
+          "checks": [
+            "Известны код услуги и мнемоника ИС вендора.",
+            "Вендор подтвердил предоставление конкретного полномочия."
+          ],
+          "sources": [
+            "apiRegulation",
+            "apiCatalogue"
+          ],
+          "next": [
+            {
+              "to": "delegation",
+              "label": "Выдать полномочие сотруднику"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "delegation",
+          "title": "Доверенность сотруднику",
+          "body": "Руководитель оформляет доверенность на нужное API-полномочие. Отдельно проверяют права для подачи заявлений, если они нужны выбранной услуге.",
+          "checks": [
+            "Проверить получателя, срок и мнемонику.",
+            "Проверить регистрацию доверенности, не только локальную подпись."
+          ],
+          "sources": [
+            "apiRegulation",
+            "attorney"
+          ],
+          "next": [
+            {
+              "to": "key",
+              "label": "Сформировать ключ"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 1
+          }
+        },
+        {
+          "id": "key",
+          "title": "Ключ и сертификат организации",
+          "body": "Ключ формируется в доступном для этого разделе по действующему процессу. Подпись и сертификат должны соответствовать требованиям метода выдачи токена.",
+          "checks": [
+            "Ключ относится к нужной организации и сотруднику.",
+            "Закрытый ключ остаётся у владельца.",
+            "Используется нужный TEST или PROD контур."
+          ],
+          "sources": [
+            "apiSpec",
+            "apiCatalogue"
+          ],
+          "next": [
+            {
+              "to": "verify",
+              "label": "Проверить услугу"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 2
+          }
+        },
+        {
+          "id": "verify",
+          "title": "Проверить полный обмен",
+          "body": "Проверяйте не только получение токена: отправку, идентификатор заявления, статусы и скачивание результата по спецификации услуги.",
+          "checks": [
+            "Ошибки авторизации отделены от ошибок бизнес-валидации.",
+            "Входящие сообщения, повторы и таймауты обработаны.",
+            "Секреты и персональные документы не попадают в журнал."
+          ],
+          "sources": [
+            "apiSpec",
+            "apiCatalogue"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "esia",
+      "title": "ЕСИА: вход на свой сайт и OAuth",
+      "summary": "Для сайтов, включая коммерческие: организация → ИС → OAuth/OIDC → TEST → согласованный рабочий запуск. Не универсальный анонимный виджет.",
+      "domain": "esia",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Какая модель доступа нужна?",
+          "body": "Вход пользователя в свой сервис через ЕСИА не равен получению организационного API-Key. Выберите требуемые данные, согласия и модель полномочий до реализации.",
+          "checks": [
+            "Определить пользовательскую или системную модель.",
+            "Найти требуемые scope в актуальной документации.",
+            "Не считать успешный браузерный вход разрешением REST API."
+          ],
+          "sources": [
+            "esia",
+            "apiSpec"
+          ],
+          "next": [
+            {
+              "to": "register",
+              "label": "Пользовательский OAuth"
+            },
+            {
+              "to": "system",
+              "label": "Системные права или API-Key"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "system",
+          "title": "Отдельное согласование прав",
+          "body": "Системные разрешения предоставляются по соответствующей модели доверия. Успешная подпись запроса не создаёт права на scope и не заменяет регистрацию API-полномочия.",
+          "checks": [
+            "Подтвердить право системы на нужный scope.",
+            "Для API-Key пройти отдельный маршрут API ЕПГУ."
+          ],
+          "sources": [
+            "esia",
+            "apiRegulation"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "register",
+          "title": "Организация → ИС → сертификат",
+          "body": "Каталог ЕСИА прямо описывает подключение сайтов коммерческих организаций. Нужны подтверждённая учётная запись руководителя, профиль организации, электронная подпись и регистрация ИС. Это не означает, что любое физлицо может без регистрации владельца добавить кнопку на произвольный домен.",
+          "checks": [
+            "Подтверждён владелец организации и право управлять сайтом.",
+            "Мнемоника, redirect URI, сертификат и scope согласованы.",
+            "Собираются только разрешённые данные, а не весь профиль Госуслуг."
+          ],
+          "sources": [
+            "esiaSite",
+            "esia",
+            "esiaTechNew"
+          ],
+          "next": [
+            {
+              "to": "oauth",
+              "label": "Реализовать выбранный протокол"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "oauth",
+          "title": "Подпись и callback",
+          "body": "Состав подписываемой строки и формат подписи зависят от версии протокола. Не смешивайте raw-подпись, CMS/PKCS#7 и параметры разных OAuth endpoints по чужим примерам.",
+          "checks": [
+            "Проверять state при callback.",
+            "Сверить timestamp, кодирование и client_certificate_hash.",
+            "Проверить алгоритм на актуальных рекомендациях и тестовом обмене."
+          ],
+          "sources": [
+            "esia",
+            "goReference"
+          ],
+          "next": [
+            {
+              "to": "verify",
+              "label": "Проверить контур и права"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 2
+          }
+        },
+        {
+          "id": "verify",
+          "title": "TEST → согласованный рабочий вход",
+          "body": "Официальный маршрут предусматривает заявку на тестовый запуск, проверку, затем отдельную заявку на рабочее подключение. После входа проверяют issuer, audience и свои права. Редирект на другой домен не доказывает перенос авторизации TEST/PROD.",
+          "checks": [
+            "Не вводить TEST-данные на неожиданном PROD-адресе.",
+            "Проверить отказ при неверных state, подписи и redirect URI.",
+            "Привязать внешний идентификатор к своему аккаунту без захвата чужой учётки.",
+            "Вход через ЕСИА не даёт права автоматически подавать заявления или подписывать документы."
+          ],
+          "sources": [
+            "esiaSite",
+            "esia"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "smev3",
+      "title": "СМЭВ 3: виды сведений и очереди",
+      "summary": "Право участия, защищённая сеть, ИС, вид сведений, испытания и подтверждения сообщений.",
+      "domain": "smev",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Допустим ли тип участника?",
+          "body": "Прямое подключение к СМЭВ не является общедоступным API для любого физлица. Проверьте категорию организации и основание обмена по текущему регламенту.",
+          "checks": [
+            "Категория участника допускается.",
+            "Есть правовое основание для конкретного вида сведений."
+          ],
+          "sources": [
+            "faq",
+            "smev3"
+          ],
+          "next": [
+            {
+              "to": "connect",
+              "label": "Есть основание"
+            },
+            {
+              "to": "no-access",
+              "label": "Нет подтверждённого основания"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "no-access",
+          "title": "Уточнить разрешённый маршрут",
+          "body": "Запросите у оператора допустимость подключения или используйте законный маршрут через уполномоченную организацию. Локальный эмулятор помогает разработке, но не выдаёт доступ.",
+          "checks": [
+            "Не использовать общие чужие учётные записи.",
+            "Согласовать роль и ответственность сторон."
+          ],
+          "sources": [
+            "faq",
+            "smev3"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "connect",
+          "title": "Сеть, ИС и сертификаты",
+          "body": "Подготовьте защищённый канал и зарегистрируйте организацию и ИС. Сертификаты среды, параметры сети и шаблоны заявок берут из текущего каталога, не из старого репозитория.",
+          "checks": [
+            "Контур и зарегистрированная ИС совпадают.",
+            "Используется актуальная версия схем и сертификатов.",
+            "Выделенная техническая почта соответствует регламенту."
+          ],
+          "sources": [
+            "faq",
+            "smev3"
+          ],
+          "next": [
+            {
+              "to": "test",
+              "label": "Получить доступ к ВС"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "test",
+          "title": "Вид сведений и испытания",
+          "body": "Выберите версию вида сведений, согласуйте доступ и пройдите процедуру технической готовности в тестовой среде.",
+          "checks": [
+            "Namespace и XSD соответствуют версии ВС.",
+            "Проверены подпись, вложения и бизнес-ответы."
+          ],
+          "sources": [
+            "smev3",
+            "operatorArticle"
+          ],
+          "next": [
+            {
+              "to": "queue",
+              "label": "Эксплуатация очередей"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 2
+          }
+        },
+        {
+          "id": "queue",
+          "title": "Получение → обработка → Ack",
+          "body": "Транспортный приём запроса не равен бизнес-ответу. Реализуйте вычитку, подтверждение сообщений, повторы, дедупликацию и наблюдение за лимитами.",
+          "checks": [
+            "MessageId и корреляция сохраняются.",
+            "Политика Ack согласована с надёжным сохранением сообщения.",
+            "Не повторять бизнес-операцию при повторной доставке."
+          ],
+          "sources": [
+            "smev3",
+            "smevReference"
+          ],
+          "next": [
+            {
+              "to": "prod",
+              "label": "Допуск к PROD"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 3
+          }
+        },
+        {
+          "id": "prod",
+          "title": "Отдельный промышленный допуск",
+          "body": "После испытаний оформите доступ в промышленной среде. Проверяйте не только успешные ответы, но и квоты, истечение сертификатов и доступность ответной стороны.",
+          "checks": [
+            "Есть согласованный доступ к нужному ВС.",
+            "Настроены предупреждения очередей и сертификатов."
+          ],
+          "sources": [
+            "smev3",
+            "faq"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 4
+          }
+        }
+      ]
+    },
+    {
+      "id": "smev4",
+      "title": "СМЭВ 4: Агент и REST/SQL",
+      "summary": "Не путать СМЭВ3, ПОДД/СМЭВ4 и прямой ГОСТ TLS к API ЕПГУ.",
+      "domain": "smev",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Выбрать тип обмена",
+          "body": "Определите, нужен ли регламентированный REST-запрос, SQL-запрос или иной поддерживаемый способ. Наличие OpenAPI не означает публичный доступ без прав.",
+          "checks": [
+            "Есть право участия и выбран тип обмена.",
+            "Известны поставщик, версия спецификации и контур."
+          ],
+          "sources": [
+            "smev4",
+            "apiSpec"
+          ],
+          "next": [
+            {
+              "to": "agent",
+              "label": "Подготовить Агент"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "agent",
+          "title": "Агент, сеть и регистрация",
+          "body": "Разверните поддерживаемую оператором версию Агента и обеспечьте сетевую связность с ПОДД. Не переносите адреса из старых инструкций без сверки.",
+          "checks": [
+            "Согласованы организация, ИС и сертификаты.",
+            "Версия Агента совместима с текущей средой."
+          ],
+          "sources": [
+            "smev4",
+            "faq"
+          ],
+          "next": [
+            {
+              "to": "rights",
+              "label": "Согласовать запрос"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 1
+          }
+        },
+        {
+          "id": "rights",
+          "title": "Регламентированный запрос и права",
+          "body": "Регистрируют спецификацию или модель данных и согласуют доступ. Для API ЕПГУ отдельно сверяют поддерживаемый транспорт и требования услуги.",
+          "checks": [
+            "Права проверены на конкретный запрос и поставщика.",
+            "Не смешаны пути прямого ГОСТ TLS и маршрута через Агент."
+          ],
+          "sources": [
+            "smev4",
+            "apiSpec"
+          ],
+          "next": [
+            {
+              "to": "test",
+              "label": "Тестовый обмен и эксплуатация"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 2
+          }
+        },
+        {
+          "id": "test",
+          "title": "Проверить данные и отказоустойчивость",
+          "body": "Проверьте бизнес-ответ, ошибки, таймауты, обновление схем и процедуры перехода в промышленную среду.",
+          "checks": [
+            "Зафиксированы версии, маршруты и согласования.",
+            "Тестовые данные не смешаны с промышленными."
+          ],
+          "sources": [
+            "smev4",
+            "apiSpec"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "signing",
+      "title": "Подпись, Госключ и доверенности",
+      "summary": "Проверка реальных байтов документа отдельно от доверия сертификату и полномочий.",
+      "domain": "signing",
+      "coverage": {
+        "status": "official_api_partial",
+        "capabilities": [
+          "goskey.preview",
+          "goskey.submit"
+        ],
+        "note": "Ядро исполняет часть операций подписания через Госключ; остальные шаги справочные."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Что именно подписывается?",
+          "body": "Сначала сохраните фактический документ или строку: XML доверенности, заявление, UUID API-Key и OAuth client_secret — разные объекты подписи.",
+          "checks": [
+            "Размер и SHA-256 фактических байтов известны.",
+            "Это документ, а не страница ошибки или короткая заглушка.",
+            "Известен требуемый формат: detached CMS, XMLDSig или иной."
+          ],
+          "sources": [
+            "apiSpec",
+            "goskey",
+            "attorney"
+          ],
+          "next": [
+            {
+              "to": "certificate",
+              "label": "Проверить сертификат"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "certificate",
+          "title": "Ключ, сертификат и доверие",
+          "body": "Успешная локальная криптопроверка не означает доверие сервера к УЦ. Раздельно проверяют срок, отзыв, цепочку доверия, реквизиты и соответствие ключа.",
+          "checks": [
+            "Ключ соответствует выбранному сертификату.",
+            "УЦ принимается конкретной TEST или PROD системой.",
+            "Реквизиты относятся к правильному физлицу и организации."
+          ],
+          "sources": [
+            "esia",
+            "goskey",
+            "apiRegulation"
+          ],
+          "next": [
+            {
+              "to": "powers",
+              "label": "Проверить полномочия"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 1
+          }
+        },
+        {
+          "id": "powers",
+          "title": "Полномочие и получатель",
+          "body": "Для доверенности проверьте мнемонику, доверителя, получателя и срок. Действующая доверенность с общим тестовым полномочием не подтверждает выдачу прав API.",
+          "checks": [
+            "Выбрано требуемое полномочие, а не похожее имя.",
+            "XML содержит ожидаемое содержимое.",
+            "Подписание Госключом организовано по спецификации выбранной услуги."
+          ],
+          "sources": [
+            "attorney",
+            "goskey",
+            "apiRegulation"
+          ],
+          "next": [
+            {
+              "to": "verify",
+              "label": "Подписать и проверить регистрацию"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 2
+          }
+        },
+        {
+          "id": "verify",
+          "title": "Подпись ≠ регистрация",
+          "body": "После локальной проверки нужна проверка серверного результата: регистрационный номер, статус и возможность предусмотренной операции. Ошибки доверия, прав и формата диагностируют отдельно.",
+          "checks": [
+            "Проверена detached-подпись именно исходных байтов.",
+            "Сервер подтвердил регистрацию или результат услуги.",
+            "Оригинал, подпись и статус сопоставимы без раскрытия секретов."
+          ],
+          "sources": [
+            "apiSpec",
+            "attorney",
+            "goskey"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "max",
+      "title": "MAX: бот, мини-приложение, Цифровой ID",
+      "summary": "Отдельные требования для платформы, событий, данных запуска и Цифрового ID.",
+      "domain": "max",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Какой сервис MAX нужен?",
+          "body": "Публичная платформа описывает подключение ЮЛ, ИП и самозанятых — резидентов РФ. Для Цифрового ID перечень уже: ЮЛ и ИП. Обычный пользовательский профиль не равен профилю разработчика.",
+          "checks": [
+            "Определить бота, мини-приложение или Цифровой ID.",
+            "Проверить условия верификации и модерации."
+          ],
+          "sources": [
+            "max",
+            "maxId"
+          ],
+          "next": [
+            {
+              "to": "bot",
+              "label": "Бот или мини-приложение"
+            },
+            {
+              "to": "digital-id",
+              "label": "Цифровой ID"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "digital-id",
+          "title": "Отдельный маршрут Цифрового ID",
+          "body": "Цифровой ID не возникает из произвольного токена бота. Следуйте отдельным условиям подключения сервиса и не выдавайте данные запуска мини-приложения за государственное удостоверение личности.",
+          "checks": [
+            "Уточнить сценарий подтверждения и требования оператора.",
+            "Проверить право организации на сервис."
+          ],
+          "sources": [
+            "max",
+            "maxId"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "bot",
+          "title": "Актуальный Bot API",
+          "body": "Используйте platform-api2.max.ru и заголовок Authorization с токеном по текущей документации. Старый домен и токен в query из прежних примеров не переносите.",
+          "checks": [
+            "Сертификаты проверяются; TLS не отключён.",
+            "Токен хранится только на сервере.",
+            "Проверены изменения методов, например GET /chats."
+          ],
+          "sources": [
+            "maxApi"
+          ],
+          "next": [
+            {
+              "to": "webhook",
+              "label": "События Webhook"
+            },
+            {
+              "to": "validation",
+              "label": "Данные мини-приложения"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "webhook",
+          "title": "HTTPS Webhook и повторы",
+          "body": "Документация требует HTTPS на порту 443 и ответ в пределах 30 секунд. Проверяйте X-Max-Bot-Api-Secret, сохраняйте событие надёжно, обрабатывайте повторы идемпотентно.",
+          "checks": [
+            "Webhook и polling не используют одновременно.",
+            "Проверены полная TLS-цепочка и доступность извне.",
+            "Учтены повторы и автоматическая отписка после длительных ошибок."
+          ],
+          "sources": [
+            "maxWebhook"
+          ],
+          "next": [
+            {
+              "to": "verify",
+              "label": "Проверить полный сценарий"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 2
+          }
+        },
+        {
+          "id": "validation",
+          "title": "Проверка WebAppData на сервере",
+          "body": "Данные запуска проверяют HMAC-SHA256 по текущему алгоритму MAX. Проверять только user.id из браузера нельзя. Токен бота не помещают в клиентский JavaScript.",
+          "checks": [
+            "Отклонять дубли параметров и неверный hash.",
+            "Проверять срок данных и защиту от повторного использования.",
+            "Права бизнес-операций проверять отдельно после аутентификации."
+          ],
+          "sources": [
+            "maxValidation"
+          ],
+          "next": [
+            {
+              "to": "verify",
+              "label": "Проверить полный сценарий"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 2
+          }
+        },
+        {
+          "id": "verify",
+          "title": "Модерация и контроль изменений",
+          "body": "Проверьте реальные сценарии доставки, ошибки TLS, недоступность сервера и повторные события. Примеры SDK и OpenAPI сверяйте с текущими страницами методов.",
+          "checks": [
+            "Подтверждена модерация, если она требуется.",
+            "Версия SDK, схема и домен зафиксированы.",
+            "Никаких автоматических действий в Госуслугах от имени пользователя без отдельного согласия."
+          ],
+          "sources": [
+            "max",
+            "maxApi",
+            "maxWebhook"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "digital-ruble",
+      "title": "Цифровой рубль: пользователь или участник",
+      "summary": "Клиентский сценарий через банк и прямое участие в платформе не одно и то же.",
+      "domain": "digital_ruble",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Какова роль интеграции?",
+          "body": "Отделите пользовательский сценарий компании или гражданина от подключения участника платформы. Публичная документация не обещает универсальный API-Key Банка России любому разработчику.",
+          "checks": [
+            "Нужен приём/перевод через обслуживающий банк или банковская интеграция?",
+            "Проверить применимые правила и допустимость роли."
+          ],
+          "sources": [
+            "ruble",
+            "rubleStandards"
+          ],
+          "next": [
+            {
+              "to": "customer",
+              "label": "Клиентский сценарий"
+            },
+            {
+              "to": "participant",
+              "label": "Участник платформы"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "customer",
+          "title": "Интеграция через банк",
+          "body": "Запросите у банка-участника поддерживаемый клиентский сценарий, API или тестовую среду и условия договора. Наличие обычного банковского API не доказывает поддержку цифрового рубля.",
+          "checks": [
+            "Банк подтвердил именно операции с цифровым рублём.",
+            "Есть документация клиентского API и условия тестирования."
+          ],
+          "sources": [
+            "ruble"
+          ],
+          "next": [
+            {
+              "to": "test",
+              "label": "Согласованные испытания"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "participant",
+          "title": "Дорожная карта и допуск",
+          "body": "Прямое подключение выполняют по правилам платформы, действующему стандарту, договорам и дорожной карте. Учитываются испытания, криптографические ключи и требования информационной безопасности.",
+          "checks": [
+            "Применяется стандарт подключения 2.0 с 01.09.2026.",
+            "Согласованы роль, регламенты и испытания.",
+            "Получены применимые требования, а не случайный Swagger."
+          ],
+          "sources": [
+            "ruble",
+            "rubleStandards"
+          ],
+          "next": [
+            {
+              "to": "messages",
+              "label": "Выбрать сообщения и версии"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "messages",
+          "title": "Альбомы, XSD и даты действия",
+          "body": "Сверяйте версию альбома, схемы и дату применения. На текущей странице опубликованы электронные сообщения 2026.09 и распоряжения 2026.7; рядом есть архивные версии.",
+          "checks": [
+            "Сообщения, схемы и правила контроля совместимы.",
+            "Учтены разъяснения и уведомления об изменениях.",
+            "Архивная версия не принята за текущую."
+          ],
+          "sources": [
+            "rubleAlbums",
+            "rubleStandards"
+          ],
+          "next": [
+            {
+              "to": "test",
+              "label": "Согласованные испытания"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 2
+          }
+        },
+        {
+          "id": "test",
+          "title": "Только согласованная тестовая среда",
+          "body": "Сначала проверяйте форматы, отказы, статусы и сверку в разрешённом тестовом контексте. Изучение документов не даёт разрешения на реальные платежи или операции.",
+          "checks": [
+            "Тестовые сообщения отделены от реальных распоряжений.",
+            "Пройдены требуемые испытания и приёмка.",
+            "Любые операции с реальными средствами требуют отдельного разрешения."
+          ],
+          "sources": [
+            "ruble",
+            "rubleAlbums",
+            "rubleStandards"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "diagnostics",
+      "title": "Диагностика: вход есть, API не работает",
+      "summary": "Последовательно отделить контур, подпись, доверие, полномочия и бизнес-ошибки.",
+      "domain": "diagnostics",
+      "coverage": {
+        "status": "informational",
+        "capabilities": [],
+        "note": "Справочный маршрут: описание шагов и проверок, ядро его не исполняет."
+      },
+      "entry_node": "start",
+      "nodes": [
+        {
+          "id": "start",
+          "title": "Где возникает отказ?",
+          "body": "Зафиксируйте шаг, время, точный URL без секретов, HTTP-статус и код ошибки. Вход в браузере, подписание документа, выдача токена и отправка заявления проверяются отдельно.",
+          "checks": [
+            "TEST или PROD?",
+            "Какая организация, ИС и модель доступа?",
+            "Получен настоящий документ/JSON, а не HTML-страница входа?"
+          ],
+          "sources": [
+            "apiSpec",
+            "esia"
+          ],
+          "next": [
+            {
+              "to": "crypto",
+              "label": "Ошибка подписи или сертификата"
+            },
+            {
+              "to": "access",
+              "label": "Вход есть, но нет прав"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 0
+          }
+        },
+        {
+          "id": "crypto",
+          "title": "Криптография и доверие",
+          "body": "Локально проверьте точные байты и подпись; затем срок, цепочку доверия, отзыв и требования сервера к УЦ. Не объявляйте сертификат отозванным только из-за ошибки входа.",
+          "checks": [
+            "Нужный контейнер ключа и сертификат.",
+            "Формат, кодировка и detached-режим соответствуют методу.",
+            "Время системы и сертификата корректно."
+          ],
+          "sources": [
+            "esia",
+            "apiSpec"
+          ],
+          "next": [
+            {
+              "to": "request",
+              "label": "Сверить протокол"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 0,
+            "row": 1
+          }
+        },
+        {
+          "id": "access",
+          "title": "Слои доступа и полномочия",
+          "body": "Проверьте отдельно доступ в ЛК, полномочие ИС, доверенность сотруднику, API-Key и разрешённую услугу. Каждый слой может иметь независимый отказ.",
+          "checks": [
+            "Нужная мнемоника действительно выдана.",
+            "Ключ и сертификат относятся к правильной организации.",
+            "Нет смешивания скоупов OAuth и API-Key."
+          ],
+          "sources": [
+            "apiCabinet",
+            "apiRegulation",
+            "apiSpec"
+          ],
+          "next": [
+            {
+              "to": "request",
+              "label": "Сверить протокол"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 2,
+            "row": 1
+          }
+        },
+        {
+          "id": "request",
+          "title": "Формат запроса и версия",
+          "body": "Сравните endpoint, метод, подпись, параметры, XML/XSD и транспорт с текущей спецификацией. Старый блог или SDK может описывать другой endpoint.",
+          "checks": [
+            "Не повторять изменяющий запрос вслепую.",
+            "Проверить идентификаторы и статус предыдущей операции.",
+            "Выделить минимальный обезличенный воспроизводимый пример."
+          ],
+          "sources": [
+            "apiSpec",
+            "apiCatalogue"
+          ],
+          "next": [
+            {
+              "to": "support",
+              "label": "Подготовить обращение"
+            }
+          ],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 2
+          }
+        },
+        {
+          "id": "support",
+          "title": "Обращение и доказательства",
+          "body": "Передайте оператору код ошибки, контур, мнемонику, версии документов и обезличенный пример. Отдельно перечислите уже проверенные гипотезы.",
+          "checks": [
+            "Не прикладывать PIN, закрытый ключ или токены.",
+            "Приложить SHA-256 и размеры, если спор о содержимом документа.",
+            "Записать ответ оператора и дату изменения процесса."
+          ],
+          "sources": [
+            "faq",
+            "apiCabinet"
+          ],
+          "next": [],
+          "warning": null,
+          "layout": {
+            "column": 1,
+            "row": 3
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-01",
+      "title": "Независимый маршрут предусмотрен актуальным регламентом",
+      "status": "Подтверждено: регламент 1.8.1, разделы 2.1 и 3",
+      "text": "Нельзя заключать, что все почтовые и операторские пути закрыты. Регламент прямо допускает подключение через ЛК или независимо. Предусловие продуктивной организации в инструкции ЛК не доказывает идентичное ограничение каждого независимого TEST-сценария; допустимость синтетической организации всё равно нужно согласовать.",
+      "sources": [
+        "apiRegulation",
+        "apiCabinet"
+      ]
+    },
+    {
+      "id": "note-02",
+      "title": "Хеш DER не равен хешу PEM-файла или SHA-1 отпечатку",
+      "status": "Нюанс из реализации автора; применимость проверять",
+      "text": "Для raw-методов автор Go-провайдера отдельно предупреждает: client_certificate_hash считают от DER-байтов сертификата, а не от текста PEM. В его PKCS#7-провайдере SHA-1 отпечаток служит выбору сертификата. Это разные параметры; переносить один вместо другого нельзя.",
+      "sources": [
+        "goSignature",
+        "esia"
+      ]
+    },
+    {
+      "id": "note-03",
+      "title": "Polling может изменить состояние вашего бота",
+      "status": "Особенность конкретного SDK; не запускали на аккаунте",
+      "text": "Автор max-io сообщает, что bot.start() по умолчанию удаляет Webhook-подписки перед polling. Официальный GET /updates также описывает: без marker возвращается последнее обновление. Простой тест SDK способен нарушить уже настроенную доставку; сначала проверяйте код и сохранение marker.",
+      "sources": [
+        "maxSdkNotes",
+        "maxPolling",
+        "maxWebhook"
+      ]
+    },
+    {
+      "id": "note-04",
+      "title": "Новый ЛК против старых анкет",
+      "status": "Подтверждено первичным документом",
+      "text": "Интеграторские инструкции всё ещё могут описывать письмо и анкету. Новая инструкция ЛК содержит другой процесс и продуктивную организацию как предусловие. Свежесть статьи не доказывает свежесть описанной процедуры.",
+      "sources": [
+        "apiCabinet",
+        "apiRegulation"
+      ]
+    },
+    {
+      "id": "note-05",
+      "title": "Raw OAuth и PKCS#7 — не взаимозаменяемы",
+      "status": "Практика реализации; сверять с протоколом",
+      "text": "Go-референс отдельно реализует варианты подписи OAuth. Смена только endpoint без изменения подписываемой строки может дать неверную подпись. Это подсказка для диагностики, а не разрешение обходить регистрацию ИС.",
+      "sources": [
+        "goReference",
+        "esia"
+      ]
+    },
+    {
+      "id": "note-06",
+      "title": "XML, CMS и API-полномочие проверяются отдельно",
+      "status": "Инженерный вывод по слоям протокола",
+      "text": "Сохраните точные подписываемые байты до вызова плагина. Локальный verify, доверие УЦ на сервере и право выполнить операцию — независимые проверки.",
+      "sources": [
+        "apiSpec",
+        "attorney",
+        "esia"
+      ]
+    },
+    {
+      "id": "note-07",
+      "title": "Успешная отправка СМЭВ ещё не бизнес-ответ",
+      "status": "Документация и реализация разработчиков",
+      "text": "Учитывайте очереди, корреляцию, Ack и повторную доставку. Логи примеров SDK могут содержать полный XML: перед эксплуатацией ограничьте журналирование данных.",
+      "sources": [
+        "smev3",
+        "smevReference",
+        "operatorArticle"
+      ]
+    },
+    {
+      "id": "note-08",
+      "title": "MAX: HTTP 200 недостаточно",
+      "status": "Подтверждено документацией метода",
+      "text": "Для ряда методов результат содержит success/message. В Webhook нужны проверка секрета, надёжное сохранение и обработка повторов; SDK с polling может удалять существующие подписки — это нужно проверять в конкретной библиотеке до запуска.",
+      "sources": [
+        "maxWebhook",
+        "maxApi"
+      ]
+    },
+    {
+      "id": "note-09",
+      "title": "Цифровой рубль — не обычный банковский REST API",
+      "status": "Подтверждено разделением ролей в документах",
+      "text": "Маркетинговый текст «получите API-Key на cbr.ru» не подтверждает открытый доступ. Выберите роль, банк/оператора, действующий стандарт и согласованные испытания.",
+      "sources": [
+        "ruble",
+        "rubleStandards",
+        "rubleAlbums"
+      ]
+    }
+  ]
+}

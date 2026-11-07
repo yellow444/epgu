@@ -1,11 +1,9 @@
 import React from 'react';
-import App from './App';
 import { createRoot } from 'react-dom/client';
-import AuthGate from './components/Auth/AuthGate';
-import AccountMenu from './components/Auth/AccountMenu';
+import PublicEntry from './PublicEntry';
 
-// Приложение открывается только после входа. Меню учётной записи живёт в
-// шапке приложения.
+// Гайд и ручная подготовка открываются без входа и без backend. Рабочий
+// раздел загружается отдельно и по-прежнему требует входа.
 const rootElement = document.getElementById('root');
 const root = createRoot(rootElement);
-root.render(<AuthGate>{() => <App headerExtra={<AccountMenu />} />}</AuthGate>);
+root.render(<PublicEntry />);

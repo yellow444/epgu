@@ -1,0 +1,1692 @@
+{
+  "schema_version": "1.0",
+  "generated_from": "api-gosuslugi-backend/capabilities.py",
+  "items": [
+    {
+      "id": "knowledge.overview",
+      "title": "Сведения о наборе знаний",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.dataset",
+      "title": "Весь набор знаний для интерфейса",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/dataset"
+      ],
+      "ui": "IntegrationGuide",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "обновление встроенной копии UI; ETag = content_sha256",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.routes",
+      "title": "Маршруты подключения",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/routes",
+        "GET /v1/knowledge/routes/{route_id}"
+      ],
+      "ui": "IntegrationGuide",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.nodes",
+      "title": "Узлы маршрута",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/routes/{route_id}/nodes/{node_id}"
+      ],
+      "ui": "IntegrationGuide",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.sources",
+      "title": "Источники и официальность",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/sources",
+        "GET /v1/knowledge/sources/{source_id}"
+      ],
+      "ui": "IntegrationGuide, SourceLinks",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.notes",
+      "title": "Практические заметки",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/notes"
+      ],
+      "ui": "IntegrationGuide",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.search",
+      "title": "Поиск по знаниям",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/search"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.capabilities_catalog",
+      "title": "Каталог возможностей ядра",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/capabilities"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "статический список встроенных записей; регистрации private не входят",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.manual_path",
+      "title": "Ручной маршрут: кабинеты, шаги, поля, пустой шаблон письма",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/manual-path"
+      ],
+      "ui": "PublicSetup",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "значения не принимает; доступность внешних кабинетов не проверена",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.connection_card",
+      "title": "Карточка подключения TEST по отметкам человека",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/connection-card",
+        "POST /v1/knowledge/connection-card/evaluate"
+      ],
+      "ui": "ConnectionCard",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "только допустимые отметки; caller_reported, не проверка кабинета, подписи, заявки или прав; действий нет",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "knowledge.official_links",
+      "title": "Официальные ссылки кабинетов и консолей",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/knowledge/manual-path"
+      ],
+      "ui": "PublicSetup",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [],
+      "notes": "поле links ручного маршрута; доступность внешних кабинетов не проверена",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "capabilities.list",
+      "title": "Реестр возможностей установки",
+      "effect": "knowledge",
+      "api": [
+        "GET /v1/capabilities",
+        "GET /v1/capabilities/{capability_id}"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "knowledge",
+      "requires": [
+        "login"
+      ],
+      "notes": "эффективный реестр, включая private; только после входа",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "manual.letter.compose",
+      "title": "Письмо оператору (.eml, mailto)",
+      "effect": "read_local",
+      "api": [],
+      "ui": "PublicSetup",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "только в UI, API нет (этап 2): значения остаются в браузере; пустой шаблон отдаёт knowledge.manual_path",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "services.list",
+      "title": "Список услуг",
+      "effect": "read_local",
+      "api": [
+        "GET /services"
+      ],
+      "ui": "App",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "services.get",
+      "title": "Описание услуги",
+      "effect": "read_local",
+      "api": [
+        "GET /services/{code}"
+      ],
+      "ui": "App",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "services.xml_template",
+      "title": "Шаблон XML услуги",
+      "effect": "read_local",
+      "api": [
+        "GET /xml"
+      ],
+      "ui": "App, вкладка XML",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "services.xsd_values",
+      "title": "Допустимые значения по XSD",
+      "effect": "read_local",
+      "api": [
+        "GET /xsd"
+      ],
+      "ui": "App, вкладка XML",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "xml.fill_profile",
+      "title": "Заполнение XML профилем",
+      "effect": "read_local",
+      "api": [],
+      "ui": "Заполнить XML",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "только в UI, API нет (этап 2): трансформации выполняются в браузере (serviceProfiles.js)",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "archive.size",
+      "title": "Размер архива",
+      "effect": "read_local",
+      "api": [
+        "POST /zipsize"
+      ],
+      "ui": "выбор файлов",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.list",
+      "title": "Список сертификатов",
+      "effect": "read_local",
+      "api": [
+        "POST /get_certificates"
+      ],
+      "ui": "App",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.current",
+      "title": "Текущий сертификат",
+      "effect": "read_local",
+      "api": [
+        "POST /get_current_certificate"
+      ],
+      "ui": "App",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.select",
+      "title": "Выбор сертификата",
+      "effect": "admin",
+      "api": [
+        "POST /set_current_certificate"
+      ],
+      "ui": "select",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.request",
+      "title": "Запрос сертификата",
+      "effect": "admin",
+      "api": [
+        "POST /certificates/request"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.delete",
+      "title": "Удаление сертификата",
+      "effect": "admin",
+      "api": [
+        "POST /certificates/delete"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.restore_keys",
+      "title": "Восстановление ключей",
+      "effect": "admin",
+      "api": [
+        "POST /certificates/restore-keys"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "cert.trust_test_ca",
+      "title": "Доверие тестовому УЦ",
+      "effect": "admin",
+      "api": [
+        "POST /certificates/trust-test-ca"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "меняет доверие хоста; обращается к внешнему адресу",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "esia.token.obtain",
+      "title": "Получение токена ЕСИА",
+      "effect": "admin",
+      "api": [
+        "POST /accessTkn_esia"
+      ],
+      "ui": "Получить токен",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "selected_certificate"
+      ],
+      "notes": "внешнее чтение, но меняет токен процесса",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "session.clear",
+      "title": "Сброс токена и сессии подачи",
+      "effect": "admin",
+      "api": [
+        "POST /session/clear"
+      ],
+      "ui": "Удалить токен",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.reserve",
+      "title": "Резервирование заявки",
+      "effect": "write_external",
+      "api": [
+        "POST /order"
+      ],
+      "ui": "Зарезервировать",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.push",
+      "title": "Подача заявки",
+      "effect": "write_external",
+      "api": [
+        "POST /push"
+      ],
+      "ui": "Создать запрос",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token",
+        "selected_certificate"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.push_chunked",
+      "title": "Подача заявки по частям",
+      "effect": "write_external",
+      "api": [
+        "POST /push/chunked"
+      ],
+      "ui": "Создать запрос",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token",
+        "selected_certificate"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.details",
+      "title": "Статус заявки",
+      "effect": "read_external",
+      "api": [
+        "POST /order/{orderId}"
+      ],
+      "ui": "Проверить статус",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "идемпотентность upstream не подтверждена",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.cancel",
+      "title": "Отмена заявки",
+      "effect": "write_external",
+      "api": [
+        "POST /order/{orderId}/cancel"
+      ],
+      "ui": "Отменить",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.list_updated",
+      "title": "Заявки, изменённые после даты",
+      "effect": "read_external",
+      "api": [
+        "GET /getUpdatedAfter"
+      ],
+      "ui": "Получить все запросы",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.status",
+      "title": "Статусы заявок",
+      "effect": "read_external",
+      "api": [
+        "GET /getOrdersStatus"
+      ],
+      "ui": "Получить все запросы",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "order.download_file",
+      "title": "Файл ответа по заявке",
+      "effect": "read_external",
+      "api": [
+        "POST /download_file/{objectId}/{objectType}"
+      ],
+      "ui": "Скачать файл ответа",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "dictionary.get",
+      "title": "Справочник ЕПГУ",
+      "effect": "read_external",
+      "api": [
+        "POST /dictionary/{code}"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "goskey.capabilities",
+      "title": "Возможности Госключа",
+      "effect": "read_local",
+      "api": [
+        "GET /goskey/capabilities"
+      ],
+      "ui": "GoskeyForm",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "goskey.preview",
+      "title": "Проверка заявки Госключа",
+      "effect": "read_local",
+      "api": [
+        "POST /goskey/preview"
+      ],
+      "ui": "GoskeyForm",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "goskey.submit",
+      "title": "Подача через Госключ",
+      "effect": "write_external",
+      "api": [
+        "POST /goskey/submit"
+      ],
+      "ui": "GoskeyForm",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token",
+        "selected_certificate"
+      ],
+      "notes": "подпись общим сертификатом установки",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "fssp.contracts",
+      "title": "Контракты ФССП",
+      "effect": "read_local",
+      "api": [
+        "GET /fssp/contracts"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "в UI не вызывается",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "fssp.preview",
+      "title": "Проверка заявления ФССП",
+      "effect": "read_local",
+      "api": [
+        "POST /fssp/preview"
+      ],
+      "ui": "FsspForm",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "fssp.submit",
+      "title": "Подача заявления ФССП",
+      "effect": "write_external",
+      "api": [
+        "POST /fssp/submit"
+      ],
+      "ui": "FsspForm",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token",
+        "selected_certificate"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.search",
+      "title": "Поиск писем ГЭПС",
+      "effect": "write_external",
+      "api": [
+        "POST /geps/search"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "квота 5 в сутки",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.result",
+      "title": "Результат поиска ГЭПС",
+      "effect": "read_external",
+      "api": [
+        "GET /geps/search/{task_uuid}"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "квота 15",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.message",
+      "title": "Письмо ГЭПС",
+      "effect": "read_external",
+      "api": [
+        "GET /geps/message/{thread_uuid}/{message_uuid}"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.attachment",
+      "title": "Вложение письма ГЭПС",
+      "effect": "read_external",
+      "api": [
+        "GET /geps/attachment/{message_uuid}/{attachment_uuid}/{file_type}"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "получение может иметь юридический эффект",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.quota",
+      "title": "Квоты ГЭПС",
+      "effect": "read_local",
+      "api": [
+        "GET /geps/quota"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.scheduler.state",
+      "title": "Состояние планировщика ГЭПС",
+      "effect": "read_local",
+      "api": [
+        "GET /geps/scheduler"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.scheduler.switch",
+      "title": "Включение планировщика ГЭПС",
+      "effect": "admin",
+      "api": [
+        "POST /geps/scheduler"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.scheduler.run",
+      "title": "Запуск планировщика ГЭПС",
+      "effect": "write_external",
+      "api": [
+        "POST /geps/scheduler/run"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.jobs",
+      "title": "Задания ГЭПС",
+      "effect": "read_local",
+      "api": [
+        "GET /geps/jobs"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.store.messages",
+      "title": "Сохранённые письма ГЭПС",
+      "effect": "read_local",
+      "api": [
+        "GET /geps/messages",
+        "GET /geps/messages/{message_uuid}"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "geps.store.attachment_save",
+      "title": "Сохранение вложения ГЭПС",
+      "effect": "read_external",
+      "api": [
+        "POST /geps/messages/{message_uuid}/attachments/{attachment_uuid}/save"
+      ],
+      "ui": "Gospochta",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "esia_token"
+      ],
+      "notes": "читает вложение у оператора и пишет его локально",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "inbound.journal",
+      "title": "Журнал входящих",
+      "effect": "read_local",
+      "api": [
+        "GET /inbound/messages"
+      ],
+      "ui": "InboundLog",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "inbound.clear",
+      "title": "Очистка журнала входящих",
+      "effect": "write_local",
+      "api": [
+        "POST /inbound/clear"
+      ],
+      "ui": "InboundLog",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "inbound.check_public",
+      "title": "Проверка публичного адреса приёмника",
+      "effect": "read_external",
+      "api": [
+        "POST /inbound/check-public"
+      ],
+      "ui": "InboundLog",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "обращается к заданному адресу",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.mode",
+      "title": "Режим входа",
+      "effect": "read_local",
+      "api": [
+        "GET /auth/mode"
+      ],
+      "ui": "AuthGate",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.login",
+      "title": "Вход",
+      "effect": "write_local",
+      "api": [
+        "POST /auth/login"
+      ],
+      "ui": "AuthGate",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.logout",
+      "title": "Выход",
+      "effect": "write_local",
+      "api": [
+        "POST /auth/logout"
+      ],
+      "ui": "AccountMenu",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.session",
+      "title": "Текущая сессия",
+      "effect": "read_local",
+      "api": [
+        "GET /auth/session"
+      ],
+      "ui": "AccountMenu",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.password",
+      "title": "Смена своего пароля",
+      "effect": "write_local",
+      "api": [
+        "POST /auth/password"
+      ],
+      "ui": "AccountMenu",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.accounts.list",
+      "title": "Список пользователей",
+      "effect": "read_local",
+      "api": [
+        "GET /auth/accounts"
+      ],
+      "ui": "AccountMenu",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.accounts.create",
+      "title": "Создание пользователя",
+      "effect": "admin",
+      "api": [
+        "POST /auth/accounts"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.accounts.password",
+      "title": "Сброс пароля пользователя",
+      "effect": "admin",
+      "api": [
+        "POST /auth/accounts/{account_id}/password"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "auth.accounts.disable",
+      "title": "Отключение пользователя",
+      "effect": "admin",
+      "api": [
+        "POST /auth/accounts/{account_id}/disabled"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "integration.create",
+      "title": "Выпуск ключа интеграции",
+      "effect": "admin",
+      "api": [
+        "POST /v1/admin/integrations"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "секрет показывается один раз, ответ с Cache-Control: no-store",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "integration.list",
+      "title": "Список ключей интеграций",
+      "effect": "admin",
+      "api": [
+        "GET /v1/admin/integrations"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "integration.revoke",
+      "title": "Отзыв ключа интеграции",
+      "effect": "admin",
+      "api": [
+        "POST /v1/admin/integrations/{client_id}/revoke"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "operator.context",
+      "title": "Контекст оператора для интеграции",
+      "effect": "read_local",
+      "api": [
+        "GET /v1/operator/context"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "ключ интеграции; контекст берётся из привязки оператора и живого состояния",
+      "scopes": [
+        "local:read"
+      ],
+      "gates": [
+        "integration_credential",
+        "operator_binding",
+        "certificate_match",
+        "contour_match",
+        "context_match"
+      ],
+      "side_effects": [],
+      "machine": "enforced"
+    },
+    {
+      "id": "operator.binding.get",
+      "title": "Привязка оператора",
+      "effect": "admin",
+      "api": [
+        "GET /v1/admin/operator-binding"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "operator.binding.set",
+      "title": "Установка привязки оператора",
+      "effect": "admin",
+      "api": [
+        "PUT /v1/admin/operator-binding"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "operator.binding.clear",
+      "title": "Снятие привязки оператора",
+      "effect": "admin",
+      "api": [
+        "DELETE /v1/admin/operator-binding"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "operation.prepare",
+      "title": "Подготовка плана внешней операции",
+      "effect": "write_local",
+      "api": [
+        "POST /v1/operations/plans"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "только записывает план; исполнитель не вызывается, номер не резервируется",
+      "scopes": [
+        "external:prepare"
+      ],
+      "gates": [
+        "integration_credential",
+        "operator_binding",
+        "certificate_match",
+        "contour_match",
+        "context_match",
+        "plan_record"
+      ],
+      "side_effects": [],
+      "machine": "enforced"
+    },
+    {
+      "id": "operation.plan.get",
+      "title": "Просмотр плана внешней операции",
+      "effect": "read_local",
+      "api": [
+        "GET /v1/operations/plans/{plan_id}"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "только план своего ключа",
+      "scopes": [
+        "external:prepare"
+      ],
+      "gates": [
+        "integration_credential",
+        "operator_binding",
+        "certificate_match",
+        "contour_match",
+        "context_match"
+      ],
+      "side_effects": [],
+      "machine": "enforced"
+    },
+    {
+      "id": "operation.execute",
+      "title": "Исполнение одобренного плана",
+      "effect": "write_external",
+      "api": [
+        "POST /v1/operations/plans/{plan_id}/execute"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "только одобренный человеком план; без исполнителя 503; при сбое после начала внешнего вызова статус unknown, без автоповтора",
+      "scopes": [
+        "external:execute"
+      ],
+      "gates": [
+        "integration_credential",
+        "operator_binding",
+        "certificate_match",
+        "contour_match",
+        "context_match",
+        "human_approval",
+        "plan_integrity",
+        "binding_epoch",
+        "execution_claim"
+      ],
+      "side_effects": [
+        "legal_effect",
+        "external_write",
+        "marks_read",
+        "consumes_quota",
+        "reserves_number"
+      ],
+      "machine": "enforced"
+    },
+    {
+      "id": "operation.review",
+      "title": "Предпросмотр плана для одобрения",
+      "effect": "admin",
+      "api": [
+        "GET /v1/admin/operations/plans/{plan_id}"
+      ],
+      "ui": "PlanReviewModal",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "точный предпросмотр, включая байты; ключ интеграции не открывает",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "operation.approve",
+      "title": "Одобрение плана человеком",
+      "effect": "admin",
+      "api": [
+        "POST /v1/admin/operations/plans/{plan_id}/approve"
+      ],
+      "ui": "PlanReviewModal",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login",
+        "installation_admin"
+      ],
+      "notes": "только обычная сессия администратора; ключ и MCP одобрить не могут",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "diagnostics.version",
+      "title": "Версия API Client",
+      "effect": "read_local",
+      "api": [
+        "GET /version"
+      ],
+      "ui": "Проверить API Client",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "diagnostics.environments",
+      "title": "Окружения",
+      "effect": "read_local",
+      "api": [
+        "GET /environments"
+      ],
+      "ui": "Проверить API Client",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "diagnostics.status",
+      "title": "Состояние сервера",
+      "effect": "read_local",
+      "api": [
+        "GET /status"
+      ],
+      "ui": "Проверить API Client",
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [
+        "login"
+      ],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    },
+    {
+      "id": "diagnostics.health",
+      "title": "Проверка здоровья",
+      "effect": "read_local",
+      "api": [
+        "GET /health",
+        "GET /hc"
+      ],
+      "ui": null,
+      "implemented": true,
+      "edition": "public",
+      "mcp_profile": "none",
+      "requires": [],
+      "notes": "",
+      "scopes": [],
+      "gates": [],
+      "side_effects": [],
+      "machine": "none"
+    }
+  ]
+}

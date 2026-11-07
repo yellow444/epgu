@@ -70,6 +70,12 @@ import geps_store
 import settings_store
 from inbound_api import inbound_router
 import auth_api
+import integration_api
+import knowledge_api
+import machine_api
+import operations
+import operations_api
+import operator_context
 from fssp_api import environment_for as fssp_environment_for
 from fssp_api import fssp_router
 
@@ -270,6 +276,14 @@ async def lifespan(_application: FastAPI):
         load_certificates()
     except Exception as exc:
         logger.warning("CryptoPro certificates are unavailable: %s", exc)
+    # Планы, оставшиеся inflight после обрыва процесса, исход неизвестен: их
+    # нельзя ни повторить, ни вернуть в approved.
+    try:
+        recovered = operations.recover_inflight()
+        if recovered:
+            logger.warning("operation plans moved to unknown after restart: %d", recovered)
+    except Exception as exc:
+        logger.warning("operation plans recovery failed: %s", type(exc).__name__)
     # Планировщик Госпочты крутится всегда, но такт делает только при явно
     # включённом автоматическом режиме: чтение запускает процессуальные сроки.
     geps_worker.start()
@@ -344,6 +358,8 @@ async def reject_cross_origin_mutations(request: Request, call_next):
             return JSONResponse(
                 status_code=403,
                 content={"detail": "Cross-origin state-changing request is forbidden"},
+                headers=({"Cache-Control": "no-store", "Pragma": "no-cache"}
+                         if auth_api.route_path(request) == "/v1/knowledge/connection-card/evaluate" else None),
             )
     return await call_next(request)
 app.include_router(
@@ -367,6 +383,41 @@ app.include_router(
 app.include_router(inbound_router())
 # Вход, выход, смена пароля и пользователи установки.
 app.include_router(auth_api.auth_router())
+# Ключи интеграций: выпуск, список и отзыв (только администратор установки).
+app.include_router(integration_api.integration_admin_router())
+
+
+def _operator_live_state() -> operator_context.LiveState:
+    """Живое состояние оператора для машинного контекста (читается за один вызов)."""
+    selected = CURRENT_CERT_ID if CURRENT_CERT_ID in CERTIFICATES else None
+    return operator_context.LiveState(
+        certificate_thumbprint=selected,
+        generation=SESSION_GENERATION,
+        esia_host=ESIA_HOST,
+        svcdev_host=SVCDEV_HOST,
+    )
+
+
+operator_context.set_state_provider(_operator_live_state)
+
+
+def _operations_session():
+    """Сессия оператора для исполнителя плана; без маркера внешний вызов не начинается."""
+    try:
+        return _require_access_token()
+    except HTTPException:
+        raise operations.NotSent("session_unavailable") from None
+
+
+operations.set_session_provider(_operations_session)
+# Контекст оператора для интеграций (ключ) и привязка оператора (администратор).
+app.include_router(machine_api.machine_router())
+app.include_router(machine_api.operator_binding_admin_router())
+# Планы внешних операций: prepare, execute (ключ) и предпросмотр, одобрение (человек).
+app.include_router(operations_api.machine_router())
+app.include_router(operations_api.admin_router())
+# API v1: чтение знаний и реестра возможностей (problem+json только на /v1).
+knowledge_api.mount(app)
 
 # Pydantic-модели
 

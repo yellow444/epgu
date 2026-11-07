@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epgu.local/schemas/knowledge.v1.schema.json",
+  "title": "EPGU knowledge dataset v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset", "sources", "routes", "notes"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "reviewed_at", "generated_from", "license_note"],
+      "properties": {
+        "id": {"$ref": "#/$defs/slug"},
+        "reviewed_at": {"$ref": "#/$defs/date"},
+        "generated_from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "sha256", "origin"],
+          "properties": {
+            "file": {"$ref": "#/$defs/text"},
+            "sha256": {"$ref": "#/$defs/hex64"},
+            "origin": {"$ref": "#/$defs/text"}
+          }
+        },
+        "license_note": {"$ref": "#/$defs/text"}
+      }
+    },
+    "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "routes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/route"}},
+    "notes": {"type": "array", "items": {"$ref": "#/$defs/note"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "hex64": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "slug": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"},
+    "sourceId": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$"},
+    "capabilityId": {"type": "string", "pattern": "^[a-z][a-z0-9_]*([.][a-z][a-z0-9_]*)+$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "url", "section", "kind_label", "officiality",
+                   "checked_at", "version", "sha256", "redistribution"],
+      "properties": {
+        "id": {"$ref": "#/$defs/sourceId"},
+        "title": {"$ref": "#/$defs/text"},
+        "url": {"type": "string", "pattern": "^https://[^ \t\r\n]+$"},
+        "section": {"$ref": "#/$defs/text"},
+        "kind_label": {"$ref": "#/$defs/text"},
+        "officiality": {"enum": ["official", "official_historical", "official_catalog",
+                                 "operator_docs", "unofficial_implementation",
+                                 "developer_experience"]},
+        "checked_at": {"$ref": "#/$defs/date"},
+        "version": {"type": ["string", "null"], "minLength": 1},
+        "sha256": {"anyOf": [{"$ref": "#/$defs/hex64"}, {"type": "null"}]},
+        "redistribution": {"enum": ["link_only"]}
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "summary", "domain", "coverage", "entry_node", "nodes"],
+      "properties": {
+        "id": {"$ref": "#/$defs/slug"},
+        "title": {"$ref": "#/$defs/text"},
+        "summary": {"$ref": "#/$defs/text"},
+        "domain": {"enum": ["transition", "epgu", "esia", "smev", "signing", "max",
+                            "digital_ruble", "diagnostics"]},
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "capabilities", "note"],
+          "properties": {
+            "status": {"enum": ["informational", "manual_route", "official_api_partial"]},
+            "capabilities": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {"$ref": "#/$defs/capabilityId"}
+            },
+            "note": {"$ref": "#/$defs/text"}
+          }
+        },
+        "entry_node": {"$ref": "#/$defs/slug"},
+        "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "body", "checks", "sources", "next", "warning", "layout"],
+      "properties": {
+        "id": {"$ref": "#/$defs/slug"},
+        "title": {"$ref": "#/$defs/text"},
+        "body": {"$ref": "#/$defs/text"},
+        "checks": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/sourceId"}},
+        "next": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["to", "label"],
+            "properties": {
+              "to": {"$ref": "#/$defs/slug"},
+              "label": {"$ref": "#/$defs/text"}
+            }
+          }
+        },
+        "warning": {"type": ["string", "null"], "minLength": 1},
+        "layout": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["column", "row"],
+          "properties": {
+            "column": {"type": "integer", "minimum": 0},
+            "row": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "status", "text", "sources"],
+      "properties": {
+        "id": {"$ref": "#/$defs/slug"},
+        "title": {"$ref": "#/$defs/text"},
+        "status": {"$ref": "#/$defs/text"},
+        "text": {"$ref": "#/$defs/text"},
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/sourceId"}}
+      }
+    }
+  }
+}

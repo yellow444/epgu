@@ -2,3 +2,18 @@
 # шелл читает "\r" частью аргумента и падает: python: can't open file '/app/app.py\r'
 *.sh text eol=lf
 entrypoint.sh text eol=lf
+
+# Канонический набор знаний, его схема, побайтовые копии в клиенте и снимок
+# реестра возможностей сравниваются и хешируются побайтно (sync_ui_copy --check,
+# ETag, snapshot --check). При autocrlf=true они не должны получать CRLF.
+project/knowledge/src/epgu_knowledge/data/knowledge.v1.json text eol=lf
+project/knowledge/src/epgu_knowledge/schema/knowledge.v1.schema.json text eol=lf
+project/api-gosuslugi-client/src/components/IntegrationGuide/knowledge.v1.json text eol=lf
+project/api-gosuslugi-client/src/components/IntegrationGuide/knowledge.v1.schema.json text eol=lf
+project/mcp-server/src/epgu_mcp/capabilities_snapshot.json text eol=lf
+project/knowledge/src/epgu_knowledge/data/manual_path.v1.json text eol=lf
+project/knowledge/src/epgu_knowledge/schema/manual_path.v1.schema.json text eol=lf
+project/api-gosuslugi-client/src/components/PublicSetup/manual_path.v1.json text eol=lf
+project/knowledge/src/epgu_knowledge/data/connection_card.v1.json text eol=lf
+project/knowledge/src/epgu_knowledge/schema/connection_card.v1.schema.json text eol=lf
+project/api-gosuslugi-client/src/components/ConnectionCard/connection_card.v1.json text eol=lf

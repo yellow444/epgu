@@ -1,0 +1,830 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "connection-card.v1"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contour": {
+      "const": "TEST"
+    },
+    "notice": {
+      "type": "string",
+      "minLength": 1
+    },
+    "privacy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "unknown",
+              "reported_yes",
+              "reported_no"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "same_context",
+              "system_registered",
+              "cert_bound",
+              "application_submitted",
+              "application_received",
+              "power_visible",
+              "power_issued",
+              "key_configured",
+              "local_signature_valid",
+              "server_signature_accepted",
+              "signature_context_checked",
+              "error_recorded"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hint": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "hint"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 12,
+      "maxItems": 12
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "request_power",
+              "check_signature",
+              "obtain_api_key"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "facts": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "same_context",
+                "system_registered",
+                "cert_bound",
+                "application_submitted",
+                "application_received",
+                "power_visible",
+                "power_issued",
+                "key_configured",
+                "local_signature_valid",
+                "server_signature_accepted",
+                "signature_context_checked",
+                "error_recorded"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "when": {
+                  "type": "object",
+                  "properties": {
+                    "same_context": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "system_registered": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "cert_bound": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "application_submitted": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "application_received": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "power_visible": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "power_issued": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "key_configured": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "local_signature_valid": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "server_signature_accepted": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "signature_context_checked": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    },
+                    "error_recorded": {
+                      "oneOf": [
+                        {
+                          "enum": [
+                            "unknown",
+                            "reported_yes",
+                            "reported_no"
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "enum": [
+                              "unknown",
+                              "reported_yes",
+                              "reported_no"
+                            ]
+                          },
+                          "minItems": 1,
+                          "uniqueItems": true
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "summary": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "next_step": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "reference": {
+                  "type": "object",
+                  "properties": {
+                    "route": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "node": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "route",
+                    "node"
+                  ],
+                  "additionalProperties": false
+                },
+                "source_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "id",
+                "when",
+                "summary",
+                "next_step",
+                "reference",
+                "source_ids"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "facts",
+          "rules"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 3,
+      "maxItems": 3
+    }
+  },
+  "required": [
+    "schema_version",
+    "version",
+    "title",
+    "contour",
+    "notice",
+    "privacy",
+    "states",
+    "facts",
+    "goals"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "when": {
+          "type": "object",
+          "properties": {
+            "same_context": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "system_registered": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "cert_bound": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "application_submitted": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "application_received": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "power_visible": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "power_issued": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "key_configured": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "local_signature_valid": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "server_signature_accepted": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "signature_context_checked": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            },
+            "error_recorded": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "unknown",
+                    "reported_yes",
+                    "reported_no"
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "enum": [
+                      "unknown",
+                      "reported_yes",
+                      "reported_no"
+                    ]
+                  },
+                  "minItems": 1,
+                  "uniqueItems": true
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_step": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reference": {
+          "type": "object",
+          "properties": {
+            "route": {
+              "type": "string",
+              "minLength": 1
+            },
+            "node": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "route",
+            "node"
+          ],
+          "additionalProperties": false
+        },
+        "source_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "when",
+        "summary",
+        "next_step",
+        "reference",
+        "source_ids"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

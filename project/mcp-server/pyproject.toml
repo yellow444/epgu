@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "epgu-mcp"
+version = "0.1.0"
+description = "MCP-сервер EPGU: справочные знания и реестр возможностей (профиль knowledge, только чтение)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+authors = [{ name = "yellow444", email = "yellow444@gmail.com" }]
+dependencies = [
+    "mcp==2.3.0",
+    "epgu-knowledge>=0.1.0",
+    "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=9.0.3,<10"]
+# HTTP-адаптер операций (operations.py): клиент backend epgu.integration.
+operations = ["epgu-api>=0.3.0"]
+
+[project.scripts]
+epgu-mcp = "epgu_mcp.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/epgu_mcp"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/epgu_mcp", "tools", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-config --strict-markers"
+pythonpath = ["src"]

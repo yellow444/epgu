@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "epgu-knowledge"
+version = "0.1.0"
+description = "Справочная база знаний по подключению к API Госуслуг (маршруты, источники, заметки)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "AGPL-3.0-or-later"
+authors = [{ name = "yellow444", email = "yellow444@gmail.com" }]
+dependencies = [
+    "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=9.0.3,<10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/epgu_knowledge"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/epgu_knowledge", "tools", "README.md", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-config --strict-markers"
+pythonpath = ["src"]

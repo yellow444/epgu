@@ -1,0 +1,733 @@
+{
+  "schema_version": "connection-card.v1",
+  "version": "1.0.0",
+  "title": "Карточка подключения TEST",
+  "contour": "TEST",
+  "notice": "Разбор основан только на ваших отметках. Система не проверяет кабинет, подпись, заявку или права и ничего не отправляет.",
+  "privacy": "Здесь только отметки. Не вводите ИНН, OID, ключи, PIN, документы и тексты ответов. В интерфейсе значения не отправляются и не сохраняются.",
+  "states": [
+    {
+      "id": "unknown",
+      "label": "Не проверено / неизвестно"
+    },
+    {
+      "id": "reported_yes",
+      "label": "По моим сведениям — да"
+    },
+    {
+      "id": "reported_no",
+      "label": "По моим сведениям — нет"
+    }
+  ],
+  "facts": [
+    {
+      "id": "same_context",
+      "title": "Сведения относятся одному случаю TEST",
+      "hint": "Сверьте контур, организацию, ИС и проверяемый вызов. Идентификаторы сюда не вводятся."
+    },
+    {
+      "id": "system_registered",
+      "title": "ИС зарегистрирована",
+      "hint": "Укажите, что вам известно о регистрации выбранной ИС."
+    },
+    {
+      "id": "cert_bound",
+      "title": "Публичный сертификат привязан к ИС",
+      "hint": "Привязка публичного сертификата не доказывает доступность закрытого ключа."
+    },
+    {
+      "id": "application_submitted",
+      "title": "Заявка отправлена",
+      "hint": "Пустая страница полномочий не отвечает на этот вопрос."
+    },
+    {
+      "id": "application_received",
+      "title": "Приём заявки подтверждён",
+      "hint": "Подтверждение приёма не означает выдачу полномочия."
+    },
+    {
+      "id": "power_visible",
+      "title": "Нужное полномочие видно в кабинете",
+      "hint": "Сверьте назначение, услугу и выбранную ИС; доступность страницы сама по себе не выдача права."
+    },
+    {
+      "id": "power_issued",
+      "title": "Есть сведения о выдаче нужного полномочия",
+      "hint": "Отметка остаётся вашим сообщением, а не проверкой оператором этой карточкой."
+    },
+    {
+      "id": "key_configured",
+      "title": "API-ключ настроен",
+      "hint": "Не вводите сам ключ. Настройка не доказывает успешный вызов API."
+    },
+    {
+      "id": "local_signature_valid",
+      "title": "Локальная проверка подписи прошла",
+      "hint": "Речь только о конкретных байтах, сертификате и моменте проверки."
+    },
+    {
+      "id": "server_signature_accepted",
+      "title": "Сервер принял подпись",
+      "hint": "Приём подписи не означает право выполнить любую операцию."
+    },
+    {
+      "id": "signature_context_checked",
+      "title": "Требования метода и контекст сверены",
+      "hint": "Сверены контур, сертификат, формат подписи и подписываемые байты, без их передачи сюда."
+    },
+    {
+      "id": "error_recorded",
+      "title": "Имеющийся отказ записан без секретов",
+      "hint": "Отмечается наличие метода, кода и безопасного описания; текст ответа сюда не передаётся."
+    }
+  ],
+  "goals": [
+    {
+      "id": "request_power",
+      "title": "Запросить полномочие",
+      "facts": [
+        "same_context",
+        "system_registered",
+        "cert_bound",
+        "application_submitted",
+        "application_received",
+        "power_visible",
+        "power_issued"
+      ],
+      "rules": [
+        {
+          "id": "context_differs",
+          "when": {
+            "same_context": "reported_no"
+          },
+          "summary": "Сведения относятся разным контекстам.",
+          "next_step": "Сверьте один случай в TEST. Сведения из другого контура или ИС не подтверждают этот случай.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "context_unknown",
+          "when": {
+            "same_context": "unknown"
+          },
+          "summary": "Недостаточно сведений о контексте.",
+          "next_step": "Сначала вручную убедитесь, что выбран один случай TEST. Неизвестное не означает ошибку подключения.",
+          "reference": {
+            "route": "epgu-vendor",
+            "node": "test"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "issued_not_visible",
+          "when": {
+            "power_issued": "reported_yes",
+            "power_visible": "reported_no"
+          },
+          "summary": "Сведения о выдаче и отображении полномочия расходятся.",
+          "next_step": "Проверьте прежнее обращение, услугу и выбранную ИС. Не подавайте дубликат только из-за пустого списка.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "issued_reported",
+          "when": {
+            "power_issued": "reported_yes"
+          },
+          "summary": "Вы сообщили о выдаче полномочия.",
+          "next_step": "Сверьте его точное назначение и принадлежность выбранной ИС. Карточка права не проверяет.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "power_visible_reported",
+          "when": {
+            "power_visible": "reported_yes"
+          },
+          "summary": "Вы сообщили о видимом полномочии.",
+          "next_step": "Проверьте, относится ли оно к нужной услуге и ИС, прежде чем запрашивать новое.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "receipt_vs_submission",
+          "when": {
+            "application_received": "reported_yes",
+            "application_submitted": "reported_no"
+          },
+          "summary": "Подтверждение приёма расходится со сведением об отсутствии подачи.",
+          "next_step": "Сверьте подтверждение и историю обращения. Не отправляйте новую анкету до уточнения.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "application_pending",
+          "when": {
+            "application_submitted": "reported_yes"
+          },
+          "summary": "Вы сообщили об отправленной заявке. Выдача права этим не доказана.",
+          "next_step": "Проверьте статус существующего обращения и страницу полномочий в том же контексте. Не дублируйте заявку.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "receipt_pending",
+          "when": {
+            "application_received": "reported_yes"
+          },
+          "summary": "Вы сообщили о принятой заявке. Это не выдача полномочия.",
+          "next_step": "Уточните статус существующего обращения, сохранив неизвестность решения оператора. Не дублируйте анкету.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "system_absent",
+          "when": {
+            "system_registered": "reported_no"
+          },
+          "summary": "По вашим сведениям ИС ещё не зарегистрирована.",
+          "next_step": "Откройте официальный ручной маршрут регистрации ИС в TEST.",
+          "reference": {
+            "route": "epgu-vendor",
+            "node": "test"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "system_unknown",
+          "when": {
+            "system_registered": "unknown"
+          },
+          "summary": "Регистрация ИС не проверена.",
+          "next_step": "Посмотрите карточку выбранной ИС в TEST; не считайте отсутствие сведений отсутствием регистрации.",
+          "reference": {
+            "route": "epgu-vendor",
+            "node": "test"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "binding_absent",
+          "when": {
+            "cert_bound": "reported_no"
+          },
+          "summary": "По вашим сведениям публичный сертификат не привязан.",
+          "next_step": "Сверьте требования регистрации и привязки публичного сертификата к этой ИС. Закрытый ключ не передавайте.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "binding_unknown",
+          "when": {
+            "cert_bound": "unknown"
+          },
+          "summary": "Привязка публичного сертификата не проверена.",
+          "next_step": "Посмотрите привязку в карточке ИС. Доступность локального ключа — отдельный вопрос.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "application_history_unknown",
+          "when": {
+            "application_submitted": "unknown"
+          },
+          "summary": "История подачи неизвестна.",
+          "next_step": "Сначала проверьте почту и существующие обращения. Пустой список полномочий не доказывает, что заявку не подавали.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "request_power",
+          "when": {},
+          "summary": "По вашим сведениям ИС и привязка есть, заявки ещё нет.",
+          "next_step": "Следуйте официальному маршруту запроса полномочия для выбранной услуги в TEST. Неизвестная локальная проверка подписи сама по себе не запрещает ручной запрос.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check_signature",
+      "title": "Разобрать отказ подписи",
+      "facts": [
+        "same_context",
+        "local_signature_valid",
+        "server_signature_accepted",
+        "cert_bound",
+        "signature_context_checked",
+        "error_recorded"
+      ],
+      "rules": [
+        {
+          "id": "context_differs",
+          "when": {
+            "same_context": "reported_no"
+          },
+          "summary": "Сведения относятся разным контекстам.",
+          "next_step": "Сверьте один случай в TEST. Сведения из другого контура или ИС не подтверждают этот случай.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "context_unknown",
+          "when": {
+            "same_context": "unknown"
+          },
+          "summary": "Недостаточно сведений о контексте.",
+          "next_step": "Сначала вручную убедитесь, что выбран один случай TEST. Неизвестное не означает ошибку подключения.",
+          "reference": {
+            "route": "epgu-vendor",
+            "node": "test"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "signature_reports_differ",
+          "when": {
+            "local_signature_valid": "reported_no",
+            "server_signature_accepted": "reported_yes"
+          },
+          "summary": "Локальный и серверный результаты требуют сверки.",
+          "next_step": "Уточните, какие именно байты, метод и сертификат проверялись. Не выводите причину из двух отметок.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "server_acceptance_reported",
+          "when": {
+            "server_signature_accepted": "reported_yes"
+          },
+          "summary": "Вы сообщили о приёме подписи сервером.",
+          "next_step": "Не переносите этот результат на полномочия или другие запросы. Проверьте требования нужной операции.",
+          "reference": {
+            "route": "signing",
+            "node": "verify"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "local_invalid",
+          "when": {
+            "local_signature_valid": "reported_no"
+          },
+          "summary": "По вашим сведениям локальная проверка не прошла.",
+          "next_step": "Проверьте имеющиеся точные байты и требования метода локально. Не меняйте сертификат и не повторяйте внешний запрос на основании одной отметки.",
+          "reference": {
+            "route": "signing",
+            "node": "verify"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "local_unknown",
+          "when": {
+            "local_signature_valid": "unknown"
+          },
+          "summary": "Локальная проверка не зафиксирована.",
+          "next_step": "Уточните результат проверки имеющейся подписи и её контекст. Наличие сертификата не заменяет проверку подписи.",
+          "reference": {
+            "route": "signing",
+            "node": "verify"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "error_not_recorded",
+          "when": {
+            "server_signature_accepted": "reported_no",
+            "error_recorded": [
+              "unknown",
+              "reported_no"
+            ]
+          },
+          "summary": "Локальная подпись отмечена валидной, сервер отказал; причина неизвестна.",
+          "next_step": "Сохраните имеющиеся метод, HTTP-код и безопасное описание без секретов. Не повторяйте запрос ради нового отказа.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "signature_binding_unchecked",
+          "when": {
+            "server_signature_accepted": "reported_no",
+            "cert_bound": [
+              "unknown",
+              "reported_no"
+            ]
+          },
+          "summary": "Локальная проверка не доказывает серверное доверие или привязку.",
+          "next_step": "Сверьте публичный сертификат в карточке этой ИС и контур. По отказу нельзя объявить сертификат отозванным.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "signature_requirements_unchecked",
+          "when": {
+            "server_signature_accepted": "reported_no",
+            "signature_context_checked": [
+              "unknown",
+              "reported_no"
+            ]
+          },
+          "summary": "Причина серверного отказа не установлена.",
+          "next_step": "Сверьте требования конкретного метода: формат, сертификат и подписываемые байты. Не перебирайте варианты подписи.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "signature_rejected_unexplained",
+          "when": {
+            "server_signature_accepted": "reported_no"
+          },
+          "summary": "Вы сообщили о сверенных условиях, но причина отказа остаётся неизвестной.",
+          "next_step": "Используйте существующее обращение или официальный канал поддержки с безопасным описанием. Локальная валидность не означает обязательный приём сервером.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "crypto"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        },
+        {
+          "id": "server_result_unknown",
+          "when": {},
+          "summary": "Результат серверной проверки неизвестен.",
+          "next_step": "Не называйте подключение рабочим по одному локальному verify. Изучите требования метода; карточка внешний вызов не выполняет.",
+          "reference": {
+            "route": "signing",
+            "node": "verify"
+          },
+          "source_ids": [
+            "esia",
+            "apiSpec"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "obtain_api_key",
+      "title": "Понять следующий шаг к API-ключу",
+      "facts": [
+        "same_context",
+        "application_submitted",
+        "application_received",
+        "power_visible",
+        "power_issued",
+        "key_configured"
+      ],
+      "rules": [
+        {
+          "id": "context_differs",
+          "when": {
+            "same_context": "reported_no"
+          },
+          "summary": "Сведения относятся разным контекстам.",
+          "next_step": "Сверьте один случай в TEST. Сведения из другого контура или ИС не подтверждают этот случай.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "context_unknown",
+          "when": {
+            "same_context": "unknown"
+          },
+          "summary": "Недостаточно сведений о контексте.",
+          "next_step": "Сначала вручную убедитесь, что выбран один случай TEST. Неизвестное не означает ошибку подключения.",
+          "reference": {
+            "route": "epgu-vendor",
+            "node": "test"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "key_rights_differ",
+          "when": {
+            "key_configured": "reported_yes",
+            "power_issued": "reported_no"
+          },
+          "summary": "Настроенный ключ не подтверждает право на нужную операцию.",
+          "next_step": "Сверьте сведения о полномочии для этой услуги и ИС. Карточка не делает пробный вызов и не разрешает доступ.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "key_configured_reported",
+          "when": {
+            "key_configured": "reported_yes"
+          },
+          "summary": "По вашим сведениям ключ настроен; работа API ещё не доказана.",
+          "next_step": "Сверьте полномочие и предусмотренный услугой порядок минимальной TEST-проверки. Самостоятельный внешний вызов этой карточкой не выполняется.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "issued_not_visible",
+          "when": {
+            "power_issued": "reported_yes",
+            "power_visible": "reported_no"
+          },
+          "summary": "Сведения о выдаче права и его отображении расходятся.",
+          "next_step": "Сверьте выбранную ИС, услугу и ответ оператора прежде чем формировать ключ или новую заявку.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "formation_route",
+          "when": {
+            "power_issued": "reported_yes"
+          },
+          "summary": "Есть ваше сообщение о выдаче права, но наличие ключа не подтверждено.",
+          "next_step": "Откройте официальный маршрут формирования API-Key для этой ИС и проверьте требуемую роль или делегирование. Значение ключа сюда не вводите.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "receipt_vs_submission",
+          "when": {
+            "application_received": "reported_yes",
+            "application_submitted": "reported_no"
+          },
+          "summary": "Подтверждение приёма расходится со сведением об отсутствии подачи.",
+          "next_step": "Сверьте историю обращения, не дублируя анкету.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "application_pending",
+          "when": {
+            "application_submitted": "reported_yes"
+          },
+          "summary": "Отправленная заявка не подтверждает выдачу полномочия.",
+          "next_step": "Проверьте существующее обращение и нужное полномочие в TEST. Ключ пока нельзя считать полученным.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "receipt_pending",
+          "when": {
+            "application_received": "reported_yes"
+          },
+          "summary": "Есть сообщение о приёме анкеты; решение оператора неизвестно.",
+          "next_step": "Проверьте статус существующего обращения и страницу полномочий. Не дублируйте анкету и не выдумывайте срок ответа.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "visible_not_confirmed",
+          "when": {
+            "power_visible": "reported_yes"
+          },
+          "summary": "Полномочие видно по вашему сообщению, но его назначение не подтверждено.",
+          "next_step": "Сверьте точную услугу и принадлежность ИС по официальному маршруту формирования ключа.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "application_history_unknown",
+          "when": {
+            "application_submitted": "unknown"
+          },
+          "summary": "Недостаточно сведений о предыдущем запросе.",
+          "next_step": "Проверьте существующую заявку прежде чем подавать новую. Отсутствие письма о выдаче не доказывает отказ.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        },
+        {
+          "id": "request_route",
+          "when": {},
+          "summary": "По вашим сведениям нужное право не подтверждено и заявка не отправлена.",
+          "next_step": "Перейдите к задаче «Запросить полномочие» и проверьте её предпосылки. Неизвестный ключ не мешает разбору ручного запроса.",
+          "reference": {
+            "route": "diagnostics",
+            "node": "access"
+          },
+          "source_ids": [
+            "apiCabinet",
+            "apiRegulation"
+          ]
+        }
+      ]
+    }
+  ]
+}

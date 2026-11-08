@@ -391,6 +391,9 @@ def register_executor(executor: Any) -> None:
         raise ValueError("%s: побочные эффекты вызовов не совпадают с возможностью" % cap_id)
     if not inspect.iscoroutinefunction(getattr(executor, "run", None)):
         raise ValueError("%s: run должен быть асинхронным методом" % cap_id)
+    validator = getattr(executor, "validate_input", None)
+    if validator is not None and (not callable(validator) or inspect.iscoroutinefunction(validator)):
+        raise ValueError("%s: validate_input должен быть синхронной проверкой без эффектов" % cap_id)
     with _executors_lock:
         if cap_id in _executors:
             raise ValueError("%s: исполнитель уже зарегистрирован" % cap_id)
@@ -894,8 +897,9 @@ def prepare(
 ) -> Tuple[Plan, bool]:
     """Записать план. Возвращает (план, создан_ли_новый).
 
-    Исполнитель НЕ вызывается, ни один внешний вызов не выполняется, номер не
-    резервируется. Тот же ключ идемпотентности с тем же запросом от того же
+    run исполнителя НЕ вызывается, ни один внешний вызов не выполняется, номер не
+    резервируется. Опциональный validate_input только проверяет содержимое без
+    эффектов, до записи плана. Тот же ключ идемпотентности с тем же запросом от того же
     ключа интеграции возвращает существующий план.
 
     Права и условия целевой возможности проверяются здесь же: план для
@@ -908,6 +912,18 @@ def prepare(
     clean_payload, clean_attachments = _validate_input(
         target, payload, attachments, idempotency_key
     )
+    validator = getattr(executor, "validate_input", None)
+    if validator is not None:
+        try:
+            validation_result = validator(clean_payload, clean_attachments, target)
+        except InvalidRequest:
+            raise
+        except Exception:
+            raise InvalidRequest("вход не прошёл проверку исполнителя") from None
+        if validation_result is not None:
+            if inspect.iscoroutine(validation_result):
+                validation_result.close()
+            raise InvalidRequest("проверка исполнителя должна завершаться без результата")
     context = snapshot.public()
     calls = _calls_json(executor)
     policy = target_policy(cap)

@@ -144,7 +144,11 @@ def test_schema_is_closed_and_read_from_the_package():
 def test_knowledge_v1_is_independent_of_the_bundle():
     assert "manual" not in json.dumps(sorted(load().dataset()))
     raw = (PROJECT / "knowledge/src/epgu_knowledge/data/knowledge.v1.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest().startswith("62d0774fe8e7")
+    before = hashlib.sha256(raw).hexdigest()
+    # Loading the separate manual route must not rewrite the editorial guide.
+    load_manual_path()
+    after = (PROJECT / "knowledge/src/epgu_knowledge/data/knowledge.v1.json").read_bytes()
+    assert hashlib.sha256(after).hexdigest() == before
 
 
 def test_interface_copy_is_byte_identical_to_the_bundle():

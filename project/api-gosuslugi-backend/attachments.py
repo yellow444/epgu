@@ -107,7 +107,7 @@ def kind_of(path: Path) -> str:
     return "unknown"
 
 
-# ---------- PDF ----------
+# PDF
 
 
 def _pdf_streams(data: bytes) -> List[bytes]:
@@ -204,7 +204,7 @@ def _pdf_pages(data: bytes) -> int:
     return max(counts) if counts else data.count(b"/Type/Page") or 0
 
 
-# ---------- документы Word и архивы ----------
+# документы Word и архивы
 
 
 def _zip_entries(path: Path) -> List[Dict[str, Any]]:
@@ -241,7 +241,7 @@ def _docx_embedded(path: Path) -> List[Dict[str, Any]]:
     return entries
 
 
-# ---------- разбор и извлечение ----------
+# разбор и извлечение
 
 
 def describe(path: Path) -> Dict[str, Any]:

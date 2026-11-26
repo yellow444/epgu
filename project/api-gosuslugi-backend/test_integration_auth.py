@@ -55,7 +55,7 @@ def bearer(secret):
     return {"Authorization": "Bearer " + secret}
 
 
-# ---------- выпуск и хранение ----------
+# выпуск и хранение
 
 
 def test_create_returns_secret_once_and_db_keeps_only_hash(store):
@@ -150,7 +150,7 @@ def test_default_ttl_is_30_days(store):
     assert span == timedelta(days=30)
 
 
-# ---------- проверка ----------
+# проверка
 
 
 def test_verify_ok_updates_last_used(store):
@@ -231,7 +231,7 @@ def test_disabling_creator_does_not_revoke_credential(store):
     assert integration_auth.list_clients()[0]["status"] == "active"
 
 
-# ---------- утечки секрета ----------
+# утечки секрета
 
 
 def test_secret_never_leaks(client, caplog):
@@ -271,7 +271,7 @@ def test_secret_never_leaks(client, caplog):
     assert secret not in caplog.text and fresh["secret"] not in caplog.text
 
 
-# ---------- зависимость require_integration ----------
+# зависимость require_integration
 
 
 def tiny_app(*scopes):
@@ -334,7 +334,7 @@ def test_cookie_session_does_not_satisfy_require_integration(client):
     assert probe.get("/probe", headers=bearer(client.cookies.get("epgu_session", "x"))).status_code == 401
 
 
-# ---------- административные методы ----------
+# административные методы
 
 
 def test_bearer_token_does_not_authorize_admin_router(client):
@@ -423,7 +423,7 @@ def test_admin_mutations_from_foreign_origin_are_rejected(client):
     assert client.get(ADMIN_URL).json()["integrations"][0]["status"] == "active"
 
 
-# ---------- HTTP-контракт выдачи (настоящее приложение) ----------
+# HTTP-контракт выдачи (настоящее приложение)
 
 PROBLEM = "application/problem+json"
 

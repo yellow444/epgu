@@ -73,7 +73,7 @@ _CREDENTIAL_RE = re.compile(r"[\x21-\x7e]{16,4096}")
 _REDACTED = "***"
 
 
-# ---------- ошибки ----------
+# ошибки
 
 
 class IntegrationError(EpguError):
@@ -190,7 +190,7 @@ _BY_STATUS: Dict[int, Type[ProblemError]] = {
 }
 
 
-# ---------- ответы ----------
+# ответы
 
 
 @dataclass(frozen=True)
@@ -218,7 +218,7 @@ class ExecuteResult:
     result: Optional[Dict[str, Any]] = None
 
 
-# ---------- клиент ----------
+# клиент
 
 
 def _is_loopback(host: str) -> bool:
@@ -292,7 +292,7 @@ class IntegrationClient:
     def __exit__(self, *exc: Any) -> None:
         self.close()
 
-    # --- методы ---------------------------------------------------------
+    # методы
 
     def prepare_plan(self, capability_id: str, target: str, payload: bytes, *,
                      idempotency_key: str,
@@ -370,7 +370,7 @@ class IntegrationClient:
                              detail="ответ %s; сервер мог исполнить план, повтор не "
                                     "выполняется" % status)
 
-    # --- транспорт ------------------------------------------------------
+    # транспорт
 
     def _send(self, method: str, path: str, body: Optional[Dict[str, Any]] = None
               ) -> httpx.Response:

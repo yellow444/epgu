@@ -39,7 +39,7 @@ SENTINEL_API_KEY = "SENTINEL-API-KEY-9c21"
 SCOPES = ("external:prepare", "external:execute")
 
 
-# ---------- общие заготовки (по образцу test_operator_context) ----------
+# общие заготовки (по образцу test_operator_context)
 
 
 @pytest.fixture()
@@ -119,7 +119,7 @@ def b64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
 
 
-# ---------- тестовый исполнитель ----------
+# тестовый исполнитель
 
 
 class MockExecutor:
@@ -274,7 +274,7 @@ def forward(monkeypatch, minutes):
     monkeypatch.setattr(operations, "_clock", lambda: real() + timedelta(minutes=minutes))
 
 
-# ---------- 1. без исполнителя ----------
+# 1. без исполнителя
 
 
 def test_without_executor_prepare_and_execute_are_503(client, monkeypatch):
@@ -307,7 +307,7 @@ def test_executor_removed_after_approve_makes_execute_503_and_keeps_plan(env):
     assert count_plans() == 1
 
 
-# ---------- 2. prepare только записывает план ----------
+# 2. prepare только записывает план
 
 
 def test_prepare_records_a_plan_and_calls_nothing(env):
@@ -346,7 +346,7 @@ def test_prepare_records_a_plan_and_calls_nothing(env):
     assert "operation_plan.prepare" in audit_actions()
 
 
-# ---------- 3. доступ к prepare ----------
+# 3. доступ к prepare
 
 
 def test_prepare_requires_the_prepare_scope_and_a_bearer(env):
@@ -363,7 +363,7 @@ def test_prepare_requires_the_prepare_scope_and_a_bearer(env):
                403, "forbidden")
 
 
-# ---------- 4. идемпотентность ----------
+# 4. идемпотентность
 
 
 def test_idempotency_same_request_returns_the_same_plan(env):
@@ -401,7 +401,7 @@ def test_context_change_between_retries_conflicts_instead_of_reusing(env):
     problem_of(env.client.post(PLANS, json=body, headers=env.headers), 409, "idempotency_conflict")
 
 
-# ---------- просмотр плана ----------
+# просмотр плана
 
 
 def test_machine_view_returns_only_the_own_plan(env):
@@ -420,7 +420,7 @@ def test_machine_view_returns_only_the_own_plan(env):
     assert env.ex.calls() == (0, 0)
 
 
-# ---------- 5. approve ----------
+# 5. approve
 
 
 def test_approve_is_for_a_signed_in_administrator_only(env, monkeypatch):
@@ -544,7 +544,7 @@ def test_operation_capabilities_are_never_in_an_mcp_profile():
         assert items[cap_id]["mcp_profile"] == "none", cap_id
 
 
-# ---------- 6. и 7. execute ----------
+# 6. и 7. execute
 
 
 def test_execute_without_approval_is_plan_state(env):
@@ -575,7 +575,7 @@ def test_execute_after_approve_runs_once_and_replays_the_result(env):
     assert audit_actions().count("operation_plan.finish") == 1
 
 
-# ---------- 8. подмена после одобрения ----------
+# 8. подмена после одобрения
 
 
 @pytest.mark.parametrize("column, value", [
@@ -618,7 +618,7 @@ def test_wrong_plan_hash_in_the_request_is_refused(env):
     assert execute(env, plan).status_code == 200
 
 
-# ---------- 9. смена контекста между approve и execute ----------
+# 9. смена контекста между approve и execute
 
 
 def _stays_approved(env, plan):
@@ -721,7 +721,7 @@ def test_expired_plan_is_410(env, monkeypatch):
     assert row_of(stale["plan_id"])["status"] == "planned"
 
 
-# ---------- 10. барьеры внутри исполнения ----------
+# 10. барьеры внутри исполнения
 
 
 def _variants(env):
@@ -799,7 +799,7 @@ def test_not_sent_from_the_executor_fails_the_plan_without_unknown(env):
     assert env.ex.calls() == (0, 0)
 
 
-# ---------- 11. захват ----------
+# 11. захват
 
 
 def test_two_concurrent_executes_run_the_executor_once(env):
@@ -888,7 +888,7 @@ def test_claim_refuses_when_a_condition_of_the_update_fails(env, what):
     assert row_of(plan["plan_id"])["status"] == "approved"
 
 
-# ---------- 12. сбой после начала send ----------
+# 12. сбой после начала send
 
 
 def test_failure_after_the_send_started_is_unknown_and_never_retried(env):
@@ -942,7 +942,7 @@ def test_outcome_is_only_in_the_unknown_problem(env):
     assert "#/$defs/" not in json.dumps(document)
 
 
-# ---------- 13. обрыв процесса ----------
+# 13. обрыв процесса
 
 
 def test_inflight_after_a_crash_becomes_unknown_never_approved(env):
@@ -1006,7 +1006,7 @@ def test_startup_moves_leftover_inflight_to_unknown(env):
     assert row["status"] == "unknown" and row["error_code"] == "interrupted"
 
 
-# ---------- 14. приватность ----------
+# 14. приватность
 
 
 def test_execution_context_and_plan_reprs_hide_the_session(env):
@@ -1067,7 +1067,7 @@ def test_execute_logs_audit_and_rows_hold_no_secrets(env, monkeypatch, caplog):
     assert PAYLOAD.decode() not in outside and b64(PAYLOAD) not in outside
 
 
-# ---------- проверка входных данных ----------
+# проверка входных данных
 
 
 @pytest.mark.parametrize("over", [
@@ -1125,7 +1125,7 @@ def test_unknown_capability_is_503_not_a_plan(env):
     assert count_plans() == 0
 
 
-# ---------- 15. реестр ----------
+# 15. реестр
 
 _BASE = capabilities.BASE_MACHINE_GATES
 
@@ -1326,7 +1326,7 @@ def test_openapi_describes_the_operation_routes(client):
     assert "get" in spec["/v1/admin/operations/plans/{plan_id}"]
 
 
-# ---------- 16. политика целевой возможности (R8) ----------
+# 16. политика целевой возможности (R8)
 
 
 class OneCallExecutor:
@@ -1494,7 +1494,7 @@ def test_policy_is_part_of_the_plan_hash(env):
     assert env.ex.calls() == (0, 0)
 
 
-# ---------- 17. момент захвата после блокировки (R9) ----------
+# 17. момент захвата после блокировки (R9)
 
 
 def _claim_waits_for_a_writer(monkeypatch, while_waiting):
@@ -1581,7 +1581,7 @@ def test_claim_reads_the_clock_inside_the_transaction(env, monkeypatch):
                                  operator_context.OperatorContext(**stored.context)) == 1
 
 
-# ---------- 18. журнал шагов (R10) ----------
+# 18. журнал шагов (R10)
 
 
 def test_unknown_after_a_reserve_keeps_the_reserve_and_its_reference(env):

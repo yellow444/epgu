@@ -113,7 +113,7 @@ def test_backup_is_skipped_when_there_are_no_keys(sources, monkeypatch, tmp_path
     assert result["keys_backup"] == ""
 
 
-# ---------- Копии ключей ----------
+# Копии ключей
 
 
 def test_backups_are_listed_newest_first(sources, monkeypatch):
@@ -163,30 +163,31 @@ def test_backup_name_is_checked(sources):
             sources.restore_key_backup(bad)
 
 
-# ---------- Запрос на сертификат для удостоверяющего центра ----------
+# Запрос на сертификат для удостоверяющего центра
 
 
+# Учебные данные; обращения к УЦ в этих тестах подменены.
 PROFILE = {
-    "ORG_FULL_NAME": "ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ КВИК РЕСТО",
-    "ORG_INN": "7726734798",
-    "ORG_OGRN": "5137746099046",
-    "CONTACT_NAME": "Ситников Максим Валериевич",
-    "CONTACT_ROLE": "Генеральный директор",
-    "CONTACT_EMAIL": "smev@mirasnowfox.ru",
-    "CONTACT_SNILS": "127-439-029 61",
+    'ORG_FULL_NAME': 'Тестовая организация для примера',
+    'ORG_INN': '9900000000',
+    'ORG_OGRN': '1269900000006',
+    'CONTACT_NAME': 'Иванов Иван Иванович',
+    'CONTACT_ROLE': 'Тестовый контакт',
+    'CONTACT_EMAIL': 'operator@example.invalid',
+    'CONTACT_SNILS': '99900000014',
 }
 
 
 def test_request_name_is_built_from_the_profile(sources):
     rdn = sources.request_rdn(PROFILE)
 
-    assert rdn.startswith("CN=ОБЩЕСТВО С ОГРАНИЧЕННОЙ")
-    assert "INN=7726734798" in rdn
-    assert "OGRN=5137746099046" in rdn
-    assert "SNILS=127-439-029 61" in rdn
-    # Фамилия и имя идут отдельными полями, как в сертификате от УЦ РТК.
-    assert "SN=Ситников" in rdn
-    assert "G=Максим Валериевич" in rdn
+    assert rdn.startswith("CN=Тестовая организация для примера")
+    assert "INN=9900000000" in rdn
+    assert "OGRN=1269900000006" in rdn
+    assert "SNILS=99900000014" in rdn
+    # Фамилия и имя идут отдельными полями сертификата.
+    assert "SN=Иванов" in rdn
+    assert "G=Иван Иванович" in rdn
     assert rdn.endswith("C=RU")
 
 
@@ -237,7 +238,7 @@ def test_error_text_explains_entropy_failure(sources):
     assert "уже есть" in sources._request_error("Error: Object already exists 0x8009000F")
 
 
-# ---------- Доверие тестовому удостоверяющему центру ----------
+# Доверие тестовому удостоверяющему центру
 
 
 def test_ca_roots_are_installed_into_their_stores(sources, monkeypatch):

@@ -59,7 +59,7 @@ def objects(schema: Any) -> list[dict[str, Any]]:
     return found
 
 
-# ------------------------------------------------------------ сам каталог
+# сам каталог
 
 def test_catalog_has_exactly_the_three_target_tools_and_none_is_available():
     assert {t.name for t in TARGET_TOOLS} == NAMES == RESERVED_NAMES
@@ -167,7 +167,7 @@ def test_targets_follow_the_capability_registry_and_stay_off():
     assert not admin & {t.capability_id for t in TARGET_TOOLS}
 
 
-# ------------------------------------------------------------ реестр и сервер
+# реестр и сервер
 
 def plan_spec(name: str, profile: str) -> ToolSpec:
     read_only = profile != "operate"

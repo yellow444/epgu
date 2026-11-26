@@ -77,7 +77,7 @@ _ADMIN_PLAN_PROBLEMS: Dict[int, Dict[str, Any]] = {
 }
 
 
-# ---------- модели ----------
+# модели
 
 
 class AttachmentIn(BaseModel):
@@ -185,7 +185,7 @@ class ExecuteOut(BaseModel):
     result: Optional[Dict[str, Any]] = None
 
 
-# ---------- перевод ошибок ----------
+# перевод ошибок
 
 
 def _v1(err: operations.OperationError) -> V1Error:
@@ -220,7 +220,7 @@ def _principal(request: Request):
     return request.state.integration
 
 
-# ---------- машинные маршруты ----------
+# машинные маршруты
 
 
 def machine_router() -> APIRouter:
@@ -293,7 +293,7 @@ def machine_router() -> APIRouter:
     return router
 
 
-# ---------- человеческие маршруты ----------
+# человеческие маршруты
 
 
 def _no_store(response: Response) -> None:

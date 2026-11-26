@@ -89,7 +89,7 @@ def ready_page(count=1):
     }
 
 
-# --- распорядок ---------------------------------------------------------
+# распорядок
 
 
 @pytest.mark.asyncio
@@ -193,7 +193,7 @@ async def test_old_job_is_marked_expired_without_asking(scheduler):
     assert geps_store.get_job(old_job["id"])["state"] == geps_store.STATE_EXPIRED
 
 
-# --- лимиты -------------------------------------------------------------
+# лимиты
 
 
 @pytest.mark.asyncio
@@ -237,7 +237,7 @@ async def test_attempt_is_spent_even_if_the_call_fails(scheduler):
     assert geps_quota.used("search") == 1
 
 
-# --- выключатель --------------------------------------------------------
+# выключатель
 
 
 def test_automatic_mode_is_off_until_switched_on(scheduler):

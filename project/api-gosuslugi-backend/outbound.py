@@ -116,7 +116,7 @@ def _admit(request: Request) -> Optional[Response]:
     return None
 
 
-# ---------- преобразование записей ----------
+# преобразование записей
 
 
 def _public_message(record: Dict[str, Any], *, with_detail: bool) -> Dict[str, Any]:
@@ -254,7 +254,7 @@ def _select(
     return records[offset : offset + limit], len(records)
 
 
-# ---------- маршруты ----------
+# маршруты
 
 
 @app.get("/health")

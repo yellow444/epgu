@@ -344,7 +344,7 @@ test('decodeBase64 rejects broken input instead of returning empty bytes', () =>
   expect(Array.from(decodeBase64(BINARY.toString('base64')))).toEqual(Array.from(BINARY));
 });
 
-// ---------- полнота предпросмотра ----------
+// полнота предпросмотра
 
 const meta = (name, bytes) => ({ name, sha256: sha(bytes), size: bytes.length });
 const content = (name, bytes) => ({ ...meta(name, bytes), content_b64: bytes.toString('base64') });
@@ -398,7 +398,7 @@ test('two attachments in the declared order are shown and can be approved', asyn
   expect(approveCalls(calls)).toHaveLength(1);
 });
 
-// ---------- подтверждение одобрения ----------
+// подтверждение одобрения
 
 const reply = (body) => () => ({ ok: true, status: 200, json: async () => body });
 const approvedView = (over = {}) => planView({ status: 'approved', approved_by: ADMIN.id, approved_at: 'now', ...over });
@@ -432,7 +432,7 @@ test.each([
   expect(planCalls(calls).map((call) => call.method)).toEqual(['GET', 'POST', 'GET']);
 });
 
-// ---------- смена рабочего контекста ----------
+// смена рабочего контекста
 
 test('a context change on the same account drops the preview until an explicit reload', async () => {
   const { calls } = installServer();
@@ -488,7 +488,7 @@ test('an approval answer after a context change does not bring the old preview b
   expect(approveCalls(calls)).toHaveLength(1);
 });
 
-// ---------- Итог исполнения ----------
+// Итог исполнения
 
 const step = (name, state, extra = {}) => ({ name, state, ...extra });
 const NO_RETRY = /Повтор|Исполнить|Запустить/i;
@@ -675,7 +675,7 @@ test.each([
   else expect(approve).not.toBeInTheDocument();
 });
 
-// ---------- Код конфликта с сервера ----------
+// Код конфликта с сервера
 
 test.each(['constructor', 'toString', '__proto__', 'hasOwnProperty', 'unknown_code'])(
   'a 409 with the code %s shows the server detail as text',

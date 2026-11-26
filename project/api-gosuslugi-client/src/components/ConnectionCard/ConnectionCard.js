@@ -82,12 +82,12 @@ export default function ConnectionCard() {
               <Paragraph strong className="connection-card-summary">{rule.summary}</Paragraph>
               <Paragraph className="connection-card-next">{rule.next_step}</Paragraph>
             </div>
-            <Text type="secondary">Основание — ваши отметки, без проверки системой.</Text>
+            <Text type="secondary">Результат рассчитан по вашим отметкам. Система их не проверяла.</Text>
             <div className="connection-card-links">
               <a href={`#guide/${rule.reference.route}/${rule.reference.node}`} target="_blank" rel="noopener noreferrer"
-                title="В новой вкладке — ваши отметки останутся здесь">Открыть узел маршрута</a>
+                title="Откроется в новой вкладке. Ваши отметки останутся здесь.">Открыть узел маршрута</a>
               <a href="#manual" target="_blank" rel="noopener noreferrer"
-                title="В новой вкладке — ваши отметки останутся здесь">Открыть ручную подготовку</a>
+                title="Откроется в новой вкладке. Ваши отметки останутся здесь.">Открыть ручную подготовку</a>
             </div>
             {assessment.unknown_facts.length > 0 && <details className="connection-card-details">
               <summary>Неизвестных отметок: {assessment.unknown_facts.length}</summary>
@@ -112,7 +112,7 @@ export default function ConnectionCard() {
               <h3 id="connection-facts-heading">Ваши отметки</h3>
               <Button size="small" onClick={reset}>Сбросить отметки</Button>
             </div>
-            <Paragraph type="secondary">Если не знаете — оставьте «Не проверено / неизвестно».</Paragraph>
+            <Paragraph type="secondary">Если не знаете, оставьте «Не проверено / неизвестно».</Paragraph>
             {goal.facts.map((id) => {
               const fact = FACTS.get(id);
               return <div key={id} className="connection-card-fact">

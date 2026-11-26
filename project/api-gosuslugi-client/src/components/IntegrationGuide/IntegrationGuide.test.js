@@ -123,7 +123,7 @@ describe('data origin', () => {
     global.fetch.mockImplementation(() => Promise.reject(new Error('offline')));
     render(<IntegrationGuide />);
     expect(screen.getByText('Встроенная копия')).toBeInTheDocument();
-    expect(screen.getByText(`Сверка: ${bundled.dataset.reviewed_at}`)).toBeInTheDocument();
+    expect(screen.getByText(`Срез гайда: ${bundled.dataset.reviewed_at}`)).toBeInTheDocument();
     expect(await screen.findByText(/сервер недоступен/)).toBeInTheDocument();
     expect(screen.getByText('Встроенная копия')).toBeInTheDocument();
     expect(screen.queryByText('Данные сервера')).not.toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('data origin', () => {
     global.fetch.mockImplementation(() => Promise.resolve(okResponse(data)));
     render(<IntegrationGuide />);
     expect(await screen.findByText('Данные сервера')).toBeInTheDocument();
-    expect(screen.getByText('Сверка: 2027-01-15')).toBeInTheDocument();
+    expect(screen.getByText('Срез гайда: 2027-01-15')).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Серверный входной шаг' })).toBeInTheDocument();
     expect(screen.queryByText('Встроенная копия')).not.toBeInTheDocument();
   });

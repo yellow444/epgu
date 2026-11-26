@@ -143,7 +143,7 @@ class OperatorContext:
         }
 
 
-# ---------- схема ----------
+# схема
 
 _ensured_for: Optional[str] = None
 
@@ -172,7 +172,7 @@ def _ensure() -> None:
         _ensured_for = current
 
 
-# ---------- привязка ----------
+# привязка
 
 
 def _validate(organization_ref: Any, is_ref: Any, contour: Any, thumbprint: Any) -> Dict[str, Any]:
@@ -275,7 +275,7 @@ def clear_binding(by: str) -> bool:
     return removed
 
 
-# ---------- живое состояние ----------
+# живое состояние
 
 _provider: Optional[Callable[[], LiveState]] = None
 

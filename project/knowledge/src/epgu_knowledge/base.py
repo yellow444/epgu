@@ -84,7 +84,7 @@ class KnowledgeBase:
             if isinstance(note, dict) and isinstance(note.get("id"), str):
                 self._notes.setdefault(note["id"], note)
 
-    # ------------------------------------------------------------------ чтение
+    # чтение
 
     @property
     def content_sha256(self) -> str:
@@ -176,7 +176,7 @@ class KnowledgeBase:
     def list_notes(self) -> list:
         return [copy.deepcopy(n) for n in self._notes.values()]
 
-    # ------------------------------------------------------------------ поиск
+    # поиск
 
     def _encode_cursor(self, offset: int, qkey: str) -> str:
         payload = f"{offset}:{self._hash[:16]}:{qkey}"
@@ -309,7 +309,7 @@ class KnowledgeBase:
         nxt = self._encode_cursor(offset + limit, qkey) if offset + limit < len(hits) else None
         return {"items": page, "next_cursor": nxt}
 
-    # ------------------------------------------------------------------ проверка
+    # проверка
 
     def validate(self) -> list:
         from jsonschema import Draft202012Validator

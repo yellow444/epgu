@@ -1,3 +1,28 @@
+.integration-guide,
+.integration-guide .ant-space,
+.integration-guide .ant-space-item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.integration-guide .ant-btn {
+  max-width: 100%;
+  min-height: 32px;
+  height: auto;
+  white-space: normal;
+}
+
+.integration-guide .ant-btn > span,
+.integration-guide .ant-tag {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.integration-guide .ant-card-head-title {
+  white-space: normal;
+}
+
 .integration-chart-scroll {
   max-width: 100%;
   overflow-x: auto;

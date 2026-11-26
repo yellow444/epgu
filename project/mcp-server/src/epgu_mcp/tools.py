@@ -149,7 +149,7 @@ _CAPABILITIES_OUT = _obj(
 )
 
 
-# ----------------------------------------------------------------- снимок
+# снимок
 
 @lru_cache(maxsize=1)
 def _snapshot() -> dict[str, Any]:
@@ -162,7 +162,7 @@ def load_snapshot() -> dict[str, Any]:
     return json.loads(json.dumps(_snapshot()))
 
 
-# ----------------------------------------------------------------- tools
+# tools
 
 def _wrap(fn: Callable[[], Any]) -> Any:
     """Перевести ошибки пакета знаний в ToolError."""

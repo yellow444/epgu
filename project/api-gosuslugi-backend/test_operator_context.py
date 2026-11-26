@@ -112,7 +112,7 @@ def problem_of(response, status, code):
     return body
 
 
-# ---------- доступ к машинному маршруту ----------
+# доступ к машинному маршруту
 
 
 def test_no_bearer_is_401_problem_with_www_authenticate(client, monkeypatch):
@@ -164,7 +164,7 @@ def test_revoked_credential_is_401_on_the_next_call(ready):
     problem_of(client.get(CONTEXT_URL, headers=bearer(key["secret"])), 401, "unauthenticated")
 
 
-# ---------- контекст недоступен ----------
+# контекст недоступен
 
 
 def _unavailable(client, key, reason):
@@ -234,7 +234,7 @@ def test_unavailable_binding_test_vs_live_prod(client, monkeypatch):
     _unavailable(client, issue(), "contour_mismatch")
 
 
-# ---------- контекст ключа не совпадает ----------
+# контекст ключа не совпадает
 
 
 MISMATCH_DETAIL = "контекст ключа не совпадает с контекстом оператора"
@@ -259,7 +259,7 @@ def test_context_mismatch(client, monkeypatch, binding_is, key_context):
     assert key["secret"] not in response.text
 
 
-# ---------- успех ----------
+# успех
 
 
 def test_success_returns_exact_fields_and_no_secrets(ready):
@@ -332,7 +332,7 @@ def test_certificate_switch_through_real_route_and_session_clear(ready, monkeypa
     assert body["detail"] == "no_certificate"
 
 
-# ---------- привязка оператора по HTTP ----------
+# привязка оператора по HTTP
 
 
 def _binding_body(**over):
@@ -512,7 +512,7 @@ def test_binding_change_takes_effect_on_the_next_call(ready):
     assert body["detail"] == "no_binding"
 
 
-# ---------- секреты и приватность ----------
+# секреты и приватность
 
 
 def test_operator_context_has_no_secret_fields_and_safe_repr(monkeypatch):
@@ -557,7 +557,7 @@ def test_success_path_logs_no_secrets(ready, caplog):
         assert secret not in caplog.text
 
 
-# ---------- согласованность реестра и маршрутов ----------
+# согласованность реестра и маршрутов
 
 
 def _mounted():
@@ -661,7 +661,7 @@ def test_require_machine_accepts_only_enforced_capabilities(monkeypatch):
         machine_api.require_machine("private.target")
 
 
-# ---------- проверки записи реестра ----------
+# проверки записи реестра
 
 
 def _cap(**kwargs):
@@ -741,7 +741,7 @@ def test_valid_machine_declarations_are_accepted():
     assert _cap(effect="admin").machine == "none"
 
 
-# ---------- R6: условия допуска fail-closed ----------
+# R6: условия допуска fail-closed
 
 _BASE = capabilities.BASE_MACHINE_GATES
 PROBE_URL = "/v1/operator/probe"
@@ -887,7 +887,7 @@ def test_every_machine_route_depends_on_its_own_capability():
     assert checked == len(auth_api.machine_endpoints) >= 1
 
 
-# ---------- R7: побочные эффекты и разрешения только на чтение ----------
+# R7: побочные эффекты и разрешения только на чтение
 
 _READ = sorted(capabilities.READ_SCOPES)
 _READ_COMBOS = [combo for size in (1, 2, 3) for combo in itertools.combinations(_READ, size)]

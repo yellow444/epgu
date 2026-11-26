@@ -49,7 +49,7 @@ def snapshot(registry):
     return [(s.name, id(s)) for s in registry.specs()]
 
 
-# ------------------------------------------------------------------ F1
+# F1
 
 def test_extension_gets_no_remove_access(monkeypatch, registry):
     before = snapshot(registry)
@@ -132,7 +132,7 @@ def test_merge_is_atomic():
     assert reg.names() == ["x"]
 
 
-# ------------------------------------------------------------------ F2
+# F2
 
 def _write(tmp_path, data, name="ds.json"):
     p = tmp_path / name
@@ -172,7 +172,7 @@ def test_invalid_dataset_exits_3_before_serving(raw, tmp_path, case):
     assert str(tmp_path) not in text, "локальный путь не выводится"
 
 
-# ------------------------------------------------------------------ F3
+# F3
 
 def _search_schema():
     tool = next(t for t in build_core_tools(load_knowledge()) if t.name == "knowledge_search")
@@ -227,7 +227,7 @@ def test_query_201_over_mcp_is_schema_error():
     anyio.run(main)
 
 
-# ------------------------------------------------------------------ логи
+# логи
 
 def test_debug_log_has_no_argument_values(caplog):
     server = build_server(build_registry("knowledge", load_knowledge()))

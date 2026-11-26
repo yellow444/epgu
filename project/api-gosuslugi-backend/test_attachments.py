@@ -46,7 +46,7 @@ def make_zip(entries) -> bytes:
     return buffer.getvalue()
 
 
-# --- определение типа ----------------------------------------------------
+# определение типа
 
 
 @pytest.mark.parametrize(
@@ -75,7 +75,7 @@ def test_docx_and_zip_are_told_apart(tmp_path):
     assert attachments.kind_of(archive) == "archive"
 
 
-# --- PDF ------------------------------------------------------------------
+# PDF
 
 
 def test_pdf_text_and_links_are_extracted(tmp_path):
@@ -114,7 +114,7 @@ def test_pdf_with_embedded_file_is_reported(tmp_path):
     assert result["entries"][0]["size"] > 0
 
 
-# --- документы и архивы ---------------------------------------------------
+# документы и архивы
 
 
 def test_docx_text_and_embedded_objects(tmp_path):

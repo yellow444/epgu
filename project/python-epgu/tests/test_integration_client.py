@@ -1,6 +1,6 @@
 """IntegrationClient: транспорт, ошибки и неизвестный исход на mock-транспорте.
 
-Сквозной цикл client -> backend -> mock executor лежит в тестах backend
+Сквозной цикл client затем backend затем mock executor лежит в тестах backend
 (``test_integration_client_cycle.py``): здесь backend нет.
 """
 
@@ -66,7 +66,7 @@ def client_with(*responses, **kwargs):
                              **kwargs), recorder
 
 
-# ---------- запрос ----------
+# запрос
 
 
 def test_prepare_sends_the_exact_request_with_bearer_and_no_cookie():
@@ -117,7 +117,7 @@ def test_there_is_no_approve_and_the_upstream_client_is_untouched():
     assert not hasattr(EpguClient, "prepare_plan") and not hasattr(EpguClient, "execute_plan")
 
 
-# ---------- настройка ----------
+# настройка
 
 
 @pytest.mark.parametrize("url", [
@@ -159,7 +159,7 @@ def test_plan_id_is_checked_before_any_request(plan_id):
     assert rec.requests == []
 
 
-# ---------- ошибки problem+json ----------
+# ошибки problem+json
 
 
 @pytest.mark.parametrize("status,code,kind", [
@@ -194,7 +194,7 @@ def test_error_without_problem_json_is_unexpected():
         api.get_plan(PLAN_ID)
 
 
-# ---------- неизвестный исход ----------
+# неизвестный исход
 
 
 def test_unknown_with_outcome_gives_the_server_lists():
@@ -268,7 +268,7 @@ def test_connect_error_did_not_reach_the_server():
     assert err.value.may_have_reached_server is False
 
 
-# ---------- редиректы ----------
+# редиректы
 
 
 def test_redirect_to_another_origin_is_not_followed():
@@ -281,7 +281,7 @@ def test_redirect_to_another_origin_is_not_followed():
         api.execute_plan(PLAN_ID, HASH)
     assert [r.url.host for r in rec.requests] == ["backend.test", "backend.test"]
 
-# ---------- срез 4a, вторая редакция: замечания R11-R14 ----------
+# срез 4a, вторая редакция: замечания R11-R14
 
 
 OTHER_ID = "plan_" + "2" * 32

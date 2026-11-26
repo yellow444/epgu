@@ -214,7 +214,7 @@ def test_forwarded_address_is_believed_only_from_our_proxy(client, monkeypatch):
     assert read_journal(client.journal)[-1]["client"] == "8.8.8.8"
 
 
-# ---------- Проверка внешнего адреса ----------
+# Проверка внешнего адреса
 
 
 def operator_client(monkeypatch, tmp_path):
@@ -314,7 +314,7 @@ def test_public_check_reports_a_foreign_answer(monkeypatch, tmp_path):
     assert any("не привёл" in hint for hint in payload["hints"])
 
 
-# ---------- Проба произвольного пути ----------
+# Проба произвольного пути
 
 
 def test_probe_answers_on_any_path(client):

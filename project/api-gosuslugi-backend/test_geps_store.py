@@ -67,7 +67,7 @@ def detail(message_uuid="91160bbb-f997-11ef-8080-808080808080", **changes):
     return card
 
 
-# --- заявки ------------------------------------------------------------
+# заявки
 
 
 def test_job_lives_through_its_states(store):
@@ -103,7 +103,7 @@ def test_update_of_unknown_job_returns_nothing(store):
     assert store.update_job("нет такого", state=store.STATE_READY) is None
 
 
-# --- уведомления --------------------------------------------------------
+# уведомления
 
 
 def test_messages_are_stored_once_and_counted(store):
@@ -151,7 +151,7 @@ def test_detail_for_unknown_message_creates_the_record(store):
     assert store.counts()["messages"] == 1
 
 
-# --- вложения -----------------------------------------------------------
+# вложения
 
 
 def test_attachment_is_written_and_remembered(store):
@@ -215,7 +215,7 @@ def test_attachment_of_unknown_message_still_lands_on_disk(store):
     assert saved["path"].endswith("file.pdf")
 
 
-# --- устойчивость и очистка ---------------------------------------------
+# устойчивость и очистка
 
 
 def test_broken_file_does_not_break_the_listing(store):

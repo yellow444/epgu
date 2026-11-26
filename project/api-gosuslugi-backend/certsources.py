@@ -318,7 +318,7 @@ def restore_key_backup(name: str) -> Dict[str, Any]:
     return {"restored": restored, "skipped": skipped, "backup": clean}
 
 
-# ---------- Запрос на сертификат для удостоверяющего центра ----------
+# Запрос на сертификат для удостоверяющего центра
 
 CRYPTCP = "/opt/cprocsp/bin/amd64/cryptcp"
 

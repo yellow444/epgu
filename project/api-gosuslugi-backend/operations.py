@@ -13,11 +13,11 @@ fixture. Без исполнителя prepare и execute отвечают 503 `
 2. ``approve`` выполняет человек (администратор по обычной сессии) после
    точного предпросмотра. Хеш плана пересчитывается из сохранённых байтов.
 3. ``execute`` проверяет одобрение, целостность, ключ, контекст и версию
-   привязки, затем одной транзакцией захватывает план (approved -> inflight)
+   привязки, затем одной транзакцией захватывает план (approved затем inflight)
    и только после захвата вызывает исполнитель.
 
 Статусы: planned, approved, inflight, succeeded, failed, unknown. Разрешены
-только переходы planned -> approved -> inflight -> succeeded|failed|unknown;
+только переходы planned затем approved затем inflight затем succeeded|failed|unknown;
 остальные отклоняет и триггер базы. inflight никогда не возвращается в
 approved: после обрыва процесса ``recover_inflight`` переводит его в unknown.
 
@@ -159,7 +159,7 @@ END;
 """
 
 
-# ---------- ошибки ----------
+# ошибки
 
 
 class OperationError(Exception):
@@ -316,7 +316,7 @@ class ContextChanged(ExecutionAborted):
     label = "контекст оператора изменился"
 
 
-# ---------- исполнители ----------
+# исполнители
 
 
 @dataclass(frozen=True)
@@ -423,7 +423,7 @@ def _calls_json(executor: Any) -> List[Dict[str, Any]]:
     ]
 
 
-# ---------- политика целевой возможности ----------
+# политика целевой возможности
 
 # Условия целевой возможности, которые конвейер плана действительно проверяет:
 # базовые (ключ, привязка, сертификат, контур, контекст) и is_bound. Любое
@@ -478,7 +478,7 @@ def _require_scopes(
         raise ScopeMissing()
 
 
-# ---------- сессия и контекст исполнения ----------
+# сессия и контекст исполнения
 
 _session_provider: Optional[Callable[[], Any]] = None
 
@@ -616,7 +616,7 @@ class ExecutionContext:
         return self._provider()
 
 
-# ---------- схема ----------
+# схема
 
 _ensured_for: Optional[str] = None
 
@@ -645,7 +645,7 @@ def _ensure() -> None:
         _ensured_for = current
 
 
-# ---------- хеши ----------
+# хеши
 
 
 def _digest(value: Any) -> str:
@@ -694,7 +694,7 @@ def _plan_hash(plan_id: str, expires_at: str, body: Dict[str, Any]) -> str:
     return _digest({**body, "plan_id": plan_id, "expires_at": expires_at})
 
 
-# ---------- план ----------
+# план
 
 
 @dataclass(frozen=True, repr=False)
@@ -836,7 +836,7 @@ def admin_view(plan: Plan) -> Dict[str, Any]:
     }
 
 
-# ---------- prepare ----------
+# prepare
 
 
 def _executor_for(capability_id: Any) -> Tuple[Any, capabilities.Capability]:
@@ -991,7 +991,7 @@ def prepare(
         return plan, True
 
 
-# ---------- approve ----------
+# approve
 
 
 def approve(plan_id: str, plan_hash: str, account_id: str) -> Plan:
@@ -1040,7 +1040,7 @@ def approve(plan_id: str, plan_hash: str, account_id: str) -> Plan:
         return approved
 
 
-# ---------- захват и завершение ----------
+# захват и завершение
 
 
 def claim_plan(
@@ -1049,7 +1049,7 @@ def claim_plan(
     client_id: str,
     context: operator_context.OperatorContext,
 ) -> int:
-    """Точка захвата: approved -> inflight одной транзакцией. Возвращает rowcount.
+    """Точка захвата: approved затем inflight одной транзакцией. Возвращает rowcount.
 
     Условия в самом UPDATE: план этого ключа, статус approved, хеш одобрения,
     срок плана, версия и значения привязки, ключ не отозван и не истёк. Из двух конкурентных
@@ -1108,7 +1108,7 @@ def _explain_claim_failure(plan_id: str, client_id: str) -> OperationError:
     return ContextChanged("binding_changed")
 
 
-# ---------- журнал шагов ----------
+# журнал шагов
 
 _REFERENCE_RE = re.compile(r"[A-Za-z0-9._:/-]{1,128}")
 
@@ -1229,7 +1229,7 @@ def _finish(
     result: Optional[Dict[str, Any]] = None,
     not_sent: bool = False,
 ) -> Dict[str, List[str]]:
-    """Завершение отдельной транзакцией: inflight -> succeeded, failed или unknown.
+    """Завершение отдельной транзакцией: inflight затем succeeded, failed или unknown.
 
     Для failed и unknown результат собирается из журнала шагов той же
     транзакцией. Возвращает этот отчёт (completed_calls, uncertain_calls).
@@ -1259,7 +1259,7 @@ def _finish(
 
 
 def recover_inflight() -> int:
-    """Все inflight -> unknown (``interrupted``). Вызывается при старте приложения.
+    """Все inflight затем unknown (``interrupted``). Вызывается при старте приложения.
 
     В approved такой план не возвращается никогда: внешний вызов мог быть
     принят. Результатом становится отчёт журнала шагов: известные завершённые
@@ -1286,7 +1286,7 @@ def recover_inflight() -> int:
     return len(rows)
 
 
-# ---------- execute ----------
+# execute
 
 
 def _replay(plan: Plan) -> Dict[str, Any]:
@@ -1305,7 +1305,7 @@ async def execute(
     if not _any_executor():
         raise ExecutorUnavailable()
     _ensure()
-    # ---- до захвата: ни одного await ----
+    # до захвата: ни одного await
     plan = get_plan(plan_id)
     if plan is None or plan.client_id != principal.id:
         raise PlanNotFound()
@@ -1344,7 +1344,7 @@ async def execute(
     if claim_plan(plan.id, plan.approved_hash, principal.id, snapshot) != 1:
         raise _explain_claim_failure(plan.id, principal.id)
 
-    # ---- план захвачен: дальше только исполнитель ----
+    # план захвачен: дальше только исполнитель
     known = tuple(call["name"] for call in plan.external_calls)
     ctx = ExecutionContext(
         plan.id, plan.client_id, snapshot, _provider=_session_provider,

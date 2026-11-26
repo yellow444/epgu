@@ -23,7 +23,7 @@ def test_list_routes_shape_and_order(kb, raw_data):
     assert [r["id"] for r in routes] == [r["id"] for r in raw_data["routes"]]
     assert set(routes[0]) == {"id", "title", "summary", "domain", "coverage",
                               "entry_node", "node_count"}
-    assert sum(r["node_count"] for r in routes) == 51
+    assert sum(r["node_count"] for r in routes) == sum(len(r["nodes"]) for r in raw_data["routes"])
 
 
 def test_get_route_and_node(kb):
@@ -52,7 +52,7 @@ def test_not_found(kb):
 
 def test_sources(kb):
     allsrc = kb.list_sources()
-    assert len(allsrc) == 28
+    assert len(allsrc) == kb.meta()["counts"]["sources"]
     official = kb.list_sources("official")
     assert official and all(s["officiality"] == "official" for s in official)
     with pytest.raises(ValueError):
@@ -66,10 +66,10 @@ def test_sources(kb):
 
 def test_notes(kb):
     notes = kb.list_notes()
-    assert [n["id"] for n in notes] == [f"note-{i:02d}" for i in range(1, 10)]
+    assert [n["id"] for n in notes] == [f"note-{i:02d}" for i in range(1, kb.meta()["counts"]["notes"] + 1)]
 
 
-# --- поиск -------------------------------------------------------------------
+# поиск
 
 def test_search_case_insensitive(kb):
     a = kb.search("регламент", limit=50)
@@ -214,7 +214,7 @@ def test_cursor_from_different_dataset(kb, write_dataset):
         other.search("api", limit=2, cursor=cursor)
 
 
-# --- копии -------------------------------------------------------------------
+# копии
 
 def test_results_are_copies(kb):
     r = kb.get_route("epgu-vendor")
@@ -235,7 +235,7 @@ def test_results_are_copies(kb):
     assert "x" not in kb.list_routes()[0]["coverage"]["capabilities"]
 
     kb.list_sources().clear()
-    assert len(kb.list_sources()) == 28
+    assert len(kb.list_sources()) == kb.meta()["counts"]["sources"]
     kb.get_source("apiSpec")["used_by"].clear()
     assert kb.get_source("apiSpec")["used_by"]
     kb.list_notes()[0]["sources"].append("x")

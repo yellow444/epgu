@@ -36,14 +36,15 @@ def test_validate_is_empty(kb):
 
 def test_counts(kb):
     counts = kb.meta()["counts"]
-    assert counts == {"routes": 10, "nodes": 51, "sources": 28, "notes": 9}
+    assert counts == {"routes": 10, "nodes": 57, "sources": 32, "notes": 13}
 
 
 def test_officiality_mapping_is_exact(raw_data):
     for src in raw_data["sources"]:
         assert OFFICIALITY_MAP[src["kind_label"]] == src["officiality"]
         assert src["url"].startswith("https://")
-        assert src["version"] is None and src["sha256"] is None
+        if src["sha256"] is not None:
+            assert re.fullmatch(r"[0-9a-f]{64}", src["sha256"])
 
 
 def test_coverage_table(raw_data):
@@ -71,10 +72,14 @@ def test_empty_warning_is_null(raw_data):
 def test_provenance(kb):
     ds = kb.meta()["dataset"]
     assert re.fullmatch(r"[0-9a-f]{64}", ds["generated_from"]["sha256"])
-    assert ds["reviewed_at"] == "2026-10-23"
+    assert ds["reviewed_at"] == "2026-11-26"
+    assert kb.get_source("apiSpec")["version"] == "1.15"
+    assert kb.get_source("esia")["version"] == "3.66"
+    # The editorial date must not silently re-date unrelated older sources.
+    assert kb.get_source("legacyVendor")["checked_at"] == "2026-10-23"
 
 
-# --- ссылочная целостность на повреждённых наборах ---------------------------
+# ссылочная целостность на повреждённых наборах
 
 def _errors(path):
     return load(path, validate=False).validate()
@@ -163,7 +168,7 @@ def test_load_is_cached(write_dataset):
     assert epgu_knowledge.load() is epgu_knowledge.load()
 
 
-# --- отсутствие секретов и персональных данных --------------------------------
+# отсутствие секретов и персональных данных
 
 SECRET_PATTERNS = {
     "PIN со значением": re.compile(r"\bPIN\b\s*(?:[:=]\s*\S|\d{4})"),

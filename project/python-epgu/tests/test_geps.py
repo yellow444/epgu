@@ -27,7 +27,7 @@ def day_before(end=NOW):
     return geps.SearchRange(start=end - timedelta(days=1), end=end)
 
 
-# --- заказ списка ------------------------------------------------------
+# заказ списка
 
 
 def test_search_sends_documented_payload_and_returns_task():
@@ -92,7 +92,7 @@ def test_search_never_leaves_the_range_unchecked():
     assert calls == []
 
 
-# --- получение готового списка -----------------------------------------
+# получение готового списка
 
 
 def test_result_reports_not_ready_without_failing():
@@ -173,7 +173,7 @@ def test_task_uuid_is_validated_before_the_request():
     assert calls == []
 
 
-# --- карточка уведомления ----------------------------------------------
+# карточка уведомления
 
 
 def test_message_parses_card_with_attachments_and_statuses():
@@ -247,7 +247,7 @@ def test_message_uuids_are_validated():
     assert calls == []
 
 
-# --- вложения ------------------------------------------------------------
+# вложения
 
 
 def test_attachment_downloads_file_and_takes_name_from_headers():
@@ -313,7 +313,7 @@ def test_unknown_file_type_is_refused():
         geps.attachment_path(MESSAGE, ATTACHMENT, "everything")
 
 
-# --- ошибки сервиса ------------------------------------------------------
+# ошибки сервиса
 
 
 def test_service_error_is_raised_with_its_code():

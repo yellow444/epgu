@@ -37,7 +37,7 @@ test('does not prefill a support recipient', () => {
   );
 });
 
-// ---------- Один канон: всё на экране приходит из набора manual_path ----------
+// Один канон: всё на экране приходит из набора manual_path
 
 test('the interface copy is byte-identical to the canonical bundle', () => {
   const project = path.resolve(__dirname, '../../../..');

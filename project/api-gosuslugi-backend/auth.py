@@ -61,7 +61,7 @@ class Account:
         }
 
 
-# ---------- пароли ----------
+# пароли
 
 
 def check_password_policy(password: str) -> None:
@@ -114,7 +114,7 @@ def _dummy_hash() -> str:
     return _DUMMY_HASH
 
 
-# ---------- ограничение попыток ----------
+# ограничение попыток
 
 
 class LoginThrottle:
@@ -161,7 +161,7 @@ class LoginThrottle:
 throttle = LoginThrottle()
 
 
-# ---------- аккаунты ----------
+# аккаунты
 
 
 def _row_to_account(row) -> Account:
@@ -351,7 +351,7 @@ def disable_account(account_id: str, by: str = "") -> None:
     set_disabled(account_id, True, by=by)
 
 
-# ---------- сессии ----------
+# сессии
 
 
 def session_ttl_seconds() -> int:

@@ -8,7 +8,7 @@
 
 | Структура | Тип | Описание | Время жизни |
 |---|---|---|---|
-| `CERTIFICATES` | `dict[str, pycades.Certificate]` | thumbprint -> объект сертификата; пусто в core runtime без CSP | до рестарта |
+| `CERTIFICATES` | `dict[str, pycades.Certificate]` | сопоставление thumbprint с объектом сертификата; пусто в core runtime без CSP | до рестарта |
 | `CURRENT_CERT_ID` | `str \| None` | активный сертификат | до рестарта |
 | `ACCESS_TKN_ESIA` | `str` | JWT от ЕСИА | до рестарта / нового вызова |
 | `ACCESS_TKN_EXP` | `int` | unix-timestamp срока действия JWT (`exp`); `0` - неизвестен | пересчитывается при получении токена |

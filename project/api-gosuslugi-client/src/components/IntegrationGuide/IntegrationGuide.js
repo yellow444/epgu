@@ -246,11 +246,12 @@ function GuideView({ source }) {
   }, [query, FLOWS]);
 
   return (
-    <Space orientation="vertical" size="large" style={{ width: '100%' }}>
+    <Space className="integration-guide" orientation="vertical" size="large" style={{ width: '100%' }}>
       <Card>
         <Title level={2}>Гайд по интеграциям</Title>
         <Paragraph>Бесплатный раздел без платных дополнений. Кликайте блоки схемы: в карточке откроются проверки, развилки и ссылки на источники. Ссылку на выбранный шаг можно сохранить из адресной строки.</Paragraph>
-        <Tag color="blue">Сверка: {REVIEWED_AT}</Tag><Tag>{FLOWS.length} маршрутов</Tag>
+        <Tag color="blue">Срез гайда: {REVIEWED_AT}</Tag><Tag>{FLOWS.length} маршрутов</Tag>
+        <Paragraph type="secondary">Даты сверки отдельных источников указаны в их карточках. Дата среза не означает, что все внешние документы проверены заново.</Paragraph>
         <Tag color={source.origin === 'server' ? 'green' : 'default'}>{source.origin === 'server' ? 'Данные сервера' : 'Встроенная копия'}</Tag>
         {source.origin === 'bundled' && fallbackNote(source.outcome) && <Text type="secondary" className="integration-origin-note" role="status">{fallbackNote(source.outcome)}</Text>}
         <Alert style={{ marginTop: 12 }} type="warning" showIcon title="Это навигатор, а не обещание доступа" description="Схемы не охватывают все ведомственные исключения. TEST и PROD разделены; синтетические реквизиты не подтверждают полномочия. Неофициальные примеры служат подсказками для проверки и не заменяют регламент. MAX и цифровой рубль здесь документированы, но их рабочие коннекторы этим не заявлены." />

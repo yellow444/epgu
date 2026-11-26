@@ -56,7 +56,7 @@ class EpguClient:
         self._client = client
         self._owns_client = client is None
 
-    # --- инфраструктура -------------------------------------------------
+    # инфраструктура
 
     def _http(self) -> httpx.Client:
         if self._client is None:
@@ -163,7 +163,7 @@ class EpguClient:
                 url=str(resp.request.url),
             ) from exc
 
-    # --- заявления ------------------------------------------------------
+    # заявления
 
     def create_order(self, meta: Union[OrderMeta, Dict[str, str]]) -> int:
         """Создать заявление (черновик). Возвращает ``orderId``.
@@ -381,7 +381,7 @@ class EpguClient:
             )
         return result
 
-    # --- статусы --------------------------------------------------------
+    # статусы
 
     def orders_status(
         self,
@@ -423,7 +423,7 @@ class EpguClient:
         resp = self._request("GET", "/api/gusmev/order/getUpdatedAfter", params=params)
         return OrdersPage.from_response(self._json(resp))
 
-    # --- справочники и файлы -------------------------------------------
+    # справочники и файлы
 
     def dictionary(
         self,
@@ -523,7 +523,7 @@ class EpguClient:
         if page_size <= 0:
             raise ValueError("page_size должен быть > 0")
 
-    # --- Госпочта (ГЭПС) ------------------------------------------------
+    # Госпочта (ГЭПС)
     #
     # Четыре сервиса из «Спецификации API ГЭПС» версии 1.0. Порядок задан
     # спецификацией: заказать список, дождаться готовности, открыть карточку,
@@ -608,7 +608,7 @@ class EpguClient:
             mime_type=resp.headers.get("content-type", "application/octet-stream"),
         )
 
-    # --- управление ресурсами ------------------------------------------
+    # управление ресурсами
 
     def close(self) -> None:
         """Закрыть созданный библиотекой HTTP-клиент; внешний клиент не закрывается."""

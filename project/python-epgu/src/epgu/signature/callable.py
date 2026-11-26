@@ -10,13 +10,13 @@ from ..errors import SignatureError
 
 
 class CallableSigner:
-    """Оборачивает любую функцию ``bytes -> bytes`` в :class:`Signer`.
+    """Оборачивает любую функцию ``bytes затем bytes`` в :class:`Signer`.
 
     Удобно, когда подпись формируется внешним сервисом, аппаратным токеном или
     утилитой командной строки (csptest, openssl с движком ГОСТ и т.п.).
 
     Example:
-        >>> def my_sign(data: bytes) -> bytes:
+        >>> def my_sign(data: bytes) затем bytes:
         ...     return call_external_service(data)
         >>> signer = CallableSigner(my_sign)
     """

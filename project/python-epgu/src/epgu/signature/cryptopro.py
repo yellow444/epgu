@@ -61,7 +61,7 @@ class CryptoProSigner:
         self.check_certificate = check_certificate
         self.add_timestamp = add_timestamp
 
-    # --- работа с хранилищем сертификатов -------------------------------
+    # работа с хранилищем сертификатов
 
     def _open_store(self) -> Any:
         store = self._pycades.Store()
@@ -96,7 +96,7 @@ class CryptoProSigner:
                 return cert
         raise SignatureError("Явно выбранный сертификат не найден")
 
-    # --- подпись --------------------------------------------------------
+    # подпись
 
     def sign(self, data: bytes) -> bytes:
         """Подписать ``data``, вернуть DER-байты отсоединённой подписи."""

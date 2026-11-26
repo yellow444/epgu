@@ -94,7 +94,7 @@ def yesterday():
     }
 
 
-# --- заказ списка ------------------------------------------------------
+# заказ списка
 
 
 def test_search_orders_the_list_and_reports_remaining_attempts(client):
@@ -173,7 +173,7 @@ def test_missing_task_uuid_is_reported_as_upstream_error(client):
     assert "searchTaskUuid" in response.json()["detail"]
 
 
-# --- получение списка --------------------------------------------------
+# получение списка
 
 
 def test_result_returns_not_ready_without_pretending_it_is_empty(client):
@@ -250,7 +250,7 @@ def test_result_quota_is_separate_from_search(client):
     assert quota["limits"]["result"]["remaining"] == 14
 
 
-# --- карточка ----------------------------------------------------------
+# карточка
 
 
 def test_message_returns_card_with_attachments_and_statuses(client):
@@ -327,7 +327,7 @@ def test_expired_result_is_explained(client):
     assert "семи дней" in response.json()["detail"]
 
 
-# --- вложения ----------------------------------------------------------
+# вложения
 
 
 def attachment_response(url, **kwargs):

@@ -133,7 +133,7 @@
     - _Specifikaciya_API_EPGU_Otpravka_dokumentov_na_podpis_v_Gosklyuch_v1.8.docx_, Табл. 2
   - **Рекомендация**: Уточнить в таблице реальное состояние; если поддерживается, явно это указать.
 
-- **Суть**: Изменение методов getOrdersStatus / getUpdatedAfter (POST -> GET).
+- **Суть**: Изменение методов getOrdersStatus / getUpdatedAfter (замена POST на GET).
 
   - В новых версиях (≥ 1.11) делается GET, но старые примеры могут быть указаны как POST.
   - **Документ/Раздел**:
@@ -285,7 +285,7 @@
     - _Specifikaciya_API_EPGU_Otpravka_dokumentov_na_podpis_v_Gosklyuch_v1.8.docx_, Табл. 2
   - **Рекомендация**: Уточнить в таблице реальное состояние; если поддерживается, явно это указать.
 
-- **Суть**: Изменение методов getOrdersStatus / getUpdatedAfter (POST -> GET).
+- **Суть**: Изменение методов getOrdersStatus / getUpdatedAfter (замена POST на GET).
 
   - В новых версиях (≥ 1.11) делается GET, но старые примеры могут быть указаны как POST.
   - **Документ/Раздел**:

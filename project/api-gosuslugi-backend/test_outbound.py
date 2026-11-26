@@ -95,7 +95,7 @@ def client(store, monkeypatch):
         yield value
 
 
-# --- закрыто по умолчанию ------------------------------------------------
+# закрыто по умолчанию
 
 
 def test_data_is_not_served_until_something_is_configured(closed):
@@ -148,7 +148,7 @@ def test_flood_is_cut_off(client, monkeypatch):
     assert codes[3:] == [429, 429, 429]
 
 
-# --- данные --------------------------------------------------------------
+# данные
 
 
 def test_messages_are_served_without_local_paths(client):
@@ -191,7 +191,7 @@ def test_since_filter_returns_only_new(client):
     assert fresh["messages"][0]["messageUuid"] == MESSAGE
 
 
-# --- формат Letters ------------------------------------------------------
+# формат Letters
 
 
 def test_letters_xml_matches_the_gospochta_shape(client):
@@ -236,7 +236,7 @@ def test_letters_escape_markup_instead_of_breaking_the_document(client):
     assert "Иванов & Сыновья «АБВ» 5 < 6" in text
 
 
-# --- вложения ------------------------------------------------------------
+# вложения
 
 
 def test_attachment_is_served_only_after_the_operator_downloaded_it(client):
@@ -286,7 +286,7 @@ def test_unknown_attachment_is_404(client):
     assert client.get(f"/messages/{MESSAGE}/attachments/нет").status_code == 404
 
 
-# --- что процесс вообще умеет -------------------------------------------
+# что процесс вообще умеет
 
 
 def test_outbound_has_no_operator_methods(client):

@@ -210,7 +210,7 @@ class FsspRequest:
     case_number: str = ""
 
 
-# ---------- проверка ----------
+# проверка
 
 
 def contract_for(service_code: str) -> FsspContract:
@@ -416,7 +416,7 @@ def validate_request(request: FsspRequest, *, today: date) -> FsspRequest:
     )
 
 
-# ---------- сборка XML ----------
+# сборка XML
 
 
 def _lxml_etree() -> Any:

@@ -125,7 +125,7 @@ def text_of(result: Any) -> str:
     return "".join(getattr(c, "text", "") for c in result.content) + json.dumps(result.structured_content or {})
 
 
-# ------------------------------------------------------------ установка
+# установка
 
 def test_executable_specs_follow_the_catalog_exactly(tmp_path):
     adapter = OperationsAdapter(OperationsConfig(base_url=BASE, credential_file=tmp_path / "absent"))
@@ -304,7 +304,7 @@ def test_import_build_list_and_extensions_open_no_credential_or_network(cred_fil
     assert "EVENTS []" in run.stdout, run.stdout
 
 
-# ------------------------------------------------------------ конфигурация и ключ
+# конфигурация и ключ
 
 def test_config_takes_a_path_not_the_secret(cred_file):
     config = OperationsConfig.from_env({"EPGU_MCP_BACKEND_URL": BASE, "EPGU_MCP_CREDENTIAL_FILE": str(cred_file),
@@ -425,7 +425,7 @@ def test_loopback_http_needs_the_explicit_switch(tmp_path):
                          allow_loopback_http="1")
 
 
-# ------------------------------------------------------------ аргументы
+# аргументы
 
 @pytest.mark.parametrize("tool,args", [
     ("plan_execute", {"plan_id": PLAN_ID, "plan_hash": HASH, "credential": CRED}),
@@ -442,7 +442,7 @@ def test_bad_or_extra_arguments_make_no_request(cred_file, tool, args):
     assert err["code"] == "invalid_parameter" and backend.requests == []
 
 
-# ------------------------------------------------------------ проекция
+# проекция
 
 def leaky_plan(**over: Any) -> dict[str, Any]:
     """План с полями администратора, байтами документа и canary в результате и ссылке."""
@@ -529,7 +529,7 @@ def test_a_credential_echoed_by_the_backend_never_reaches_the_output(cred_file):
     assert error_of(result)["code"] == "unexpected_response" and CRED not in text_of(result)
 
 
-# ------------------------------------------------------------ отказы и неизвестный исход
+# отказы и неизвестный исход
 
 @pytest.mark.parametrize("status,code", [(401, "unauthenticated"), (403, "forbidden"), (409, "plan_state"),
                                          (410, "plan_expired"), (503, "executor_unavailable")])

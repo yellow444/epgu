@@ -92,7 +92,7 @@ def safe_name(name: str, default: str = "attachment") -> str:
     return cleaned[:150]
 
 
-# ---------- заявки ----------
+# заявки
 
 
 def create_job(payload: Dict[str, str], task_uuid: str) -> Dict[str, Any]:
@@ -164,7 +164,7 @@ def has_job_for_range(payload: Dict[str, str]) -> bool:
     return False
 
 
-# ---------- уведомления ----------
+# уведомления
 
 
 def save_messages(job_id: str, messages: List[Dict[str, Any]]) -> int:

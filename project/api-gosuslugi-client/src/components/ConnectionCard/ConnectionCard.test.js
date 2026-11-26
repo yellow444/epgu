@@ -19,7 +19,7 @@ test('renders only facts selected by the chosen goal and labels them as caller r
     expect(screen.getByLabelText(fact.title)).toBeInTheDocument();
   });
   expect(screen.queryByLabelText('Локальная проверка подписи прошла')).not.toBeInTheDocument();
-  expect(screen.getByText('Основание — ваши отметки, без проверки системой.'))
+  expect(screen.getByText('Результат рассчитан по вашим отметкам. Система их не проверяла.'))
     .toBeInTheDocument();
   expect(screen.getByText(/Ссылки дают контекст маршрута/)).toBeInTheDocument();
   expect(screen.getByText(/Ссылки ведут к основаниям этого шага/)).toBeInTheDocument();
@@ -34,7 +34,7 @@ test('renders only facts selected by the chosen goal and labels them as caller r
 
 test('goal changes clear state and reset clears the selected facts', () => {
   render(<ConnectionCard />);
-  choose('Сведения относятся одному случаю TEST', 'По моим сведениям — нет');
+  choose('Сведения относятся одному случаю TEST', 'Нет, по моим сведениям');
   expect(screen.getByText('Сведения относятся разным контекстам.')).toBeInTheDocument();
 
   choose('Цель разбора', 'Разобрать отказ подписи');
@@ -42,7 +42,7 @@ test('goal changes clear state and reset clears the selected facts', () => {
   expect(screen.getByText('Недостаточно сведений о контексте.')).toBeInTheDocument();
   expect(screen.queryByLabelText('Заявка отправлена')).not.toBeInTheDocument();
 
-  choose('Сведения относятся одному случаю TEST', 'По моим сведениям — нет');
+  choose('Сведения относятся одному случаю TEST', 'Нет, по моим сведениям');
   expect(screen.getByText('Сведения относятся разным контекстам.')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Сбросить отметки' }));
   expect(screen.getByText('Недостаточно сведений о контексте.')).toBeInTheDocument();
@@ -65,9 +65,9 @@ test('rendering and using the card does not call network or browser storage APIs
   global.fetch = fetchSpy;
   try {
     render(<ConnectionCard />);
-    choose('Сведения относятся одному случаю TEST', 'По моим сведениям — нет');
+    choose('Сведения относятся одному случаю TEST', 'Нет, по моим сведениям');
     choose('Цель разбора', 'Разобрать отказ подписи');
-    choose('Локальная проверка подписи прошла', 'По моим сведениям — да');
+    choose('Локальная проверка подписи прошла', 'Да, по моим сведениям');
     EXAMPLES.forEach((example) => fireEvent.click(screen.getByRole('button', { name: example.label })));
     fireEvent.click(screen.getByRole('button', { name: 'Сбросить отметки' }));
 
@@ -98,7 +98,7 @@ test.each([
 test('editing an example keeps its warning; starting your own case clears all example facts', () => {
   render(<ConnectionCard />);
   fireEvent.click(screen.getByRole('button', { name: 'ИС есть, заявки нет' }));
-  choose('Заявка отправлена', 'По моим сведениям — да');
+  choose('Заявка отправлена', 'Да, по моим сведениям');
   expect(screen.getByRole('note')).toBeInTheDocument();
   expect(screen.getByRole('status')).toHaveTextContent('Вы сообщили об отправленной заявке.');
   fireEvent.click(screen.getByRole('button', { name: 'Начать свой разбор' }));

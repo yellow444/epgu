@@ -246,7 +246,7 @@ def _connection_card() -> ConnectionCard:
 
 
 def _bad(exc: Exception) -> V1Error:
-    """Ошибка пакета знаний или проверки параметров -> ошибка v1."""
+    """Ошибка пакета знаний или проверки параметров затем ошибка v1."""
     if isinstance(exc, NotFound):
         return V1Error("not_found", 404, exc.message)
     if isinstance(exc, KnowledgeError):

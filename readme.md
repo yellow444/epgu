@@ -15,6 +15,9 @@
 расчёт доступны через HTTP API и MCP (Model Context Protocol).
 [Как запустить и что действительно проверено](./project/epgu/PUBLIC_RELEASE_2026-11-07.md).
 
+[Изменения ЕСИА, API ЕПГУ, MAX и цифрового рубля: сверка 26.11.2026](./project/docs/PLATFORM_CHANGES_2026-11-26.md).
+[Границы реализации и актуальность общего гайда UI/HTTP/MCP](./project/docs/IMPLEMENTATION_STATUS.md).
+
 **Проект оказался полезен? Поставьте ⭐ [yellow444/epgu](https://github.com/yellow444/epgu)** — так вы поддержите развитие открытого инструментария для интеграции с Госуслугами. Нашли ошибку или недостающий сценарий? [Создайте issue](https://github.com/yellow444/epgu/issues), не прикладывая персональные данные, API-ключи, PIN-коды и закрытые ключи.
 
 [Быстрый старт](#быстрый-старт) · [Инструкция запуска](./project/docs/HOWTO.md) · [Документация](./project/docs/README.md) · [Python SDK](./project/python-epgu/README.md) · [Postman](./project/docs/postman) · [О статистике](./project/docs/metrics/README.md)
@@ -55,6 +58,20 @@ Backend использует версионируемый реестр [`service
 - Служебный `submissionContext` используется только локально для согласованной подстановки `{orderId}`/`{guid}` и не пересылается в ЕПГУ.
 
 ## Быстрый старт
+
+**Сначала проверить полный цикл без подключения к Госуслугам:**
+
+```powershell
+$checkRoot = Join-Path $env:LOCALAPPDATA ('EPGU Public Check ' + [guid]::NewGuid().ToString('N'))
+python project/examples/check_single_org.py --output "$checkRoot"
+```
+
+Это отдельная установка зависимостей и полный mock-цикл ФССП через HTTP и MCP
+для одной синтетической организации. Приватные дополнения, Docker, КриптоПро
+и ключи Госуслуг не нужны. Сеть используется только pip при установке.
+[Результаты, границы и Linux-команда](./project/epgu/PUBLIC_SINGLE_ORG.md).
+
+Для обычной установки интерфейса и backend:
 
 Не помещайте реальные API-ключи, PIN-коды, сертификаты или контейнеры закрытых ключей в Git.
 

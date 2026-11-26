@@ -10,7 +10,7 @@ XSD-проверка и `/goskey/preview` доступны без них. Пол
 | Операция | Инструмент | Примечание |
 |---|---|---|
 | Хранение закрытого ключа | Опциональный КриптоПро CSP, контейнер `xxx.000` | Доступен только пользователю signing runtime |
-| Подпись `api_key` для ЕСИА | `pycades.Signer` + `CADESCOM_CADES_BES`, detached | base64 -> urlsafe base64 |
+| Подпись `api_key` для ЕСИА | `pycades.Signer` + `CADESCOM_CADES_BES`, detached | преобразование Base64 в Base64URL |
 | Подписи архива Госключа | `epgu-api` manifest + `pycades`, detached | Отдельный `.sig` обязателен для `req.xml` и каждого документа |
 | TSA | `TSAAddress` передаётся `pycades.Signer` | Код запрашивает тип `CADESCOM_CADES_BES`; наличие TSA не меняет заявленный тип подписи |
 | Валидация XML | безопасный `lxml` parser + XSD профиля | Выполняется для `/push` и `/push/chunked`; Госключ генерируется typed-моделями |
@@ -40,7 +40,7 @@ XSD-проверка и `/goskey/preview` доступны без них. Пол
 ## Реализовано в коде (2026-08)
 
 -  Безопасный парсер XML: `XMLParser(resolve_entities=False, no_network=True, huge_tree=False)` в `validate_xml_content` (см. `app.py`).
--  Парсинг `exp` JWT: `_decode_jwt_exp` -> возвращается клиенту и через `/version`.
+-  Парсинг `exp` JWT: `_decode_jwt_exp` затем возвращается клиенту и через `/version`.
 - CORS и server-side Origin/Referer guard через env `ALLOWED_ORIGINS`; CLI/SDK без browser origin поддерживаются, wildcard не разрешает browser mutations.
 -  Разделение `certs/public/` (в git) и `certs/personal/` (gitignored).
 -  Пути XML/XSD и имена ZIP проверяются на traversal; дубликаты имён отклоняются.

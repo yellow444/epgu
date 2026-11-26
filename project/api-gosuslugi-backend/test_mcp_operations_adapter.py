@@ -1,4 +1,4 @@
-"""Сквозной цикл MCP: in-process сервер -> HTTP-клиент 4a -> настоящее app.app -> mock executor.
+"""Сквозной цикл MCP: in-process сервер затем HTTP-клиент 4a затем настоящее app.app затем mock executor.
 
 Сервер собран явно (``build_operate_registry``), штатные профили и CLI
 операций не выдают. Ключ интеграции синтетический, лежит во временном файле
@@ -128,7 +128,7 @@ def executions(transport):
     return [r for r in transport.requests if r.url.path.endswith(EXECUTE_PATH)]
 
 
-# ------------------------------------------------------------ положительный цикл
+# положительный цикл
 
 def test_prepare_human_approve_execute_and_get_through_mcp(env, tmp_path):
     server, transport = mcp_for(env, tmp_path)
@@ -181,7 +181,7 @@ def test_executor_result_outside_the_projection_is_withheld(env, tmp_path):
     assert_clean(env, done, stored)
 
 
-# ------------------------------------------------------------ отказы
+# отказы
 
 def test_unknown_key_is_unauthenticated(env, tmp_path):
     server, transport = mcp_for(env, tmp_path, secret="itk_" + "Z" * 40)
@@ -231,7 +231,7 @@ def test_missing_executor_is_unavailable(env, tmp_path):
     assert row_of(plan["plan_id"])["status"] == "approved"
 
 
-# ------------------------------------------------------------ неизвестный исход
+# неизвестный исход
 
 def test_unknown_after_a_partial_effect_is_reported_once_without_retry(env, tmp_path):
     server, transport = mcp_for(env, tmp_path)
@@ -296,7 +296,7 @@ def test_forbidden_plan_get_does_not_cancel_the_unknown_outcome(env, tmp_path):
     assert len(executions(transport)) == 1 and env.ex.calls() == (1, 1)
 
 
-# ------------------------------------------------------------ штатный сервер и журнал
+# штатный сервер и журнал
 
 def test_standard_operate_registry_has_no_operations(env):
     registry = build_registry("operate", load_knowledge())

@@ -246,7 +246,7 @@ class OperationsAdapter:
     def __repr__(self) -> str:
         return f"OperationsAdapter(origin={self.config.origin!r})"
 
-    # --- handlers -------------------------------------------------------
+    # handlers
 
     def prepare(self, args: dict[str, Any]) -> dict[str, Any]:
         payload = _decode(args["payload_b64"], "payload_b64")
@@ -275,7 +275,7 @@ class OperationsAdapter:
 
         return self._run("plan_execute", call)
 
-    # --- вызов ----------------------------------------------------------
+    # вызов
 
     def _run(self, tool: str, call: Callable[[IntegrationClient], dict[str, Any]]) -> dict[str, Any]:
         try:
@@ -336,7 +336,7 @@ class OperationsAdapter:
              "completed_calls": completed, "uncertain_calls": uncertain},
         )
 
-    # --- проекция -------------------------------------------------------
+    # проекция
 
     def _plan(self, plan: Plan) -> dict[str, Any]:
         preview = _obj(plan.preview)

@@ -97,7 +97,7 @@ class IntegrationPrincipal:
     expires_at: str = ""
 
 
-# ---------- схема ----------
+# схема
 
 _ensured_for: Optional[str] = None
 
@@ -126,7 +126,7 @@ def _ensure() -> None:
         _ensured_for = current
 
 
-# ---------- вспомогательное ----------
+# вспомогательное
 
 
 def _now(now: Optional[datetime]) -> datetime:
@@ -236,7 +236,7 @@ def _status(row, moment: datetime) -> str:
     return "active"
 
 
-# ---------- операции ----------
+# операции
 
 
 def create_client(

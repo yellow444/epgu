@@ -1,0 +1,13 @@
+EPGU backend and web UI
+Copyright (c) 2025-2026 Maksim Sitnikov (yellow444).
+Project: https://github.com/yellow444/epgu
+
+The public license for owner-authored portions is AGPL-3.0-or-later.
+A separate commercial license for those portions is available only under
+an executed agreement identifying its scope. See LICENSING.md.
+This notice does not grant an automatic commercial license or add conditions
+to AGPL. Existing open-source grants remain available under their terms.
+
+Third-party libraries, template portions, official data, certificates and
+assets retain their own rights and notices. No exclusive rights to those
+materials are claimed. See the component third-party notices.

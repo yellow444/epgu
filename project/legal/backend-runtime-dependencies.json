@@ -1,0 +1,235 @@
+{
+  "base_commit": "5d278466ac8f69eb051015c1ee964c2a0a84b72e",
+  "requirements_sha256": "68426e48787c7f76db40f4742338a79163cb8ab9a319785e184939b0116065dc",
+  "direct_lock_matches_environment": true,
+  "packages": [
+    {
+      "name": "epgu-knowledge",
+      "version": "0.2.0",
+      "license": "Apache-2.0",
+      "notice_files": [
+        "epgu_knowledge-0.2.0.dist-info/licenses/LICENSE",
+        "epgu_knowledge-0.2.0.dist-info/licenses/NOTICE"
+      ]
+    },
+    {
+      "name": "jsonschema",
+      "version": "4.26.0",
+      "license": "MIT",
+      "notice_files": [
+        "jsonschema-4.26.0.dist-info/licenses/COPYING"
+      ]
+    },
+    {
+      "name": "rpds-py",
+      "version": "2026.9.1",
+      "license": "MIT",
+      "notice_files": [
+        "rpds_py-2026.9.1.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "referencing",
+      "version": "0.37.0",
+      "license": "MIT",
+      "notice_files": [
+        "referencing-0.37.0.dist-info/licenses/COPYING"
+      ]
+    },
+    {
+      "name": "attrs",
+      "version": "26.1.0",
+      "license": "MIT",
+      "notice_files": [
+        "attrs-26.1.0.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "jsonschema-specifications",
+      "version": "2025.9.1",
+      "license": "MIT",
+      "notice_files": [
+        "jsonschema_specifications-2025.9.1.dist-info/licenses/COPYING"
+      ]
+    },
+    {
+      "name": "epgu-api",
+      "version": "0.4.0",
+      "license": "Apache-2.0",
+      "notice_files": [
+        "epgu_api-0.4.0.dist-info/licenses/COMMERCIAL-LICENSE.md",
+        "epgu_api-0.4.0.dist-info/licenses/LICENSE",
+        "epgu_api-0.4.0.dist-info/licenses/NOTICE"
+      ]
+    },
+    {
+      "name": "lxml",
+      "version": "6.1.1",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "lxml-6.1.1.dist-info/licenses/LICENSE.txt",
+        "lxml-6.1.1.dist-info/licenses/LICENSES.txt"
+      ]
+    },
+    {
+      "name": "httpx",
+      "version": "0.28.1",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "httpx-0.28.1.dist-info/licenses/LICENSE.md"
+      ]
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "idna-3.20.dist-info/licenses/LICENSE.md"
+      ]
+    },
+    {
+      "name": "httpcore",
+      "version": "1.0.9",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "httpcore-1.0.9.dist-info/licenses/LICENSE.md"
+      ]
+    },
+    {
+      "name": "h11",
+      "version": "0.16.0",
+      "license": "MIT",
+      "notice_files": [
+        "h11-0.16.0.dist-info/licenses/LICENSE.txt"
+      ]
+    },
+    {
+      "name": "certifi",
+      "version": "2026.11.20",
+      "license": "MPL-2.0",
+      "notice_files": [
+        "certifi-2026.11.20.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "anyio",
+      "version": "4.16.0",
+      "license": "MIT",
+      "notice_files": [
+        "anyio-4.16.0.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "license": "PSF-2.0",
+      "notice_files": [
+        "typing_extensions-4.16.0.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "pydantic",
+      "version": "2.13.4",
+      "license": "MIT",
+      "notice_files": [
+        "pydantic-2.13.4.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "typing-inspection",
+      "version": "0.4.5",
+      "license": "MIT",
+      "notice_files": [
+        "typing_inspection-0.4.5.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "pydantic_core",
+      "version": "2.46.4",
+      "license": "MIT",
+      "notice_files": [
+        "pydantic_core-2.46.4.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "annotated-types",
+      "version": "0.8.0",
+      "license": "MIT",
+      "notice_files": [
+        "annotated_types-0.8.0.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "pypdf",
+      "version": "6.1.3",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "pypdf-6.1.3.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "dnspython",
+      "version": "2.7.0",
+      "license": "ISC",
+      "notice_files": [
+        "dnspython-2.7.0.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "python-multipart",
+      "version": "0.0.32",
+      "license": "Apache-2.0",
+      "notice_files": [
+        "python_multipart-0.0.32.dist-info/licenses/LICENSE.txt"
+      ]
+    },
+    {
+      "name": "python-dotenv",
+      "version": "1.2.2",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "python_dotenv-1.2.2.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "uvicorn",
+      "version": "0.52.1",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "uvicorn-0.52.1.dist-info/licenses/LICENSE.md"
+      ]
+    },
+    {
+      "name": "click",
+      "version": "8.5.1",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "click-8.5.1.dist-info/licenses/LICENSE.txt"
+      ]
+    },
+    {
+      "name": "fastapi",
+      "version": "0.141.1",
+      "license": "MIT",
+      "notice_files": [
+        "fastapi-0.141.1.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "annotated-doc",
+      "version": "0.0.7",
+      "license": "MIT",
+      "notice_files": [
+        "annotated_doc-0.0.7.dist-info/licenses/LICENSE"
+      ]
+    },
+    {
+      "name": "starlette",
+      "version": "1.10.0",
+      "license": "BSD-3-Clause",
+      "notice_files": [
+        "starlette-1.10.0.dist-info/licenses/LICENSE.md"
+      ]
+    }
+  ]
+}

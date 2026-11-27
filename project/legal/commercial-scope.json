@@ -1,0 +1,838 @@
+{
+  "schema_version": 1,
+  "base_commit": "5d278466ac8f69eb051015c1ee964c2a0a84b72e",
+  "date": "2026-11-27",
+  "owner_confirmation": "Owner confirmed own code rights; libraries, template files and Gosuslugi data excluded",
+  "commercial_grant": "Only under a separately executed agreement referencing this manifest; no automatic commercial grant",
+  "files": [
+    {
+      "path": "project/api-gosuslugi-backend/HOWTO.md",
+      "sha256": "459150fe5bb2239f4957d5823a2302497a6f948a7af2dd85ead84511c5cddbdf",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/README.md",
+      "sha256": "47dae684fe3a8df341bf81501e06ccba17ad05e93633a3606a36ba0026d1458d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/app.py",
+      "sha256": "e9de59b5f662016d7bdba2c383bd11a0095ea2d78f16d58dc49a69058bf3fc55",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/attachments.py",
+      "sha256": "4938992e6cea8bcffcd54bb453e7587473585d21cd41afb5e8aaae36bad6aaac",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/auth.py",
+      "sha256": "15d2b71ea0654dd1107d31d6d461750e19340927c3315ed0781ba7a31409328d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/auth_api.py",
+      "sha256": "dcea9c1ec32da4969b502715f77d7793feb31525d3259f36b581233508ec6a6d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/auth_cli.py",
+      "sha256": "1f67cb7393135d79cbbb142e70dc5241142bab10bb0f114e92f71486b4c5ebff",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/auth_store.py",
+      "sha256": "54126a2d8546fba8d97623505b5b1c86fde98d866851280daa5f85eb7fd5fa85",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/capabilities.py",
+      "sha256": "fce6f8098451c329e8d94ad4e84f5f91692e542d0daaebb838dc50e7735eb6f7",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/personal/.gitignore",
+      "sha256": "84c3546c2eeaf0adaa2c45ba0ecffa516c74166a8688355c35ab11757cbfb7a7",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/personal/.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/personal/README.md",
+      "sha256": "a1d3329c74238b454fcab08cb8693e894131a002c34f39cecee728a591ac8ffd",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certsources.py",
+      "sha256": "e045700882f9bcef407fa24de6294b7d815dd2fb883e55ba38ce228f4e91a7bc",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/config.py",
+      "sha256": "e68823f80566aba26095f9649187949934e526ffa902a1b5ded4bd62870ae7db",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/conftest.py",
+      "sha256": "e65add0e0441d8a987ce6e2a2b87fc9a5971df5ae4f0f268ad8b4fa441e34a1f",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/fssp_api.py",
+      "sha256": "30d1ee3f029143dde34c68e37d1f0d4028cd7a9abe55b7b66a1c3d5986d6e25f",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/geps_quota.py",
+      "sha256": "2983e9d8f191358246072d7f5e064354d8d54f32ba99ea651d6635cb53e9a6a1",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/geps_scheduler.py",
+      "sha256": "7dd052e4d58bc56f590f29664f23a6044375f26a80dafbaa72112604df07713e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/geps_store.py",
+      "sha256": "003266c2c9fca579eb79c33105e36581b1b047d18ed7b24ae4f2128c592453d8",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/inbound.py",
+      "sha256": "7b80bb93f7b9fe68c047f1c71b085fb32c887f6feefa906590ccc3757786bf05",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/inbound_api.py",
+      "sha256": "00b1e5e6f03d8244efdd5bce7cba6cf1827a165cb9340f98c91aa7445865764e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/inbound_guard.py",
+      "sha256": "994d911f081f5cca036ec0e9577df322e6c0a0fe15745a6748f5cd9df1d7ec0e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/inbound_store.py",
+      "sha256": "089a8ce1a85b7a3256d8063f87b692051b5367174720cb2afad19511ef8cb7b3",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/integration_api.py",
+      "sha256": "e49f4c973cd544812cb5a57d4714a2b4cecc958b1c6309380ebddcc131075196",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/integration_auth.py",
+      "sha256": "b6d8d3dd54b8fadcd4251fa69893dee8a8e621bd4c361909d03f1e66bf25360e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/knowledge_api.py",
+      "sha256": "653b5a0e089d27fd40aeceb91ea2a8998ec256ad1f383ffa3c79f4391c40d9e4",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/machine_api.py",
+      "sha256": "180cd30745ad2f4fb5513919fb9a6b9d1ed2f0a57a3ec348ac02db5582ac5d6f",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/mock_fssp_cycle.py",
+      "sha256": "280a35775e18c32bb3af8747e2ce1b6293243ab8598818defcdd670ada8001e3",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/operations.py",
+      "sha256": "8771631fff01c97a397d71cb9ac1d362393f886d9d88b04cbdb5aa3bf50189d9",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/operations_api.py",
+      "sha256": "bd2c44ced2c1048510fc9a3c06109055cbe832ed54cbabd335d754f1501db308",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/operator_context.py",
+      "sha256": "f622b5567a15ea461628055f74be0a3e5ccc0aba8936b419af8bd65cc0ca83a0",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/outbound.py",
+      "sha256": "f25c98cfe0f976cc2f0014771f397e3c02222d7a440a584accd79e777e4e3bbc",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/public_budget.py",
+      "sha256": "99e1453600562ac276b7b81c07e76999d579eb62c3d7c68833e52fdeeaf3c2ac",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/pytest.ini",
+      "sha256": "1f870b70f7449ab158cae1e09c12a1c7106c863bd07f72ac89cf151958f88914",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/requirements-test.txt",
+      "sha256": "06afea927bc8e58d464ea186b3746c54f572b2b60187c6eb50c3f464da7a435e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/requirements.txt",
+      "sha256": "68426e48787c7f76db40f4742338a79163cb8ab9a319785e184939b0116065dc",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/routers.py",
+      "sha256": "4e01cbd615acbffee967da1786013733cb1c06dddf15ebb0a9f75be8b5bda1be",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/ruff.toml",
+      "sha256": "af72f7aa034d80bb9aad51ab49cd76eaca79495dc9943f1ac153658a38114262",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/secret_store.py",
+      "sha256": "e0ffe2bc6f54c7b95605b9d03823778a26214b06d162b9e9e919915e1b8d5f21",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/service_profiles.json",
+      "sha256": "87ce30a9f5543e5cea5a526197a1fc3870e0e5b31aeb7d2909ccc050116ed6a0",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/settings_store.py",
+      "sha256": "f87ee27a1634fa55c6604503544a97b0942a509150037eeefb6b5fdbaa9ceaf2",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_app.py",
+      "sha256": "5e6f4d16a5d0149c5e8b61e49b9e05efd1fe0d75236e63163ae6211211ff1385",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_attachments.py",
+      "sha256": "ec6ae8286ce86e8b798bf8a2c0ca9f60a13305036273ad8af7cb030cd51904ba",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_auth.py",
+      "sha256": "27efc6ae76fa0846f9211e5dc553d7269d06be0924d100e4a56a4f6304eef30c",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_capabilities.py",
+      "sha256": "1f5635bb725723b3360b37008222056335c5682750304faf8506ffa746beeb8b",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_certsources.py",
+      "sha256": "dcfb015bc5c863db621278599858bd03f2988aed50a8b40ff22e7d7361ce26b4",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_config.py",
+      "sha256": "bb2eb435fd04810b24e2d227f18f8359a38cf054fbf7905cfe4fda7ecfc5b3c2",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_connection_card_api.py",
+      "sha256": "a470bd6e0dc3cf1e5d7e4b4221c3e8ac180dc834aefd8aed47528c24dbad395e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_fssp_api.py",
+      "sha256": "05c4e7becd94fc130a297f100c759f8464f54f770f2504e58b9ae388e48170a5",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_geps_api.py",
+      "sha256": "499f684a2e9c73dda4ef52e623fd4a3c339f1154897e5fc4d9d8501be179cf19",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_geps_scheduler.py",
+      "sha256": "b44007dc5d5db42d9337f2f08c2d0685532595f5b7d8192645f075258c25e59d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_geps_store.py",
+      "sha256": "e2e242b22f38449ce33c30306deb1076ce7e34403a1779c233e0fc599fac3c69",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_goskey_api.py",
+      "sha256": "fbd0d21ab88fad69cba12314b823a9e7a9e9ec97586c06d24428ff9ac90e229a",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_inbound.py",
+      "sha256": "ca4905366536d01cd3b9e4913fcb11545d6b5cd417f86fc5e914c0178954a292",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_inbound_journal.py",
+      "sha256": "9cb38210f9544023bfb39df9962cfe6da5f7dd585953f416d11e347505f44dc6",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_integration_auth.py",
+      "sha256": "7020514333e799bbc5ecac9e4cd68b722984b14b72f359f1636fb47f9cc4be92",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_integration_client_cycle.py",
+      "sha256": "4564fe31c357f9eee76f03f4e37e3eef5aab280219045dd9fb539f5259c8472b",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_knowledge_api.py",
+      "sha256": "ab8ee50542ecab4c2e70676445495ad856551c47be11256a5f9f7245fac02f82",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_logging_privacy.py",
+      "sha256": "baa1c917f9149777bbc1dd5feaf49c55e332e5b031434757d2b07f6274ff7655",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_manual_path_api.py",
+      "sha256": "c76ddd6c46b7e13ecb54d65f43fddf7eef70103a4d60e3f5f78d2d8682514574",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_mcp_operations_adapter.py",
+      "sha256": "c0af295b6714d559f3ecd1af3ed07d758483ac44bd0bc664953946bf2fa9b4c0",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_mcp_target_contract.py",
+      "sha256": "fb8d73286bb365aa20d025b442b6fa9e8c73160829e732864f69912b5841b704",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_mock_fssp_cycle.py",
+      "sha256": "3ce630ac3c8e2df070e3648bfd113c68558fd3c8abd722c233f9694fb2687bbb",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_operations.py",
+      "sha256": "2c47befe46bf623bc99e2f00745e8adb1688cf4b10c2848dfe489998f4164cd7",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_operator_context.py",
+      "sha256": "0b70c1c98ee95f0676e569554c3fbf4d4a9e5766f2a9c4bad8565adac9b4ccac",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_outbound.py",
+      "sha256": "2d48d43fe877af1086ee79f6c5c6e878cbe696aed510556c1d2ab66fd1b97097",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/test_submission_contracts.py",
+      "sha256": "de309fa6c3338ea50409d875a54f86428dde77a6785e32dc8188ba95cad0e5fe",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/v1_errors.py",
+      "sha256": "74ec7dd3a071ac054d459a940ce418319cc9206a0e6307fd7aed7da3bbf3699c",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/xml/piev_epgu.xml",
+      "sha256": "6449bf88d25316c9fd435d62e39520294b5328450607ce7a8b6016384ce91f15",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/xml/piev_epgu.xsd",
+      "sha256": "90d83d20643eb6a7392c0760c7e693202c8935ae07f6a50c8b32071127f73744",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/xml/req.xml",
+      "sha256": "a738abddf1c738833dacb83cdd034e4bd1206be78039fbe611435bef45cc272a",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/.env.development.example",
+      "sha256": "5c89cc972eded7e7c9575a0f7eb6f963c8c4936deb3a8f84950ab363de34b2ef",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/.eslintignore",
+      "sha256": "496c20ea5d6815ad1bc9b9498c312c6aa97f26c7f5abaa700ff34b5a71afc542",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/.eslintrc.json",
+      "sha256": "1905ae16083ece7ae1e3416a22cfd7ec9c15cc37f0f11baaee564ad305b58d0e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/.gitignore",
+      "sha256": "38ac5dea6c1a1d101c4ba8b808cbab9c7c1006caa0cb43adbe3914471ed9486a",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/.npmrc",
+      "sha256": "3ebab50d417e2f839d22a5ad2f5190fc9a6ad025e5e6a1cca264d7cc5bd5eb30",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/.prettierrc",
+      "sha256": "66adaaf900f8be71ad5721050d35857917d9148dbd50073def73e7a45b60b1bb",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/HOWTO.md",
+      "sha256": "8bb2678bf21d3c0dc7b8650b51ebd8825394f4f02d4f27332348c4ce943028ba",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/README.md",
+      "sha256": "3c0ab00b03a7c6ed48fcaf6caf9e7eb8b84b4039969b9040337a9bf001a68ac5",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/default.conf",
+      "sha256": "27ba2addbef8835168269baaf529eec8e9478b7705696ed4155652093632b6b3",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/default.conf.template",
+      "sha256": "3f95e1bf5519fef6036c82e1edbc21792723b31a41b63b2b8ec5f9d8cc9047f1",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/generate-react-cli.json",
+      "sha256": "4881f01b1958f3d424843924c076aa521e4c66d4134e1bb7df9d529a47a5aa08",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/habr.md",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/package-lock.json",
+      "sha256": "d78ad9cf013f5edbcb19c00d64a008586808fc4bc8392d7d381146fc5de0ab0e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/package.json",
+      "sha256": "22a44f079cd5287556fd900c8970e689725ad0548c4cd399ee2b7b924879bece",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/index.html",
+      "sha256": "130f13c88ba7771530115bf102c7e800472dacace7e923487afe6ab5c59c264a",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/manifest.json",
+      "sha256": "33fdb99cc2cd3ad8e1815b18b7005eb3f58048990d80ee7c73aed28ab69a4e19",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/robots.txt",
+      "sha256": "e5ab0d231eeb01b4a982d1c79a6729cac9797ad15a69247e4f28ba6afc149b4c",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/App.css",
+      "sha256": "81cb18c0bbbe74bc87a48697632c2b36df193d3d652555a664dd20e0ca2e4893",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/App.js",
+      "sha256": "5b2112b3328306dea47392d2a0abf7cafd8fd24b8df2a62e88cb8c6c56da18c5",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/App.test.js",
+      "sha256": "533ef6475bea78be17167439dbefb327aa9b6a7d5042e39c2015215b64d0f12f",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/ProtectedWorkspace.js",
+      "sha256": "dd4e8f4e6d26d30b821feea25a79293f674f31dea5e3193abee95be4e26614af",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/PublicEntry.connectionCard.test.js",
+      "sha256": "18bead16fa8df3ab20e8e90b96665efdaacf8230c2b01f23985a60f6c2ea5afd",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/PublicEntry.js",
+      "sha256": "a65359fb1269a5c60e6b1bf2144325158c444ce0287fa90afac76e20dacf5402",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/__mocks__/ace-builds/webpack-resolver.js",
+      "sha256": "1f4df430896ce1c55bd41d901e4824fd11ae8da0ec7184ea6b426956d68ec97c",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/certificateDisplay.js",
+      "sha256": "60036ffb389766e47f7c93bf5088c3718a00742fe89163384786728ed399780d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/certificateDisplay.test.js",
+      "sha256": "42596fe2458ed802b7ec23089cf9b533f56f22122a6bc29e0494e6ea857465e9",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/Auth/AccountMenu.js",
+      "sha256": "2006684d59ef29c72670bade7abd18c13e21a1b95d0792e4f9678e6bdfdb6fdc",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/Auth/Auth.test.js",
+      "sha256": "2fe98912c06170e189b30fe065571aa7fedc8d93acc6ff7b7cb8d44b59302d13",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/Auth/AuthGate.js",
+      "sha256": "4b46539c5b5b24f25d3721166b2481b89902cb99954034befebbdda5500c4a7e",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/Auth/authApi.js",
+      "sha256": "e1970ca9adccf9a3088ca78f6c89bd80f7c47193f729e3681b1d3fc240083b90",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/ConnectionCard/ConnectionCard.css",
+      "sha256": "fe0b1ca97fd995aaee260209cfead631c5cce6d1422e5eff4ed0d34d8c66b548",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/ConnectionCard/ConnectionCard.js",
+      "sha256": "e61c52eb421f075947600d476a4fa2874bd872bf6f4b57657656d7e4de6c5a65",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/ConnectionCard/ConnectionCard.test.js",
+      "sha256": "65aa05d108060b90bbfa132f283dc74e24586c3f072e79911277d3bcfaab66ab",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/ConnectionCard/evaluateConnectionCard.js",
+      "sha256": "141b75c058804a5497eed72180abb3b5364036702508833cb38304d98f6f29b9",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/ConnectionCard/evaluateConnectionCard.test.js",
+      "sha256": "fb5234e804810be2256e35277752644a9dcd1a52d619d90f179486b47543448b",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/FileDropzone/FileDropzone.js",
+      "sha256": "6f21dd34b029b0ee9d9696ca4e7ea5ba03bf73ac114587539ce281a9c81a5cd5",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/FileDropzone/FileDropzone.test.js",
+      "sha256": "b1715bf8cb994853645f437d3a1c4d60d6b16a3a4a7a2e7132dbc50103d0202b",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/FsspForm/FsspForm.js",
+      "sha256": "a0aa30e99cd1e19e277c34879193a8c27cccf133823703b55394e7ba39d47d38",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/FsspForm/FsspForm.test.js",
+      "sha256": "c72079ff6fb64fa02cca55d8a1e960a9270203cdf21c1107ef1dcf29308df662",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/GoskeyForm/GoskeyForm.js",
+      "sha256": "f4fe8458fa7bb1abee730183815b380d388d42dda494701712a1de2b99aef19d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/GoskeyForm/GoskeyForm.test.js",
+      "sha256": "7c9a6a43a468d67d0c3d50bda53b72e3bdc51310cf68cbc1c8536c02a80f02ef",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/Gospochta/Gospochta.js",
+      "sha256": "2605d6b695d12b16bd0d2c37dcfeed65e4ee3840e6b0c4c2fa8038abbe8cecb6",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/InboundLog/InboundLog.js",
+      "sha256": "25346cd07a96229bff50638729d798ab5704719ca3c419a79d0dd70bb8fb4741",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/IntegrationGuide.boundary.test.js",
+      "sha256": "43c87b26757eccc99335a69d3e86087b2aca4ecb898eefd0274135c94131406a",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/IntegrationGuide.css",
+      "sha256": "b5f5ce50744230c6d5aebbf2ee754f6cbdd8ebea809c589c75355fad78334859",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/IntegrationGuide.js",
+      "sha256": "7af4e72487549c31fe0ac1dd17c2000fe5c918f3698a652dc82cf0da54d2a627",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/IntegrationGuide.test.js",
+      "sha256": "09b892efc798660e52cfa83e74e45aa22c4b4d3974ca5de76bd1e4e70a54bcb5",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/SourceLinks.test.js",
+      "sha256": "9b4d94a73511a2ad0981a822fc8a7559a83335e602b45037ef074525f0ef955a",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/knowledgeModel.js",
+      "sha256": "513d9d6d45ea7a08b523bfa656a45dccf7e685411163c87d356d38e2428b2441",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/knowledgeModel.test.js",
+      "sha256": "384f9d2bb3388d91eb080a968abafd3108ea58c8e7365e528a2f2c6c1cdc3265",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/JsonViewer/JsonViewer.js",
+      "sha256": "54f6fe4ccb1f066378857f5ec9f903f3b0c0918313025f00285488537aba5ce1",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/OperationPlans/PlanReviewModal.js",
+      "sha256": "596d4525eb1d37a7f1d4183dcb2d3520f2988127baa4e57a9f34b359864e4266",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/OperationPlans/PlanReviewModal.test.js",
+      "sha256": "e02e49f771a488de15fc4fbc38742bffacea0661d29191cf9ca722af0f2de4c3",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/OperationPlans/planReviewApi.js",
+      "sha256": "08220f11c971dc455e7ad7cc4524964c9636302bf9337b427c339355b9199c39",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/PublicSetup/PublicSetup.js",
+      "sha256": "1b3c8c69338f688df7916143cec45e18db0772dffe0fcc44f68af5bbe5bfe3f0",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/PublicSetup/PublicSetup.test.js",
+      "sha256": "392b4b677f90c0f3c1c7553970fe3aea5eb1a39f65c8ea73cfa6ac7910028aeb",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/downloads.js",
+      "sha256": "aed3b3a3581110ecbd2e853949904b1eb971091faf95011be802501750ca56e7",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/downloads.test.js",
+      "sha256": "74f65e3b5bb2ecf293176f4ed1087ceb2571c54028d8be77b9e1e7b89148cb10",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/index.css",
+      "sha256": "8cbfd6874c98507e3fb6f698956eebcf69291291acb4abf0b41fe7574475f4ce",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/index.js",
+      "sha256": "975fb0e33a26dc910b0a5d4a4657447254b616979651b969abd9ddade8e12661",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/index.test.js",
+      "sha256": "4940ff2df4eb2e7db3698c3d242e5d9a09b43980e20161f0fd8ea17600972940",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/integration/integrationClient.js",
+      "sha256": "a471c6e6c4dfb5b2b230112d8250a14a0d41b0d06fca7c1ed1974e61ac6a148c",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/integration/integrationClient.test.js",
+      "sha256": "d0c2762d543f5967ab9bfdb68f14c94133f75000ffa87c9da036fa16741715b1",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/logo.gosuslugi.svg",
+      "sha256": "042e57c90432b9ab0cac0c85f7af3825427ca280717f60bc28edeac2c44b0888",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/nginxConfig.test.js",
+      "sha256": "6794368bcbc94fc0baf6afeb9d18b4bcb19fce846b874d381401f17bf0a770cd",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/orderId.js",
+      "sha256": "709d1c3d8bf99b91683db85dca5a305e6ee947213cc9c735938adb8f0bedd43d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/orderId.test.js",
+      "sha256": "3f792f23956ef8b719a1cf637b9df34e3d6dd3c37599fbc40491aad6c5817185",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/reportWebVitals.txt",
+      "sha256": "5efbb84cbed52b82cab1165c816c92390b0a5d752e490ca564172a14e3a84a6d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/safeLogging.js",
+      "sha256": "6ef4afbec960b91e279dce1e85a50d90daabb991607ec4514f59a7945f63df20",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/safeLogging.test.js",
+      "sha256": "c151283e1af50af8d217ef0d01f1ca01dccd3a44441f8aaeb4616be0b8c93155",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/serviceProfiles.js",
+      "sha256": "7458e039d2c143e8c9cb49f25319703d4c9d7fc2e219d04b2df1200131313df0",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/serviceProfiles.test.js",
+      "sha256": "d9364342b601965f86f10bb5f3b9f2262a1c8a88686780d969cd8072de0fb56b",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/setupTests.js",
+      "sha256": "c2df7c5a2483bad2e536c5576131e3530b25bb561ae4c45e2590ee1f388a691d",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/workspaceContext.js",
+      "sha256": "a53eeaa407974a0e971619372576ee0cd2d7a21d4882286ed1e1ae11cd6d6755",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    },
+    {
+      "path": "project/api-gosuslugi-client/webpack.config.js",
+      "sha256": "3cf40784802049211c4a7db926076815d7510b09ab22c7a38acd576350f70c56",
+      "scope": "Owner-authored portions only; embedded third-party templates and external data excluded"
+    }
+  ],
+  "excluded": [
+    {
+      "path": "project/api-gosuslugi-backend/LICENSE",
+      "sha256": "e0eedba615d5cd1b986afb6c5b3a4b1ae33713e7e9dc74d19daec5e3221f9d2e",
+      "reason": "Existing license and notice text retains its own terms"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/2F0CB09BE3550EF17EC4F29C90ABD18BFCAAD63A.cer",
+      "sha256": "4bb37cc7c0ff4bf2aa893e95076ebb3565c69237ee1b61635beee4c1966495c7",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/README.md",
+      "sha256": "37869c2bb3f48fed2714e333d77d7b26b0fb2d3f6570ed81160d0d098dba412f",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/ca-root.crt",
+      "sha256": "def5478abe61ed85b68335e8d5e7ad180551bf2c4652d823ff34a454385e1de9",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/cacerts.p7b",
+      "sha256": "257431eb4fb59dae30a6bce04c2687a845ca7fb78bba7c2b1e07989295e5882b",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/der.cer",
+      "sha256": "b45c56c9112c1b22978c2fe722bfe26aad20c350049c207638ea868dd77a8f31",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/rootca.cer",
+      "sha256": "6b97f7f1d3effb94edc969bf81313cc3cce41a775536050fc4c01ac9068adf66",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-backend/certs/public/test_ca_rtk2.cer",
+      "sha256": "6d02de1853c683c00eef90143b9a6745735b1a26000383415178a78144f37aa5",
+      "reason": "Third-party CA material; no commercial rights claimed"
+    },
+    {
+      "path": "project/api-gosuslugi-client/LICENSE",
+      "sha256": "e0eedba615d5cd1b986afb6c5b3a4b1ae33713e7e9dc74d19daec5e3221f9d2e",
+      "reason": "Existing license and notice text retains its own terms"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/favicon.ico",
+      "sha256": "3d10f7da6c603178340081668c4ac5b3ae9743ca9a262ab0fcd312fbb9f48bdd",
+      "reason": "Create React App template asset; upstream MIT and trademark rules retained"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/licenses/epgu-knowledge/LICENSE.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "reason": "Existing license and notice text retains its own terms"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/licenses/epgu-knowledge/NOTICE.txt",
+      "sha256": "6f610250e8d57492cba41ee4ac6b53304f22c51ab00ab3af50dfeaa6f6531147",
+      "reason": "Existing license and notice text retains its own terms"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/logo192.png",
+      "sha256": "c386396ec70db3608075b5fbfaac4ab1ccaa86ba05a68ab393ec551eb66c3e00",
+      "reason": "Create React App template asset; upstream MIT and trademark rules retained"
+    },
+    {
+      "path": "project/api-gosuslugi-client/public/logo512.png",
+      "sha256": "9ea4f4da7050c0cc408926f6a39c253624e9babb1d43c7977cd821445a60b461",
+      "reason": "Create React App template asset; upstream MIT and trademark rules retained"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/ConnectionCard/connection_card.v1.json",
+      "sha256": "27c06bcce4cf557e0255d01ab9c0373a1d23851f04fe8c102093a32ba1b563e7",
+      "reason": "Apache-2.0 knowledge copy; license unchanged"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/knowledge.v1.json",
+      "sha256": "55b51d247fb9c7c3d23905b8b4476167a429614b0c3d32e662f78c742d8b44bb",
+      "reason": "Apache-2.0 knowledge copy; license unchanged"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/IntegrationGuide/knowledge.v1.schema.json",
+      "sha256": "9c99a1e5b1fc2b7ef1f12628d8bc0d04f57106362e207ca3e21b346009d3855f",
+      "reason": "Apache-2.0 knowledge copy; license unchanged"
+    },
+    {
+      "path": "project/api-gosuslugi-client/src/components/PublicSetup/manual_path.v1.json",
+      "sha256": "88b689fe1d01238fa051f5b41afe49b79e3ff66ce39a223e21359b262d538f68",
+      "reason": "Apache-2.0 knowledge copy; license unchanged"
+    }
+  ],
+  "limitations": [
+    "Git authorship is provenance evidence, not a substitute for rights ownership",
+    "Third-party licenses and notices remain effective",
+    "Official data and specifications are not relicensed",
+    "Future contributions require their own rights record"
+  ],
+  "snapshot_status": "Prepared scope based on base_commit; hashes identify the listed file bytes, including line endings. Documentation was prepared after the base commit. A customer delivery requires a separately executed agreement and its exact delivery manifest."
+}

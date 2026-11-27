@@ -2,7 +2,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/yellow444/epgu?style=flat&logo=github&label=Stars)](https://github.com/yellow444/epgu)
 [![GitHub Forks](https://img.shields.io/github/forks/yellow444/epgu?style=flat&logo=github&label=Forks)](https://github.com/yellow444/epgu/forks)
-[![Web: AGPL-3.0](https://img.shields.io/badge/Web-AGPL--3.0-blue?style=flat)](./LICENSE)
+[![Web: AGPL or commercial agreement](https://img.shields.io/badge/Web-AGPL%20%2F%20Commercial-blue?style=flat)](./project/LICENSING.md)
 [![SDK, knowledge, MCP: Apache-2.0](https://img.shields.io/badge/SDK%20%7C%20knowledge%20%7C%20MCP-Apache--2.0-blue?style=flat)](./project/LICENSING.md)
 [![Просмотры репозитория за 14 дней, датированный снимок GitHub Traffic](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyellow444%2Fepgu%2Fmain%2Fproject%2Fdocs%2Fmetrics%2Fviews.json)](./project/docs/metrics/README.md)
 [![Клонирования за 14 дней, датированный снимок GitHub Traffic](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fyellow444%2Fepgu%2Fmain%2Fproject%2Fdocs%2Fmetrics%2Fclones.json)](./project/docs/metrics/README.md)
@@ -168,7 +168,7 @@ python -m twine check dist/*
 
 ## Лицензия
 
-SDK epgu-api 0.4.0, knowledge 0.2.0 и MCP 0.2.0 распространяются по Apache-2.0. Backend и веб-интерфейс остаются под AGPL-3.0-or-later. [Карта лицензий](./project/LICENSING.md), [коммерческое сопровождение и дополнения](./project/COMMERCIAL.md). Старые версии сохраняют прежние условия.
+SDK epgu-api 0.4.0, knowledge 0.2.0 и MCP 0.2.0 распространяются по Apache-2.0. Для backend и UI можно выбрать публичную AGPL-3.0-or-later либо отдельное коммерческое соглашение на собственный код для закрытого внедрения. Коммерческий вариант не активируется скачиванием репозитория и сохраняет сторонние права. [Карта лицензий](./project/LICENSING.md), [коммерческие условия](./project/COMMERCIAL.md), [проверка прав](./project/legal/RIGHTS_REVIEW.md). Старые версии сохраняют прежние условия.
 
 ## Поддержать проект
 

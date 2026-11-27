@@ -147,4 +147,4 @@ src/
 
 ## Лицензия
 
-Веб-интерфейс остается под [AGPL-3.0-or-later](LICENSE). Встроенные данные и схемы knowledge сохраняют Apache-2.0. Их LICENSE и NOTICE включены в статическую сборку в `licenses/epgu-knowledge/`; React-компоненты остаются под AGPL. [Карта лицензий](../LICENSING.md).
+Публичная копия UI предоставляется по [AGPL-3.0-or-later](LICENSE). Для собственных React-компонентов можно получить [коммерческую альтернативу](LICENSING.md) по отдельному соглашению. Встроенные данные knowledge сохраняют Apache-2.0, шаблонные части и библиотеки сохраняют собственные лицензии. Статическая сборка содержит `licenses/epgu-knowledge/`, `licenses/epgu-web/` и [уведомления runtime-зависимостей](public/licenses/third-party/NOTICES.txt). [Карта лицензий](../LICENSING.md).

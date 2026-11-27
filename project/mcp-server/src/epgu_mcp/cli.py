@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Точка входа: ``python -m epgu_mcp --profile knowledge`` (транспорт stdio).
 
 stdout занят протоколом. Всё остальное (логи, сообщения об ошибках) идёт в

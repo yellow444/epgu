@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Интерактивный пример безопасного OAuth2 Authorization Code потока ЕСИА."""
 
 import os

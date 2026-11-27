@@ -13,7 +13,7 @@
 | Идея новой функции или услуги | [Issue по форме «Предложение»](https://github.com/yellow444/epgu/issues/new/choose) |
 | Неточность в документации или руководстве, запрос нового руководства | [Issue по форме «Документация»](https://github.com/yellow444/epgu/issues/new/choose) |
 | Уязвимость | Только приватно, см. [SECURITY.md](./SECURITY.md) |
-| Коммерческая лицензия Python SDK | [Условия и контакт](../project/python-epgu/COMMERCIAL-LICENSE.md) |
+| Коммерческое сопровождение и отдельные дополнения | [Условия и контакт](../project/COMMERCIAL.md) |
 
 Перед новым вопросом проверьте [документацию](../project/docs/README.md),
 [инструкцию запуска](../project/docs/HOWTO.md) и уже открытые

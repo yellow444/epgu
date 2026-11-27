@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Сессия 2026-07-28 (без initialize): discover, tools/list, tools/call."""
 from __future__ import annotations
 

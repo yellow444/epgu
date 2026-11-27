@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Снимок реестра возможностей сверяется с backend capabilities.py."""
 from __future__ import annotations
 

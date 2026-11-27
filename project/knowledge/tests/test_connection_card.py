@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Границы справочной диагностики: неизвестное и сведения человека не доказательства."""
 import copy
 import itertools

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Общие помощники: запуск сервера подпроцессом по stdio."""
 from __future__ import annotations
 

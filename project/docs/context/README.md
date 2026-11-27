@@ -10,7 +10,7 @@
 - `04-api-reference.md` - эндпоинты бэкенда и структура фронтенда.
 - `05-journal.md` - журнал работ по датам: что делали и чем закончилось.
 - `06-repo-and-identity.md` - репозиторий, ветки, авторство, правила по текстам.
-- `07-licensing-and-publication.md` - AGPL плюс коммерческая лицензия, PyPI.
+- `07-licensing-and-publication.md` - Apache для SDK/knowledge/MCP, AGPL для backend/UI, сборка и публикация.
 - `08-access-and-certificates.md` - доступ в тестовый контур и сертификаты.
 - `09-open-items.md` - открытые вопросы и риски.
 - `11-inbound-endpoint.md` - приём входящих запросов от ЕПГУ, порт наружу.

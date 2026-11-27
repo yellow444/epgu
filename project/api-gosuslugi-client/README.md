@@ -147,4 +147,4 @@ src/
 
 ## Лицензия
 
-См. корневой файл [`../LICENSE`](../../LICENSE) (AGPL-3.0-or-later).
+Веб-интерфейс остается под [AGPL-3.0-or-later](LICENSE). Встроенные данные и схемы knowledge сохраняют Apache-2.0. Их LICENSE и NOTICE включены в статическую сборку в `licenses/epgu-knowledge/`; React-компоненты остаются под AGPL. [Карта лицензий](../LICENSING.md).

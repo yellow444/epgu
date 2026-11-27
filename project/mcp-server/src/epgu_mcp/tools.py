@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Встроенные tools профиля knowledge.
 
 Все tools только читают: либо набор знаний ``epgu_knowledge``, либо

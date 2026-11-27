@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """IntegrationClient: транспорт, ошибки и неизвестный исход на mock-транспорте.
 
 Сквозной цикл client затем backend затем mock executor лежит в тестах backend

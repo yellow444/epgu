@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Механизм расширений: entry point group ``epgu_mcp.extensions``.
 
 Расширение это функция ``register(server, profile)``. Первый аргумент это

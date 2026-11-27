@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Чтение, поиск и проверка набора знаний (только чтение, без сети)."""
 from __future__ import annotations
 

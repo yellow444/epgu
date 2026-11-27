@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """The opt-in mock server must not change standard profiles or accept remote backends."""
 import pytest
 from epgu_mcp.mock_fssp_cycle import CAPABILITY, RESULT_FIELDS, mock_server

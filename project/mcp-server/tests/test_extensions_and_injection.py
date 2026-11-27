@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Расширения (entry point group epgu_mcp.extensions) и prompt-injection в данных."""
 from __future__ import annotations
 

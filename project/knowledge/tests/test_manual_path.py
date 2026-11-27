@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Ручной маршрут: схема, связность и запрет настоящих значений в публичных данных."""
 import copy
 import hashlib

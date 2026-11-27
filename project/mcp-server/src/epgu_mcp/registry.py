@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Реестр tools и правила профилей.
 
 Профили упорядочены по силе: knowledge < read < operate. Tool может быть

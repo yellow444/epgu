@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Legacy-сессия (initialize, 2025-11-25) и сырой JSON-RPC по stdio."""
 from __future__ import annotations
 

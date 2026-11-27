@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """knowledge_search через MCP: source_ids в outputSchema и в настоящем ответе."""
 from __future__ import annotations
 

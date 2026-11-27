@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 """epgu - Python-клиент API Госуслуг (ЕПГУ/ЕСИА).
 
@@ -49,7 +49,7 @@ from .models import (
 )
 from .xml_validation import validate_xml
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "__version__",

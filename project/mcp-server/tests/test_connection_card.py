@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Реальный stdio MCP, без LLM, кабинетов и сети: вычисление из отметок."""
 import json
 

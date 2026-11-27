@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """knowledge_get_manual_path: тот же канон, что HTTP и интерфейс, без входных значений."""
 from __future__ import annotations
 

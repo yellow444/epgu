@@ -2,6 +2,7 @@
   "name": "api-gosuslugi-client",
   "version": "0.1.0",
   "private": true,
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "ace-builds": "^1.37.4",

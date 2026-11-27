@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Каталог целевых tools операций: описан, но не выдаётся ни одним профилем."""
 from __future__ import annotations
 

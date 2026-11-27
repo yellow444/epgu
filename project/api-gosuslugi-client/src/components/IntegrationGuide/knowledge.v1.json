@@ -8,7 +8,7 @@
       "sha256": "9a32cc1178b85eb3f95d56176f35f22ae7004c223b7901c87afd39ada2e972a0",
       "origin": "Historical guideData.js import; canonical JSON editorially maintained since 2026-11-26"
     },
-    "license_note": "Тексты маршрутов авторские (AGPL проекта). Внешние документы только ссылками."
+    "license_note": "Собственные тексты, модели и схемы epgu-knowledge распространяются по Apache-2.0. Внешние документы сохраняют свои условия."
   },
   "sources": [
     {

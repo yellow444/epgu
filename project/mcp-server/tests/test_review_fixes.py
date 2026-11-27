@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Регрессии по замечаниям приёмки F1-F3 и логированию аргументов."""
 from __future__ import annotations
 

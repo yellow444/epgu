@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """HTTP-адаптер операций на фейковом backend (httpx.MockTransport).
 
 Сквозной цикл на настоящем backend и mock executor лежит в

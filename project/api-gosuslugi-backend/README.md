@@ -114,4 +114,4 @@ python scripts/audit_repository.py --check
 - [`../docs/api_for_gu/README.md`](../docs/api_for_gu/README.md) - происхождение официального снимка;
 - [`../docs/AUDIT_2026-08-12.md`](../docs/AUDIT_2026-08-12.md) - результаты и блокеры публикации.
 
-Проект распространяется по AGPL-3.0-or-later - см. [`../LICENSE`](../../LICENSE).
+Backend остается под [AGPL-3.0-or-later](LICENSE). Самостоятельные зависимости SDK и knowledge используют Apache-2.0; их лицензии и уведомления сохраняются. [Карта лицензий](../LICENSING.md).

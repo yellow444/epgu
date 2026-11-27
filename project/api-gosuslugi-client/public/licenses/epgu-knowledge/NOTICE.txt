@@ -1,0 +1,16 @@
+epgu-knowledge
+Copyright (c) 2026 yellow444 <yellow444@gmail.com>
+
+Project created by Maksim Sitnikov (yellow444).
+Project: https://github.com/yellow444/epgu
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+The Apache-2.0 edition starts at version 0.2.0.
+Previously distributed versions retain their original license terms.
+
+This license covers the project's original source, schemas, authored guide
+texts, data models, examples and tooling in this package. Links and citations
+to external specifications do not relicense those external documents.
+
+Embedded copies of this package's guide data and schemas retain these notices
+and the Apache-2.0 license when included in the AGPL web application.

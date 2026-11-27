@@ -1,13 +1,17 @@
 epgu-api
 Copyright (c) 2025 yellow444 <yellow444@gmail.com>
 
-This product is licensed under the GNU Affero General Public License v3.0
-or later (AGPL-3.0-or-later). A commercial license is also available;
-see COMMERCIAL-LICENSE.md.
+Project created by Maksim Sitnikov (yellow444).
+Project: https://github.com/yellow444/epgu
 
----
+Licensed under the Apache License, Version 2.0. See LICENSE.
+The Apache-2.0 edition starts at version 0.4.0.
+Previously distributed versions retain their original license terms.
 
 This library is inspired by and partly modeled after go-api-epgu
 (https://github.com/ofstudio/go-api-epgu) by ofstudio, which is distributed
 under the MIT License. The Python implementation in this project is an
-independent rewrite.
+independent rewrite. This attribution is retained from earlier versions.
+
+CryptoPro CSP and pycades are separate third-party products. This license
+covers this package's adapter code, not those products or their distribution.

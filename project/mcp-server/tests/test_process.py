@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Процесс: профили, коды выхода, stdout/stderr, EOF, уровень логов."""
 from __future__ import annotations
 

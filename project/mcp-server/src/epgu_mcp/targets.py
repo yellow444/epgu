@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Каталог целевых tools операций: описание будущих tools, а не действующие tools.
 
 Здесь описаны ``plan_prepare``, ``plan_get`` и ``plan_execute`` (status=target,

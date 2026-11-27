@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Госпочта (ГЭПС): четыре сервиса и ограничения из спецификации."""
 
 import json

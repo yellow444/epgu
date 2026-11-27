@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """HTTP-адаптер tools операций к backend установки (mock-only срез).
 
 Tools ``plan_prepare``, ``plan_get`` и ``plan_execute`` из ``targets.py``

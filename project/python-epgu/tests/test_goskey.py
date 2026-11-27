@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import hashlib
 import zipfile
 from datetime import datetime, timedelta, timezone

@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "epgu-api"
-version = "0.3.0"
+version = "0.4.0"
 description = "Python-клиент API Госуслуг (ЕПГУ/ЕСИА): подача заявлений, статусы, файлы - для граждан и организаций"
 readme = "README.md"
 requires-python = ">=3.10"
-license = "AGPL-3.0-or-later"
+license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE", "COMMERCIAL-LICENSE.md"]
 authors = [{ name = "yellow444", email = "yellow444@gmail.com" }]
 keywords = [
@@ -68,8 +68,8 @@ dev = [
 Homepage = "https://github.com/yellow444/epgu"
 Repository = "https://github.com/yellow444/epgu"
 Issues = "https://github.com/yellow444/epgu/issues"
-Documentation = "https://github.com/yellow444/epgu/tree/main/python-epgu"
-Changelog = "https://github.com/yellow444/epgu/blob/main/python-epgu/CHANGELOG.md"
+Documentation = "https://github.com/yellow444/epgu/tree/main/project/python-epgu"
+Changelog = "https://github.com/yellow444/epgu/blob/main/project/python-epgu/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/epgu"]

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Справочная база знаний по подключению к API Госуслуг (только чтение)."""
 from . import limits
 from .base import KnowledgeBase, load
@@ -14,4 +15,4 @@ __all__ = [
     "ConnectionCard", "connection_card_input_schema", "connection_card_output_schema",
     "connection_card_schema", "load_connection_card",
 ]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

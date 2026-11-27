@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Конвертер guideData.js -> knowledge.v1.json.
 // Запуск: node tools/convert_guide.mjs <guideData.js> <out.json>
 import { createHash } from 'node:crypto';
@@ -115,7 +116,7 @@ const doc = {
     id: 'epgu-integration-guide',
     reviewed_at: REVIEWED_AT,
     generated_from: { file: basename(srcPath), sha256, origin: 'repos/public uncommitted' },
-    license_note: 'Тексты маршрутов авторские (AGPL проекта). Внешние документы только ссылками.',
+    license_note: 'Собственные тексты, модели и схемы epgu-knowledge распространяются по Apache-2.0. Внешние документы сохраняют свои условия.',
   },
   sources,
   routes,

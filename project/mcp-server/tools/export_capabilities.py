@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Генератор снимка реестра возможностей для MCP.
 
 Загружает ``api-gosuslugi-backend/capabilities.py`` по пути файла (без

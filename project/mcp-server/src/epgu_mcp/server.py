@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Сборка MCP-сервера на низкоуровневом ``mcp.server.lowlevel.Server`` (mcp 2.x).
 
 Низкоуровневый класс выбран вместо ``MCPServer``, чтобы точно задать

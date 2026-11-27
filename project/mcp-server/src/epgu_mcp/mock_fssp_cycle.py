@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Explicit stdio server for the synthetic FSSP demo, not the normal CLI."""
 import os
 from pathlib import Path

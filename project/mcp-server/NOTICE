@@ -1,0 +1,14 @@
+epgu-mcp
+Copyright (c) 2026 yellow444 <yellow444@gmail.com>
+
+Project created by Maksim Sitnikov (yellow444).
+Project: https://github.com/yellow444/epgu
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+The Apache-2.0 edition starts at version 0.2.0.
+Previously distributed versions retain their original license terms.
+
+The standalone server depends on the Apache-2.0 epgu-knowledge package.
+The optional operations client depends on Apache-2.0 epgu-api and calls a
+separately configured backend over HTTP. This notice does not relicense that
+backend, third-party dependencies or independently supplied extensions.

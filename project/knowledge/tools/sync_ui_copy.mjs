@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Синхронизация встроенных копий модели знаний для клиента.
 // Create React App не разрешает импорт за пределами src/, поэтому каноническая
 // модель и её JSON Schema копируются побайтно в клиент. Копии руками не правят:
@@ -16,6 +17,8 @@ const pairs = [
   ['../src/epgu_knowledge/schema/knowledge.v1.schema.json', 'IntegrationGuide/knowledge.v1.schema.json'],
   ['../src/epgu_knowledge/data/manual_path.v1.json', 'PublicSetup/manual_path.v1.json'],
   ['../src/epgu_knowledge/data/connection_card.v1.json', 'ConnectionCard/connection_card.v1.json'],
+  ['../LICENSE', '../../public/licenses/epgu-knowledge/LICENSE.txt'],
+  ['../NOTICE', '../../public/licenses/epgu-knowledge/NOTICE.txt'],
 ].map(([from, to]) => [resolve(here, from), resolve(components, to)]);
 
 const check = process.argv.includes('--check');

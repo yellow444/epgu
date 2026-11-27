@@ -142,3 +142,15 @@ deploy/vps/secret/
 
 # Черновики и выгрузки под рукой: в репозиторий не кладутся
 tmp/
+
+# Local AI tooling and development handoffs.
+/.codex/
+/.agents/
+/.cursor/
+/.mcp.json
+/.workspace-state/
+/mailbox/
+/to-codex/
+/project/docs/context/
+AGENTS.md
+HANDOFF*.md

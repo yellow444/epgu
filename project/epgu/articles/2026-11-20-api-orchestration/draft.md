@@ -80,7 +80,7 @@ HTTP-клиент и MCP обращаются к одному backend. Инст�
 ```powershell
 git clone https://github.com/yellow444/epgu.git
 cd epgu
-git checkout 69e07d8f19772c65e0d90f9e64bdae7848faf856
+git checkout 89ff57a2dfbb57f0c44f03da4272ffdda330fa9f
 $checkRoot = Join-Path $env:LOCALAPPDATA ('EPGU Check ' + [guid]::NewGuid().ToString('N'))
 python project/examples/check_single_org.py --output "$checkRoot"
 ```
@@ -89,7 +89,7 @@ python project/examples/check_single_org.py --output "$checkRoot"
 
 В каталоге результата остаются XML, квитанция `cycle/receipt.json` и сводка `single-org-check.json`. HTTP и MCP получают один и тот же демонстрационный документ размером 98 байт. Это учебный файл проверки транспорта, а не ведомственная справка.
 
-В конце временный локальный ключ отзывается, его файл удаляется, проверочный backend останавливается. [Подробная инструкция](https://github.com/yellow444/epgu/blob/69e07d8f19772c65e0d90f9e64bdae7848faf856/project/epgu/PUBLIC_SINGLE_ORG.md) и [описание mock-цикла](https://github.com/yellow444/epgu/blob/69e07d8f19772c65e0d90f9e64bdae7848faf856/project/epgu/FSSP_MOCK_CYCLE.md) закреплены за той же версией.
+В конце временный локальный ключ отзывается, его файл удаляется, проверочный backend останавливается. [Подробная инструкция](https://github.com/yellow444/epgu/blob/89ff57a2dfbb57f0c44f03da4272ffdda330fa9f/project/epgu/PUBLIC_SINGLE_ORG.md) и [описание mock-цикла](https://github.com/yellow444/epgu/blob/89ff57a2dfbb57f0c44f03da4272ffdda330fa9f/project/epgu/FSSP_MOCK_CYCLE.md) закреплены за той же версией.
 
 ## Как это переносится в рабочий контур
 
@@ -102,3 +102,9 @@ python project/examples/check_single_org.py --output "$checkRoot"
 Учетная система может подготовить данные, показать оператору предпросмотр и сохранить номер с состоянием операции. Позже она запрашивает результат по этому же номеру. HTTP и MCP дают два способа обратиться к общему механизму.
 
 [EPGU Bell](https://github.com/yellow444/epgu-bell) может стать источником входящего события для такой очереди. Сообщение сначала попадает на разбор, затем оператор выбирает подходящую услугу и одобряет запрос. Для внешней программы это обычные данные и методы API; качество формулировки запроса к модели не должно определять, появится ли повторная подача.
+
+## Условия использования и авторство
+
+Я развиваю EPGU под учетной записью yellow444, мое имя Максим Ситников. SDK epgu-api с версии 0.4.0, knowledge и MCP с версии 0.2.0 доступны по Apache 2.0: их можно встроить в закрытую 1С, CRM или ERP, сохранив лицензию и применимые уведомления. Имя автора и ссылка на проект включены в NOTICE каждого пакета.
+
+Backend и UI остаются под AGPL-3.0-or-later. Для небольшой компании можно начать с одной организации и mock-примера, а внедрение, поддержку и дополнительные модули заказать отдельно. Это не плата за право использовать Apache-пакеты. [Состав бесплатной части и коммерческие предложения](https://github.com/yellow444/epgu/blob/main/project/COMMERCIAL.md), [карта лицензий](https://github.com/yellow444/epgu/blob/main/project/LICENSING.md).
